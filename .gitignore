@@ -33,3 +33,4 @@ yarn-error.log*
 # Docker
 docker/data/
 .claude/settings.local.json
+/.claude
