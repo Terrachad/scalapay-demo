@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { UnauthorizedException, ConflictException } from '@nestjs/common';
+import { UserRole } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 
 jest.mock('bcrypt');
@@ -124,7 +125,7 @@ describe('AuthService', () => {
         email: 'new@example.com',
         password: 'password',
         name: 'New User',
-        role: 'customer' as const,
+        role: UserRole.CUSTOMER,
       };
       const hashedPassword = 'hashedPassword';
       const token = 'jwt-token';
@@ -158,7 +159,7 @@ describe('AuthService', () => {
         email: 'existing@example.com',
         password: 'password',
         name: 'Existing User',
-        role: 'customer' as const,
+        role: UserRole.CUSTOMER,
       };
 
       mockUsersService.findByEmail.mockResolvedValue(mockUser);

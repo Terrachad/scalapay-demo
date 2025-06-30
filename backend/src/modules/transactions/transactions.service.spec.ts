@@ -3,12 +3,12 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransactionsService } from './transactions.service';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
-import { WebSocketGateway } from '../websocket/websocket.gateway';
+import { ScalaPayWebSocketGateway } from '../websocket/websocket.gateway';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
   let repository: Repository<Transaction>;
-  let wsGateway: WebSocketGateway;
+  let wsGateway: ScalaPayWebSocketGateway;
 
   const mockTransaction = {
     id: 'trans-123',
@@ -39,7 +39,7 @@ describe('TransactionsService', () => {
           useValue: mockRepository,
         },
         {
-          provide: WebSocketGateway,
+          provide: ScalaPayWebSocketGateway,
           useValue: mockWsGateway,
         },
       ],
@@ -47,7 +47,7 @@ describe('TransactionsService', () => {
 
     service = module.get<TransactionsService>(TransactionsService);
     repository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
-    wsGateway = module.get<WebSocketGateway>(WebSocketGateway);
+    wsGateway = module.get<ScalaPayWebSocketGateway>(ScalaPayWebSocketGateway);
   });
 
   afterEach(() => {
