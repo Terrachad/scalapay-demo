@@ -41,7 +41,21 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
+      console.log("🚀 Starting login process with:", data);
       const response = await authService.login(data);
+      console.log("🔍 Full login response:", response);
+      console.log("🔍 Response type:", typeof response);
+      console.log("🔍 Response keys:", response ? Object.keys(response) : 'null/undefined');
+      
+      if (!response || !response.accessToken || !response.user) {
+        console.log("❌ Missing required fields:", {
+          hasResponse: !!response,
+          hasAccessToken: !!response?.accessToken,
+          hasUser: !!response?.user
+        });
+        throw new Error("Invalid response format");
+      }
+      
       setToken(response.accessToken);
       setUser(response.user);
       
@@ -59,6 +73,7 @@ export default function LoginPage() {
         router.push("/dashboard/customer");
       }
     } catch (error) {
+      console.error("❌ Login error:", error);
       toast({
         title: "Login failed",
         description: "Invalid email or password",

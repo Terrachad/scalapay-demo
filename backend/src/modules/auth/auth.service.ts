@@ -14,8 +14,19 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
-      return user;
+    console.log(`🔍 Validating user: ${email}, found: ${!!user}`);
+    
+    if (user) {
+      console.log(`🔐 Password hash starts with: ${user.password.substring(0, 20)}`);
+      try {
+        const isValid = await bcrypt.compare(password, user.password);
+        console.log(`🧪 Password validation result: ${isValid}`);
+        if (isValid) {
+          return user;
+        }
+      } catch (error) {
+        console.error(`❌ Bcrypt error for ${email}:`, error instanceof Error ? error.message : String(error));
+      }
     }
     return null;
   }
