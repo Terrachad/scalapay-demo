@@ -45,6 +45,9 @@ export class User {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   availableCredit!: number;
 
+  @Column({ nullable: true })
+  stripeCustomerId?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

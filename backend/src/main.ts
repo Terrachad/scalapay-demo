@@ -19,7 +19,6 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       configService.get('frontend.url') || 'http://localhost:3000',
-      'https://dpi-burke-snapshot-take.trycloudflare.com', // Add this line
       /\.trycloudflare\.com$/, // Allow all Cloudflare tunnel URLs
     ],
     credentials: true,

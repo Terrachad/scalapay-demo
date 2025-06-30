@@ -39,6 +39,24 @@ export class Payment {
   @Column({ nullable: true })
   paymentDate!: Date;
 
+  @Column({ nullable: true })
+  stripePaymentIntentId?: string;
+
+  @Column({ nullable: true })
+  stripePaymentMethodId?: string;
+
+  @Column({ type: 'int', nullable: true })
+  installmentNumber?: number;
+
+  @Column({ type: 'text', nullable: true })
+  failureReason?: string;
+
+  @Column({ type: 'int', default: 0 })
+  retryCount!: number;
+
+  @Column({ nullable: true })
+  nextRetryAt?: Date;
+
   @CreateDateColumn()
   createdAt!: Date;
 
