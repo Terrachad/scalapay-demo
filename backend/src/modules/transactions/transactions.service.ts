@@ -2,24 +2,58 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
+import { User } from '../users/entities/user.entity';
 import { ScalaPayWebSocketGateway } from '../websocket/websocket.gateway';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { TransactionFilterDto } from './dto/transaction-filter.dto';
+import { TransactionRepository } from './repositories/transaction.repository';
+import { BusinessRulesService } from './services/business-rules.service';
+import { PaymentSchedulerService } from './services/payment-scheduler.service';
+import { TransactionStateMachineService } from './services/transaction-state-machine.service';
 
 @Injectable()
 export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private customTransactionRepository: TransactionRepository,
+    private businessRulesService: BusinessRulesService,
+    private paymentSchedulerService: PaymentSchedulerService,
+    private stateMachineService: TransactionStateMachineService,
     private wsGateway: ScalaPayWebSocketGateway,
   ) {}
 
-  async create(data: Partial<Transaction>): Promise<Transaction> {
-    const transaction = this.transactionRepository.create(data);
+  async create(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
+    // Validate business rules
+    await this.businessRulesService.validateTransactionCreation(
+      createTransactionDto,
+      createTransactionDto.userId!,
+    );
+
+    // Create transaction
+    const transaction = this.transactionRepository.create({
+      ...createTransactionDto,
+      status: TransactionStatus.PENDING,
+    });
+    
     const saved = await this.transactionRepository.save(transaction);
+
+    // Create payment schedule
+    await this.paymentSchedulerService.createPaymentSchedule(saved);
+
+    // Update user's available credit
+    await this.updateUserCredit(createTransactionDto.userId!, -Number(createTransactionDto.amount));
+
+    // Load complete transaction with relations
+    const completeTransaction = await this.findOne(saved.id);
     
     // Emit real-time update
-    this.wsGateway.emitTransactionUpdate(saved.user.id, saved);
+    this.wsGateway.emitTransactionUpdate(completeTransaction.user.id, completeTransaction);
     
-    return saved;
+    return completeTransaction;
   }
 
   async findByUser(userId: string): Promise<Transaction[]> {
@@ -50,39 +84,11 @@ export class TransactionsService {
   }
 
   async findAll(
-    filters: any,
+    filters: TransactionFilterDto,
     page: number = 1,
     limit: number = 10,
   ): Promise<{ transactions: Transaction[]; total: number }> {
-    const queryBuilder = this.transactionRepository
-      .createQueryBuilder('transaction')
-      .leftJoinAndSelect('transaction.user', 'user')
-      .leftJoinAndSelect('transaction.merchant', 'merchant')
-      .leftJoinAndSelect('transaction.payments', 'payments');
-
-    // Apply filters
-    if (filters.status) {
-      queryBuilder.andWhere('transaction.status = :status', { status: filters.status });
-    }
-    
-    if (filters.userId) {
-      queryBuilder.andWhere('user.id = :userId', { userId: filters.userId });
-    }
-    
-    if (filters.merchantId) {
-      queryBuilder.andWhere('merchant.id = :merchantId', { merchantId: filters.merchantId });
-    }
-
-    // Pagination
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
-    
-    // Order by creation date
-    queryBuilder.orderBy('transaction.createdAt', 'DESC');
-
-    const [transactions, total] = await queryBuilder.getManyAndCount();
-
-    return { transactions, total };
+    return this.customTransactionRepository.findWithFilters(filters, page, limit);
   }
 
   async findOne(id: string): Promise<Transaction> {
@@ -98,8 +104,20 @@ export class TransactionsService {
     return transaction;
   }
 
-  async update(id: string, updateData: Partial<Transaction>): Promise<Transaction> {
+  async update(id: string, updateData: UpdateTransactionDto): Promise<Transaction> {
     const transaction = await this.findOne(id);
+    
+    // Validate status transition if status is being updated
+    if (updateData.status && updateData.status !== transaction.status) {
+      await this.businessRulesService.validateStatusTransition(transaction, updateData.status);
+      
+      // Use state machine for transition
+      await this.stateMachineService.transition(
+        transaction.status,
+        updateData.status,
+        { transaction, user: transaction.user, payments: transaction.payments },
+      );
+    }
     
     Object.assign(transaction, updateData);
     const updated = await this.transactionRepository.save(transaction);
@@ -113,15 +131,21 @@ export class TransactionsService {
   async cancel(id: string): Promise<void> {
     const transaction = await this.findOne(id);
     
-    if (transaction.status === TransactionStatus.COMPLETED) {
-      throw new Error('Cannot cancel completed transaction');
-    }
-    
-    if (transaction.status === TransactionStatus.CANCELLED) {
-      throw new Error('Transaction already cancelled');
+    // Validate cancellation using state machine
+    const canCancel = await this.stateMachineService.canTransition(
+      transaction.status,
+      TransactionStatus.CANCELLED,
+      { transaction, payments: transaction.payments },
+    );
+
+    if (!canCancel) {
+      throw new Error(`Cannot cancel transaction in ${transaction.status} status`);
     }
 
     await this.update(id, { status: TransactionStatus.CANCELLED });
+    
+    // Restore user's credit
+    await this.updateUserCredit(transaction.userId, Number(transaction.amount));
   }
 
   async retryPayment(id: string): Promise<Transaction> {
@@ -130,6 +154,18 @@ export class TransactionsService {
     if (transaction.status !== TransactionStatus.REJECTED) {
       throw new Error('Can only retry rejected transactions');
     }
+
+    // Validate if user still has sufficient credit
+    await this.businessRulesService.validateTransactionCreation(
+      {
+        amount: Number(transaction.amount),
+        merchantId: transaction.merchantId,
+        paymentPlan: transaction.paymentPlan,
+        items: transaction.items,
+        userId: transaction.userId,
+      },
+      transaction.userId,
+    );
 
     // Reset status to pending for retry
     return await this.update(id, { status: TransactionStatus.PENDING });
@@ -143,7 +179,15 @@ export class TransactionsService {
       amount: payment.amount,
       dueDate: payment.dueDate,
       status: payment.status,
-      paidAt: payment.paidAt,
+      paidAt: payment.paymentDate,
     }));
+  }
+
+  private async updateUserCredit(userId: string, creditChange: number): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user) {
+      user.availableCredit = Number(user.availableCredit) + creditChange;
+      await this.userRepository.save(user);
+    }
   }
 }

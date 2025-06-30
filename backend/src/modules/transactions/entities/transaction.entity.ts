@@ -33,6 +33,7 @@ export class Transaction {
   id!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Index()
   amount!: number;
 
   @Column({
@@ -62,9 +63,11 @@ export class Transaction {
   updatedAt!: Date;
 
   @Column()
+  @Index()
   userId!: string;
 
   @Column()
+  @Index()
   merchantId!: string;
 
   @ManyToOne(() => User, user => user.transactions)

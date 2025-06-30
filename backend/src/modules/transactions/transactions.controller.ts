@@ -16,32 +16,11 @@ import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Transaction, TransactionStatus, PaymentPlan } from './entities/transaction.entity';
+import { Transaction, TransactionStatus } from './entities/transaction.entity';
 import { UserRole } from '../users/entities/user.entity';
-
-// DTOs will be created in Phase 2, using basic types for now
-interface CreateTransactionDto {
-  amount: number;
-  merchantId: string;
-  paymentPlan: PaymentPlan;
-  items: Array<{
-    name: string;
-    price: number;
-    quantity: number;
-  }>;
-}
-
-interface UpdateTransactionDto {
-  status?: TransactionStatus;
-}
-
-interface TransactionFilterDto {
-  status?: TransactionStatus;
-  userId?: string;
-  merchantId?: string;
-  page?: number;
-  limit?: number;
-}
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { TransactionFilterDto } from './dto/transaction-filter.dto';
 
 @Controller('transactions')
 @UseGuards(JwtAuthGuard)

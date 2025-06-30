@@ -21,9 +21,11 @@ export class Payment {
   id!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Index()
   amount!: number;
 
   @Column({ type: 'date' })
+  @Index()
   dueDate!: Date;
 
   @Column({
@@ -43,6 +45,7 @@ export class Payment {
   updatedAt!: Date;
 
   @Column()
+  @Index()
   transactionId!: string;
 
   @ManyToOne(() => Transaction, transaction => transaction.payments)
