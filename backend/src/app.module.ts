@@ -34,10 +34,23 @@ import configuration from './config/configuration';
         logging: configService.get('NODE_ENV') === 'development',
       }),
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute
+      },
+      {
+        name: 'auth',
+        ttl: 900000, // 15 minutes
+        limit: 5, // 5 login attempts per 15 minutes
+      },
+      {
+        name: 'transactions',
+        ttl: 60000, // 1 minute
+        limit: 10, // 10 transaction creations per minute
+      },
+    ]),
     CqrsModule.forRoot(),
     RedisModule,
     DynamoDBModule,

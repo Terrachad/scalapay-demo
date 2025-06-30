@@ -11,7 +11,12 @@ import {
   Request,
   HttpStatus,
   HttpException,
+  UseInterceptors,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -21,7 +26,11 @@ import { UserRole } from '../users/entities/user.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionFilterDto } from './dto/transaction-filter.dto';
+import { TransactionResponseDto } from './dto/transaction-response.dto';
+import { Serialize } from '../../common/interceptors/serialize.interceptor';
 
+@ApiTags('transactions')
+@ApiBearerAuth()
 @Controller('transactions')
 @UseGuards(JwtAuthGuard)
 export class TransactionsController {
@@ -30,6 +39,15 @@ export class TransactionsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(UserRole.CUSTOMER)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 transactions per minute
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
+  @ApiOperation({ summary: 'Create a new transaction' })
+  @ApiResponse({ status: 201, description: 'Transaction created successfully', type: TransactionResponseDto })
+  @Serialize(TransactionResponseDto)
+  @ApiResponse({ status: 400, description: 'Invalid transaction data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
+  @ApiResponse({ status: 429, description: 'Too many requests' })
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
     @Request() req: any,
