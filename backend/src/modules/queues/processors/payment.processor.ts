@@ -97,7 +97,7 @@ export class PaymentProcessor {
 
     // Update retry count
     payment.retryCount = retryCount + 1;
-    payment.nextRetryAt = null; // Clear next retry time
+    payment.nextRetryAt = undefined; // Clear next retry time
     
     // Process as regular charge
     await this.processCharge(payment);

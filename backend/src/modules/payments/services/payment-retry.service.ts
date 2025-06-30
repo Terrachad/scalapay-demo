@@ -158,7 +158,7 @@ export class PaymentRetryService {
   private async markPaymentAsFinalFailure(payment: Payment, reason: string): Promise<void> {
     payment.status = PaymentStatus.FAILED;
     payment.failureReason = reason;
-    payment.nextRetryAt = null;
+    payment.nextRetryAt = undefined;
     
     await this.paymentRepository.save(payment);
 

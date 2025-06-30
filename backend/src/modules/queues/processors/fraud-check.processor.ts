@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transaction } from '../../transactions/entities/transaction.entity';
+import { Transaction, TransactionStatus } from '../../transactions/entities/transaction.entity';
 import { User } from '../../users/entities/user.entity';
 import { FraudDetectionService } from '../../integrations/services/fraud-detection.service';
 import { FraudCheckJob } from '../services/queue.service';
@@ -103,7 +103,7 @@ export class FraudCheckProcessor {
 
       case 'DECLINE':
         // Block the transaction
-        transaction.status = 'rejected';
+        transaction.status = TransactionStatus.REJECTED;
         await this.transactionRepository.save(transaction);
         
         this.logger.warn(`Transaction ${transaction.id} declined due to fraud risk`);

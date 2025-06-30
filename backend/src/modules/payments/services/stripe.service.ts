@@ -25,7 +25,7 @@ export class StripeService {
   constructor(private configService: ConfigService) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_...';
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2024-06-20',
+      apiVersion: '2025-05-28.basil',
     });
   }
 

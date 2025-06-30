@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Transaction } from '../../transactions/entities/transaction.entity';
+import { Transaction, TransactionStatus } from '../../transactions/entities/transaction.entity';
 import { User } from '../../users/entities/user.entity';
 
 export interface TransactionCreatedEvent {
@@ -147,7 +147,7 @@ export class TransactionEventHandler {
       const completedTransactions = await this.transactionRepository.count({
         where: { 
           userId: user.id,
-          status: 'completed',
+          status: TransactionStatus.COMPLETED,
         },
       });
 

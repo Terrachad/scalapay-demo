@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Payment } from '../../payments/entities/payment.entity';
+import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { User } from '../../users/entities/user.entity';
 import { NotificationService } from '../../payments/services/notification.service';
 
@@ -80,7 +80,7 @@ export class PaymentEventHandler {
       const recentFailures = await this.paymentRepository.count({
         where: {
           transaction: { userId: event.userId },
-          status: 'failed',
+          status: PaymentStatus.FAILED,
           createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } as any,
         },
       });
@@ -167,8 +167,8 @@ export class PaymentEventHandler {
       const pendingPayments = await this.paymentRepository.find({
         where: {
           transaction: { userId: event.userId },
-          status: 'scheduled',
-          stripePaymentMethodId: null,
+          status: PaymentStatus.SCHEDULED,
+          stripePaymentMethodId: undefined,
         },
       });
 

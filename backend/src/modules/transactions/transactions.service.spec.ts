@@ -3,7 +3,12 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TransactionsService } from './transactions.service';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
+import { User } from '../users/entities/user.entity';
 import { ScalaPayWebSocketGateway } from '../websocket/websocket.gateway';
+import { TransactionRepository } from './repositories/transaction.repository';
+import { BusinessRulesService } from './services/business-rules.service';
+import { PaymentSchedulerService } from './services/payment-scheduler.service';
+import { TransactionStateMachineService } from './services/transaction-state-machine.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -30,6 +35,29 @@ describe('TransactionsService', () => {
     emitTransactionUpdate: jest.fn(),
   };
 
+  const mockUserRepository = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockTransactionRepository = {
+    findWithFilters: jest.fn(),
+  };
+
+  const mockBusinessRulesService = {
+    validateTransactionCreation: jest.fn(),
+    validateStatusTransition: jest.fn(),
+  };
+
+  const mockPaymentSchedulerService = {
+    createPaymentSchedule: jest.fn(),
+  };
+
+  const mockStateMachineService = {
+    transition: jest.fn(),
+    canTransition: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,6 +65,26 @@ describe('TransactionsService', () => {
         {
           provide: getRepositoryToken(Transaction),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: mockUserRepository,
+        },
+        {
+          provide: TransactionRepository,
+          useValue: mockTransactionRepository,
+        },
+        {
+          provide: BusinessRulesService,
+          useValue: mockBusinessRulesService,
+        },
+        {
+          provide: PaymentSchedulerService,
+          useValue: mockPaymentSchedulerService,
+        },
+        {
+          provide: TransactionStateMachineService,
+          useValue: mockStateMachineService,
         },
         {
           provide: ScalaPayWebSocketGateway,
@@ -58,21 +106,33 @@ describe('TransactionsService', () => {
     it('should create a transaction and emit update', async () => {
       const createData = {
         amount: 100,
-        user: { id: 'user-123' },
-        merchant: { id: 'merchant-123' },
+        userId: 'user-123',
+        merchantId: 'merchant-123',
       };
 
+      const completeTransaction = {
+        ...mockTransaction,
+        user: { id: 'user-123' },
+      };
+
+      mockBusinessRulesService.validateTransactionCreation.mockResolvedValue(true);
       mockRepository.create.mockReturnValue(mockTransaction);
       mockRepository.save.mockResolvedValue(mockTransaction);
+      mockPaymentSchedulerService.createPaymentSchedule.mockResolvedValue(undefined);
+      mockUserRepository.findOne.mockResolvedValue({ id: 'user-123', availableCredit: 1000 });
+      mockUserRepository.save.mockResolvedValue(undefined);
+      mockRepository.findOne.mockResolvedValue(completeTransaction);
 
       const result = await service.create(createData as any);
 
-      expect(result).toEqual(mockTransaction);
-      expect(mockRepository.create).toHaveBeenCalledWith(createData);
-      expect(mockRepository.save).toHaveBeenCalledWith(mockTransaction);
+      expect(result).toEqual(completeTransaction);
+      expect(mockBusinessRulesService.validateTransactionCreation).toHaveBeenCalled();
+      expect(mockRepository.create).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
+      expect(mockPaymentSchedulerService.createPaymentSchedule).toHaveBeenCalled();
       expect(mockWsGateway.emitTransactionUpdate).toHaveBeenCalledWith(
         'user-123',
-        mockTransaction
+        completeTransaction
       );
     });
   });

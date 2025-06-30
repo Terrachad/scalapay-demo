@@ -4,7 +4,7 @@ import { Job } from 'bull';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Transaction } from '../../transactions/entities/transaction.entity';
+import { Transaction, TransactionStatus } from '../../transactions/entities/transaction.entity';
 import { CreditCheckService } from '../../integrations/services/credit-check.service';
 import { CreditCheckJob } from '../services/queue.service';
 
@@ -129,9 +129,9 @@ export class CreditCheckProcessor {
 
     if (transaction) {
       if (creditResult.approved) {
-        transaction.status = 'approved';
+        transaction.status = TransactionStatus.APPROVED;
       } else {
-        transaction.status = 'rejected';
+        transaction.status = TransactionStatus.REJECTED;
         // Store rejection reason in metadata or separate field
       }
 
@@ -165,7 +165,7 @@ export class CreditCheckProcessor {
       });
 
       if (transaction) {
-        transaction.status = 'rejected';
+        transaction.status = TransactionStatus.REJECTED;
         await this.transactionRepository.save(transaction);
       }
     } catch (error) {
