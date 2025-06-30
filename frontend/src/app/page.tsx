@@ -53,7 +53,7 @@ export default function HomePage() {
                 <span className="ml-2 text-white/90">4.8/5 Rating</span>
               </div>
               <div className="hidden sm:block text-white/60">•</div>
-              <div className="text-white/90">Trusted by 10M+ users</div>
+              <div className="text-white/90">Trusted by 6.5M+ users</div>
             </div>
           </motion.div>
 
@@ -243,7 +243,7 @@ const features = [
 ];
 
 const stats = [
-  { icon: Users, value: "10M+", label: "Active Users" },
+  { icon: Users, value: "6.5M+", label: "Active Users" },
   { icon: ShoppingBag, value: "8,000+", label: "Partner Merchants" },
   { icon: DollarSign, value: "$2.5B+", label: "Transactions Processed" },
 ];

@@ -70,7 +70,7 @@ export default function RegisterPage() {
   };
 
   const benefits = [
-    { icon: Users, text: "Join 10M+ Users", desc: "Trusted worldwide" },
+    { icon: Users, text: "Join 6.5M+ Users", desc: "Trusted worldwide" },
     { icon: Clock, text: "Instant Approvals", desc: "Get approved in seconds" },
     { icon: TrendingUp, text: "Build Credit", desc: "Improve your credit score" },
   ];

@@ -124,7 +124,7 @@ export default function LoginPage() {
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="w-5 h-5 fill-current" />
               ))}
-              <span className="ml-2 text-white/90">Trusted by 10M+ users</span>
+              <span className="ml-2 text-white/90">Trusted by 6.5M+ users</span>
             </div>
           </motion.div>
         </div>
