@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: scalapay-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: scalapay_root_pass
+      MYSQL_DATABASE: scalapay_db
+      MYSQL_USER: scalapay_user
+      MYSQL_PASSWORD: scalapay_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/data/mysql:/var/lib/mysql
+    networks:
+      - scalapay-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: scalapay-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker/data/redis:/data
+    networks:
+      - scalapay-network
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: scalapay-localstack
+    environment:
+      - SERVICES=dynamodb
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./docker/data/localstack:/tmp/localstack
+    networks:
+      - scalapay-network
+
+networks:
+  scalapay-network:
+    driver: bridge
