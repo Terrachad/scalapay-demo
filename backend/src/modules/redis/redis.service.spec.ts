@@ -29,7 +29,7 @@ describe('RedisService', () => {
     (Redis as jest.MockedClass<typeof Redis>).mockImplementation(() => mockRedis);
 
     mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
+      const config: Record<string, any> = {
         'database.redis.host': 'localhost',
         'database.redis.port': 6379,
       };
@@ -66,7 +66,7 @@ describe('RedisService', () => {
 
     it('should handle different host and port configurations', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
+        const config: Record<string, any> = {
           'database.redis.host': 'redis.example.com',
           'database.redis.port': 6380,
         };

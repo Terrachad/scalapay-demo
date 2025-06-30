@@ -28,7 +28,7 @@ describe('DynamoDBService', () => {
     (DynamoDBDocumentClient.from as jest.Mock).mockReturnValue(mockDocClient);
 
     mockConfigService.get.mockImplementation((key: string) => {
-      const config = {
+      const config: Record<string, any> = {
         'database.dynamodb.endpoint': 'http://localhost:8000',
         'database.dynamodb.region': 'us-east-1',
         'database.dynamodb.accessKeyId': 'test-access-key',
@@ -70,7 +70,7 @@ describe('DynamoDBService', () => {
 
     it('should create DynamoDB client without credentials when not provided', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
+        const config: Record<string, any> = {
           'database.dynamodb.endpoint': 'http://localhost:8000',
           'database.dynamodb.region': 'us-east-1',
           'database.dynamodb.accessKeyId': null,
@@ -228,7 +228,7 @@ describe('DynamoDBService', () => {
   describe('configuration scenarios', () => {
     it('should handle missing endpoint configuration', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
+        const config: Record<string, any> = {
           'database.dynamodb.endpoint': undefined,
           'database.dynamodb.region': 'us-east-1',
           'database.dynamodb.accessKeyId': 'test-access-key',
@@ -251,7 +251,7 @@ describe('DynamoDBService', () => {
 
     it('should handle partial credentials (only accessKeyId)', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        const config = {
+        const config: Record<string, any> = {
           'database.dynamodb.endpoint': 'http://localhost:8000',
           'database.dynamodb.region': 'us-east-1',
           'database.dynamodb.accessKeyId': 'test-access-key',

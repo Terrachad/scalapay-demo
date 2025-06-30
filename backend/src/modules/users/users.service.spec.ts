@@ -194,19 +194,21 @@ describe('UsersService', () => {
     it('should handle negative credit updates', async () => {
       const userId = 'user-123';
       const amount = -200; // Adding credit back
+      const userCopy = { ...mockUser, availableCredit: 4500 };
+      const expectedCredit = userCopy.availableCredit - amount; // 4500 - (-200) = 4700
       const updatedUser = {
-        ...mockUser,
-        availableCredit: mockUser.availableCredit - amount,
+        ...userCopy,
+        availableCredit: expectedCredit,
       };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.findOne.mockResolvedValue(userCopy);
       mockRepository.save.mockResolvedValue(updatedUser);
 
       const result = await service.updateCreditLimit(userId, amount);
 
       expect(repository.save).toHaveBeenCalledWith({
-        ...mockUser,
-        availableCredit: 4700,
+        ...userCopy,
+        availableCredit: expectedCredit,
       });
       expect(result).toEqual(updatedUser);
     });
@@ -214,17 +216,18 @@ describe('UsersService', () => {
     it('should handle zero amount updates', async () => {
       const userId = 'user-123';
       const amount = 0;
+      const userCopy = { ...mockUser, availableCredit: 4500 };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.save.mockResolvedValue(mockUser);
+      mockRepository.findOne.mockResolvedValue(userCopy);
+      mockRepository.save.mockResolvedValue(userCopy);
 
       const result = await service.updateCreditLimit(userId, amount);
 
       expect(repository.save).toHaveBeenCalledWith({
-        ...mockUser,
+        ...userCopy,
         availableCredit: 4500,
       });
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(userCopy);
     });
   });
 });
