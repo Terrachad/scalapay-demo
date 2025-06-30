@@ -103,8 +103,8 @@ export default function RegisterPage() {
 
           <Card className="shadow-elegant border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-2xl font-bold text-gray-900">Create Your Account</CardTitle>
+              <CardDescription className="text-base text-gray-600">
                 Join millions who shop smarter with Scalapay
               </CardDescription>
             </CardHeader>
@@ -112,14 +112,14 @@ export default function RegisterPage() {
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-900">
                     Full Name
                   </Label>
                   <Input
                     id="name"
                     type="text"
                     placeholder="Enter your full name"
-                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-foreground"
+                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
                     {...register("name")}
                   />
                   {errors.name && (
@@ -128,14 +128,14 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-900">
                     Email Address
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-foreground"
+                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
                     {...register("email")}
                   />
                   {errors.email && (
@@ -144,7 +144,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-900">
                     Password
                   </Label>
                   <div className="relative">
@@ -152,13 +152,13 @@ export default function RegisterPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Create a strong password"
-                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-foreground"
+                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
                       {...register("password")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900">
                     Confirm Password
                   </Label>
                   <div className="relative">
@@ -177,13 +177,13 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
-                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-foreground"
+                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
                       {...register("confirmPassword")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
                       {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -214,7 +214,7 @@ export default function RegisterPage() {
             </CardContent>
 
             <CardFooter className="text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline font-medium">
                   Sign In

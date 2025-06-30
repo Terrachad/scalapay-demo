@@ -154,8 +154,8 @@ export default function LoginPage() {
 
           <Card className="shadow-elegant border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
+              <CardDescription className="text-base text-gray-600">
                 Sign in to your Scalapay account
               </CardDescription>
             </CardHeader>
@@ -163,14 +163,14 @@ export default function LoginPage() {
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-900">
                     Email Address
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-foreground"
+                    className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
                     {...register("email")}
                   />
                   {errors.email && (
@@ -179,7 +179,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-900">
                     Password
                   </Label>
                   <div className="relative">
@@ -187,13 +187,13 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-foreground"
+                      className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
                       {...register("password")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -225,7 +225,7 @@ export default function LoginPage() {
 
             <CardFooter className="space-y-6">
               <div className="text-center w-full">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600">
                   Don't have an account?{" "}
                   <Link href="/register" className="text-primary hover:underline font-medium">
                     Create Account
@@ -235,7 +235,7 @@ export default function LoginPage() {
 
               {/* Demo Accounts */}
               <div className="w-full space-y-3">
-                <p className="text-xs text-muted-foreground text-center font-medium">
+                <p className="text-xs text-gray-600 text-center font-medium">
                   Demo Accounts (password: password123)
                 </p>
                 <div className="grid grid-cols-1 gap-2">
@@ -250,8 +250,8 @@ export default function LoginPage() {
                       <div className="flex items-center space-x-3">
                         <div className={`w-3 h-3 rounded-full ${account.color}`} />
                         <div>
-                          <p className="text-sm font-medium">{account.role}</p>
-                          <p className="text-xs text-muted-foreground">{account.email}</p>
+                          <p className="text-sm font-medium text-gray-900">{account.role}</p>
+                          <p className="text-xs text-gray-600">{account.email}</p>
                         </div>
                       </div>
                     </motion.div>

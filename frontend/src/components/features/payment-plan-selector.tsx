@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -43,6 +43,11 @@ const plans: PaymentPlan[] = [
 
 export function PaymentPlanSelector({ amount, onSelect }: PaymentPlanSelectorProps) {
   const [selected, setSelected] = useState(plans[1].id);
+
+  // Initialize with default plan on mount
+  useEffect(() => {
+    onSelect(plans[1]);
+  }, [onSelect]);
 
   const handleSelect = (value: string) => {
     setSelected(value);
