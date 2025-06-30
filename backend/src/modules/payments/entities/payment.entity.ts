@@ -42,6 +42,9 @@ export class Payment {
   @UpdateDateColumn()
   updatedAt!: Date;
 
+  @Column()
+  transactionId!: string;
+
   @ManyToOne(() => Transaction, transaction => transaction.payments)
   transaction!: Transaction;
 }

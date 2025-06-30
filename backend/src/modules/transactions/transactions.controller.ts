@@ -43,7 +43,7 @@ interface TransactionFilterDto {
   limit?: number;
 }
 
-@Controller('api/transactions')
+@Controller('transactions')
 @UseGuards(JwtAuthGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}

@@ -61,6 +61,12 @@ export class Transaction {
   @UpdateDateColumn()
   updatedAt!: Date;
 
+  @Column()
+  userId!: string;
+
+  @Column()
+  merchantId!: string;
+
   @ManyToOne(() => User, user => user.transactions)
   user!: User;
 
