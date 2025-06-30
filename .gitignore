@@ -35,3 +35,4 @@ docker/data/
 .claude/settings.local.json
 /.claude
 /.claude
+.claude/settings.local.json
