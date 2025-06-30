@@ -36,3 +36,6 @@ docker/data/
 /.claude
 /.claude
 .claude/settings.local.json
+.claude
+*.md
+CLAUDE.md

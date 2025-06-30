@@ -9,7 +9,9 @@ echo "🧪 Setting up tests..."
 cd backend
 
 # Create test directory structure
-mkdir -p test/{unit,integration,e2e}
+mkdir -p test/unit
+mkdir -p test/integration
+mkdir -p test/e2e
 
 # Jest configuration for backend
 cat > jest.config.js << 'EOF'
