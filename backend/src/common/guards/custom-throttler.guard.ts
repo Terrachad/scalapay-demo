@@ -20,7 +20,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     return ip;
   }
 
-  protected getErrorMessage(): string {
+  protected async getErrorMessage(): Promise<string> {
     return 'Too many requests. Please try again later.';
   }
 }

@@ -59,7 +59,7 @@ export class TransactionsController {
       });
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to create transaction',
+        (error as Error).message || 'Failed to create transaction',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -137,7 +137,7 @@ export class TransactionsController {
       return await this.transactionsService.update(id, updateTransactionDto);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to update transaction',
+        (error as Error).message || 'Failed to update transaction',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -166,7 +166,7 @@ export class TransactionsController {
       return { message: 'Transaction cancelled successfully' };
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to cancel transaction',
+        (error as Error).message || 'Failed to cancel transaction',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -194,7 +194,7 @@ export class TransactionsController {
       return await this.transactionsService.retryPayment(id);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Failed to retry payment',
+        (error as Error).message || 'Failed to retry payment',
         HttpStatus.BAD_REQUEST,
       );
     }

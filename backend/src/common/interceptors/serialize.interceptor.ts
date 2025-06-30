@@ -23,7 +23,7 @@ export class SerializeInterceptor implements NestInterceptor {
     return handler.handle().pipe(
       map((data: any) => {
         if (Array.isArray(data)) {
-          return data.map(item => plainToClass(this.dto, item, {
+          return data.map((item: any) => plainToClass(this.dto, item, {
             excludeExtraneousValues: true,
           }));
         }
@@ -33,7 +33,7 @@ export class SerializeInterceptor implements NestInterceptor {
           return {
             ...data,
             data: Array.isArray(data.data) 
-              ? data.data.map(item => plainToClass(this.dto, item, { excludeExtraneousValues: true }))
+              ? data.data.map((item: any) => plainToClass(this.dto, item, { excludeExtraneousValues: true }))
               : plainToClass(this.dto, data.data, { excludeExtraneousValues: true })
           };
         }
