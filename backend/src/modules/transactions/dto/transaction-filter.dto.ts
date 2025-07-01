@@ -1,4 +1,12 @@
-import { IsOptional, IsEnum, IsUUID, IsDateString, IsNumberString, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsUUID,
+  IsDateString,
+  IsNumberString,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionStatus } from '../entities/transaction.entity';
 
@@ -24,13 +32,11 @@ export class TransactionFilterDto {
   dateTo?: string;
 
   @IsOptional()
-  @IsNumberString()
   @Type(() => Number)
   @Min(1)
   page?: number = 1;
 
   @IsOptional()
-  @IsNumberString()
   @Type(() => Number)
   @Min(1)
   @Max(100)

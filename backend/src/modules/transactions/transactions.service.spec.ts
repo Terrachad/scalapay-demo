@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { TransactionsService } from './transactions.service';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
+import { Merchant } from '../merchants/entities/merchant.entity';
 import { ScalaPayWebSocketGateway } from '../websocket/websocket.gateway';
 import { TransactionRepository } from './repositories/transaction.repository';
 import { BusinessRulesService } from './services/business-rules.service';
@@ -58,6 +59,11 @@ describe('TransactionsService', () => {
     canTransition: jest.fn(),
   };
 
+  const mockMerchantRepository = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -69,6 +75,10 @@ describe('TransactionsService', () => {
         {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
+        },
+        {
+          provide: getRepositoryToken(Merchant),
+          useValue: mockMerchantRepository,
         },
         {
           provide: TransactionRepository,
@@ -132,7 +142,7 @@ describe('TransactionsService', () => {
       expect(mockPaymentSchedulerService.createPaymentSchedule).toHaveBeenCalled();
       expect(mockWsGateway.emitTransactionUpdate).toHaveBeenCalledWith(
         'user-123',
-        completeTransaction
+        completeTransaction,
       );
     });
   });
@@ -172,7 +182,7 @@ describe('TransactionsService', () => {
       });
       expect(mockWsGateway.emitTransactionUpdate).toHaveBeenCalledWith(
         'user-123',
-        updatedTransaction
+        updatedTransaction,
       );
     });
   });

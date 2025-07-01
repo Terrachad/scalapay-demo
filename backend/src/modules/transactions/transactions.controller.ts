@@ -16,7 +16,14 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -42,7 +49,11 @@ export class TransactionsController {
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 transactions per minute
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
   @ApiOperation({ summary: 'Create a new transaction' })
-  @ApiResponse({ status: 201, description: 'Transaction created successfully', type: TransactionResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Transaction created successfully',
+    type: TransactionResponseDto,
+  })
   @Serialize(TransactionResponseDto)
   @ApiResponse({ status: 400, description: 'Invalid transaction data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -71,7 +82,7 @@ export class TransactionsController {
     @Request() req: any,
   ): Promise<{ transactions: Transaction[]; total: number; page: number; limit: number }> {
     const { page = 1, limit = 10, ...filters } = filterDto;
-    
+
     // Filter by user role
     if (req.user.role === UserRole.CUSTOMER) {
       filters.userId = req.user.id;
@@ -89,13 +100,30 @@ export class TransactionsController {
     };
   }
 
+  @Get('my')
+  @ApiOperation({ summary: 'Get current user transactions' })
+  @ApiResponse({ status: 200, description: 'User transactions retrieved successfully' })
+  async getMyTransactions(@Request() req: any): Promise<Transaction[]> {
+    return this.transactionsService.findByUser(req.user.id);
+  }
+
+  @Get('merchant')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MERCHANT, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get merchant transactions' })
+  @ApiResponse({ status: 200, description: 'Merchant transactions retrieved successfully' })
+  async getMerchantTransactions(@Request() req: any): Promise<Transaction[]> {
+    if (req.user.role === UserRole.MERCHANT) {
+      return this.transactionsService.findByMerchant(req.user.merchantId);
+    }
+    // Admin can see all merchant transactions - would need merchant ID parameter
+    throw new HttpException('Merchant ID required for admin access', HttpStatus.BAD_REQUEST);
+  }
+
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @Request() req: any,
-  ): Promise<Transaction> {
+  async findOne(@Param('id') id: string, @Request() req: any): Promise<Transaction> {
     const transaction = await this.transactionsService.findOne(id);
-    
+
     if (!transaction) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -104,7 +132,7 @@ export class TransactionsController {
     if (req.user.role === UserRole.CUSTOMER && transaction.user.id !== req.user.id) {
       throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
     }
-    
+
     if (req.user.role === UserRole.MERCHANT && transaction.merchant.id !== req.user.merchantId) {
       throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
     }
@@ -119,7 +147,7 @@ export class TransactionsController {
     @Request() req: any,
   ): Promise<Transaction> {
     const transaction = await this.transactionsService.findOne(id);
-    
+
     if (!transaction) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -146,12 +174,9 @@ export class TransactionsController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MERCHANT)
-  async cancel(
-    @Param('id') id: string,
-    @Request() req: any,
-  ): Promise<{ message: string }> {
+  async cancel(@Param('id') id: string, @Request() req: any): Promise<{ message: string }> {
     const transaction = await this.transactionsService.findOne(id);
-    
+
     if (!transaction) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -175,12 +200,9 @@ export class TransactionsController {
   @Patch(':id/retry-payment')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.CUSTOMER)
-  async retryPayment(
-    @Param('id') id: string,
-    @Request() req: any,
-  ): Promise<Transaction> {
+  async retryPayment(@Param('id') id: string, @Request() req: any): Promise<Transaction> {
     const transaction = await this.transactionsService.findOne(id);
-    
+
     if (!transaction) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -201,12 +223,9 @@ export class TransactionsController {
   }
 
   @Get(':id/payments')
-  async getPayments(
-    @Param('id') id: string,
-    @Request() req: any,
-  ) {
+  async getPayments(@Param('id') id: string, @Request() req: any) {
     const transaction = await this.transactionsService.findOne(id);
-    
+
     if (!transaction) {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
@@ -215,11 +234,63 @@ export class TransactionsController {
     if (req.user.role === UserRole.CUSTOMER && transaction.user.id !== req.user.id) {
       throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
     }
-    
+
     if (req.user.role === UserRole.MERCHANT && transaction.merchant.id !== req.user.merchantId) {
       throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
     }
 
     return await this.transactionsService.getPaymentSchedule(id);
+  }
+
+  @Patch(':id/approve')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Approve transaction (admin only)' })
+  @ApiResponse({ status: 200, description: 'Transaction approved' })
+  async approveTransaction(@Param('id') id: string): Promise<Transaction> {
+    const transaction = await this.transactionsService.findOne(id);
+
+    if (!transaction) {
+      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (transaction.status !== TransactionStatus.PENDING && transaction.status !== TransactionStatus.PROCESSING) {
+      throw new HttpException('Transaction cannot be approved in current status', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      return await this.transactionsService.approveTransaction(id);
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Failed to approve transaction',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Reject transaction (admin only)' })
+  @ApiResponse({ status: 200, description: 'Transaction rejected' })
+  async rejectTransaction(@Param('id') id: string): Promise<Transaction> {
+    const transaction = await this.transactionsService.findOne(id);
+
+    if (!transaction) {
+      throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (transaction.status !== TransactionStatus.PENDING && transaction.status !== TransactionStatus.PROCESSING) {
+      throw new HttpException('Transaction cannot be rejected in current status', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      return await this.transactionsService.rejectTransaction(id);
+    } catch (error) {
+      throw new HttpException(
+        (error as Error).message || 'Failed to reject transaction',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

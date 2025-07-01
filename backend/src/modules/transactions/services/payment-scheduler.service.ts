@@ -28,19 +28,20 @@ export class PaymentSchedulerService {
 
     for (let i = 0; i < installments; i++) {
       const dueDate = new Date(startDate);
-      
+
       if (i === 0) {
         // First payment due immediately (or within 24 hours)
         dueDate.setHours(dueDate.getHours() + 24);
       } else {
         // Subsequent payments due every 2 weeks
-        dueDate.setDate(dueDate.getDate() + (i * 14));
+        dueDate.setDate(dueDate.getDate() + i * 14);
       }
 
       // Adjust the last payment to account for rounding
-      const paymentAmount = i === installments - 1 
-        ? amount - (installmentAmount * (installments - 1))
-        : installmentAmount;
+      const paymentAmount =
+        i === installments - 1
+          ? amount - installmentAmount * (installments - 1)
+          : installmentAmount;
 
       schedule.push({
         amount: paymentAmount,
@@ -53,10 +54,7 @@ export class PaymentSchedulerService {
   }
 
   async createPaymentSchedule(transaction: Transaction): Promise<Payment[]> {
-    const schedule = this.calculatePaymentSchedule(
-      transaction.amount,
-      transaction.paymentPlan,
-    );
+    const schedule = this.calculatePaymentSchedule(transaction.amount, transaction.paymentPlan);
 
     const payments: Payment[] = [];
 
@@ -74,10 +72,11 @@ export class PaymentSchedulerService {
     return this.paymentRepository.save(payments);
   }
 
-  async getUpcomingPayments(
-    userId: string,
-    daysAhead: number = 7,
-  ): Promise<Payment[]> {
+  async schedulePayments(transaction: Transaction): Promise<Payment[]> {
+    return this.createPaymentSchedule(transaction);
+  }
+
+  async getUpcomingPayments(userId: string, daysAhead: number = 7): Promise<Payment[]> {
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + daysAhead);
@@ -108,9 +107,7 @@ export class PaymentSchedulerService {
       queryBuilder.andWhere('user.id = :userId', { userId });
     }
 
-    return queryBuilder
-      .orderBy('payment.dueDate', 'ASC')
-      .getMany();
+    return queryBuilder.orderBy('payment.dueDate', 'ASC').getMany();
   }
 
   async recalculatePaymentSchedule(
@@ -124,10 +121,7 @@ export class PaymentSchedulerService {
     });
 
     // Create new schedule for remaining amount
-    const schedule = this.calculatePaymentSchedule(
-      remainingAmount,
-      transaction.paymentPlan,
-    );
+    const schedule = this.calculatePaymentSchedule(remainingAmount, transaction.paymentPlan);
 
     const payments: Payment[] = [];
 
@@ -165,7 +159,7 @@ export class PaymentSchedulerService {
 
   getPaymentPlanInfo(paymentPlan: PaymentPlan) {
     const installments = this.getInstallmentCount(paymentPlan);
-    
+
     return {
       installments,
       description: `Pay in ${installments} installments`,

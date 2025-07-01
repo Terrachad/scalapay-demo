@@ -14,10 +14,12 @@ import { Payment } from '../../payments/entities/payment.entity';
 
 export enum TransactionStatus {
   PENDING = 'pending',
+  PROCESSING = 'processing',
   APPROVED = 'approved',
   REJECTED = 'rejected',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+  FAILED = 'failed',
 }
 
 export enum PaymentPlan {
@@ -56,6 +58,9 @@ export class Transaction {
     quantity: number;
   }>;
 
+  @Column({ type: 'integer', default: 0 })
+  riskScore!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 
@@ -70,12 +75,12 @@ export class Transaction {
   @Index()
   merchantId!: string;
 
-  @ManyToOne(() => User, user => user.transactions)
+  @ManyToOne(() => User, (user) => user.transactions)
   user!: User;
 
-  @ManyToOne(() => Merchant, merchant => merchant.transactions)
+  @ManyToOne(() => Merchant, (merchant) => merchant.transactions)
   merchant!: Merchant;
 
-  @OneToMany(() => Payment, payment => payment.transaction)
+  @OneToMany(() => Payment, (payment) => payment.transaction)
   payments!: Payment[];
 }

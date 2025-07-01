@@ -48,9 +48,7 @@ export class TransactionStateMachineService {
     to: TransactionStatus,
     context?: any,
   ): Promise<boolean> {
-    const transition = this.transitions.find(
-      (t) => t.from === from && t.to === to,
-    );
+    const transition = this.transitions.find((t) => t.from === from && t.to === to);
 
     if (!transition) {
       return false;
@@ -63,22 +61,14 @@ export class TransactionStateMachineService {
     return true;
   }
 
-  async transition(
-    from: TransactionStatus,
-    to: TransactionStatus,
-    context: any,
-  ): Promise<void> {
+  async transition(from: TransactionStatus, to: TransactionStatus, context: any): Promise<void> {
     const canTransition = await this.canTransition(from, to, context);
 
     if (!canTransition) {
-      throw new BadRequestException(
-        `Invalid state transition from ${from} to ${to}`,
-      );
+      throw new BadRequestException(`Invalid state transition from ${from} to ${to}`);
     }
 
-    const transition = this.transitions.find(
-      (t) => t.from === from && t.to === to,
-    );
+    const transition = this.transitions.find((t) => t.from === from && t.to === to);
 
     if (transition?.action) {
       await transition.action(context);
@@ -86,9 +76,7 @@ export class TransactionStateMachineService {
   }
 
   getValidTransitions(from: TransactionStatus): TransactionStatus[] {
-    return this.transitions
-      .filter((t) => t.from === from)
-      .map((t) => t.to);
+    return this.transitions.filter((t) => t.from === from).map((t) => t.to);
   }
 
   isTerminalState(status: TransactionStatus): boolean {
@@ -112,8 +100,8 @@ export class TransactionStateMachineService {
   private validateCancellationAllowed(context: any): boolean {
     const { payments } = context;
     // Allow cancellation if no payments have been processed yet
-    return payments.every((payment: any) => 
-      payment.status === 'scheduled' || payment.status === 'failed'
+    return payments.every(
+      (payment: any) => payment.status === 'scheduled' || payment.status === 'failed',
     );
   }
 }

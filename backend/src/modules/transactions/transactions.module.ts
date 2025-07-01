@@ -13,10 +13,7 @@ import { TransactionStateMachineService } from './services/transaction-state-mac
 import { WebSocketModule } from '../websocket/websocket.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment]),
-    WebSocketModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Transaction, User, Merchant, Payment]), WebSocketModule],
   controllers: [TransactionsController],
   providers: [
     TransactionsService,

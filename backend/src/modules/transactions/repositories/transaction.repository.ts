@@ -35,10 +35,7 @@ export class TransactionRepository extends Repository<Transaction> {
     return { transactions, total };
   }
 
-  async findByUserWithStatus(
-    userId: string,
-    status: TransactionStatus,
-  ): Promise<Transaction[]> {
+  async findByUserWithStatus(userId: string, status: TransactionStatus): Promise<Transaction[]> {
     return this.transactionRepository.find({
       where: { userId, status },
       relations: ['user', 'merchant', 'payments'],
@@ -86,24 +83,30 @@ export class TransactionRepository extends Repository<Transaction> {
       queryBuilder.where('transaction.merchantId = :merchantId', { merchantId });
     }
 
-    const [
-      totalAmount,
-      totalCount,
-      pendingCount,
-      approvedCount,
-      completedCount,
-      rejectedCount,
-    ] = await Promise.all([
-      queryBuilder
-        .select('SUM(transaction.amount)', 'total')
-        .getRawOne()
-        .then(result => parseFloat(result.total) || 0),
-      queryBuilder.getCount(),
-      queryBuilder.clone().andWhere('transaction.status = :status', { status: TransactionStatus.PENDING }).getCount(),
-      queryBuilder.clone().andWhere('transaction.status = :status', { status: TransactionStatus.APPROVED }).getCount(),
-      queryBuilder.clone().andWhere('transaction.status = :status', { status: TransactionStatus.COMPLETED }).getCount(),
-      queryBuilder.clone().andWhere('transaction.status = :status', { status: TransactionStatus.REJECTED }).getCount(),
-    ]);
+    const [totalAmount, totalCount, pendingCount, approvedCount, completedCount, rejectedCount] =
+      await Promise.all([
+        queryBuilder
+          .select('SUM(transaction.amount)', 'total')
+          .getRawOne()
+          .then((result) => parseFloat(result.total) || 0),
+        queryBuilder.getCount(),
+        queryBuilder
+          .clone()
+          .andWhere('transaction.status = :status', { status: TransactionStatus.PENDING })
+          .getCount(),
+        queryBuilder
+          .clone()
+          .andWhere('transaction.status = :status', { status: TransactionStatus.APPROVED })
+          .getCount(),
+        queryBuilder
+          .clone()
+          .andWhere('transaction.status = :status', { status: TransactionStatus.COMPLETED })
+          .getCount(),
+        queryBuilder
+          .clone()
+          .andWhere('transaction.status = :status', { status: TransactionStatus.REJECTED })
+          .getCount(),
+      ]);
 
     return {
       totalAmount,

@@ -1,4 +1,15 @@
-import { IsNotEmpty, IsString, IsNumber, IsEnum, IsArray, ValidateNested, IsUUID, IsOptional, Min, Max } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsUUID,
+  IsOptional,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentPlan } from '../entities/transaction.entity';
@@ -23,11 +34,11 @@ export class TransactionItemDto {
 }
 
 export class CreateTransactionDto {
-  @ApiProperty({ 
-    description: 'Total transaction amount', 
-    example: 999.99, 
-    minimum: 1, 
-    maximum: 50000 
+  @ApiProperty({
+    description: 'Total transaction amount',
+    example: 999.99,
+    minimum: 1,
+    maximum: 50000,
   })
   @IsNotEmpty()
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -35,40 +46,45 @@ export class CreateTransactionDto {
   @Max(50000) // Maximum transaction amount
   amount!: number;
 
-  @ApiProperty({ 
-    description: 'Merchant ID', 
-    example: '123e4567-e89b-12d3-a456-426614174000' 
+  @ApiProperty({
+    description: 'Merchant ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsNotEmpty()
   @IsUUID()
   merchantId!: string;
 
-  @ApiProperty({ 
-    description: 'Payment plan option', 
+  @ApiProperty({
+    description: 'Payment plan option',
     enum: PaymentPlan,
-    example: PaymentPlan.PAY_IN_4 
+    example: PaymentPlan.PAY_IN_4,
   })
   @IsNotEmpty()
   @IsEnum(PaymentPlan)
   paymentPlan!: PaymentPlan;
 
-  @ApiProperty({ 
-    description: 'Items in the transaction', 
+  @ApiProperty({
+    description: 'Items in the transaction',
     type: [TransactionItemDto],
-    example: [{ name: 'iPhone 14 Pro', price: 999.99, quantity: 1 }]
+    example: [{ name: 'iPhone 14 Pro', price: 999.99, quantity: 1 }],
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TransactionItemDto)
   items!: TransactionItemDto[];
 
-  @ApiPropertyOptional({ 
-    description: 'Additional metadata', 
-    example: { source: 'mobile_app', campaign: 'summer_sale' } 
+  @ApiPropertyOptional({
+    description: 'Additional metadata',
+    example: { source: 'mobile_app', campaign: 'summer_sale' },
   })
   @IsOptional()
   metadata?: object;
 
-  // This will be set by the controller from the authenticated user
+  @ApiPropertyOptional({ 
+    description: 'User ID - will be set from authenticated user if not provided',
+    example: '500a126c-b32a-4888-8301-9f61ca950c98' 
+  })
+  @IsOptional()
+  @IsUUID()
   userId?: string;
 }
