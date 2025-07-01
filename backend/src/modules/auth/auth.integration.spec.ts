@@ -33,10 +33,12 @@ describe('AuthController (Integration)', () => {
           synchronize: false, // Don't modify existing schema
           logging: false,
         }),
-        ThrottlerModule.forRoot([{
-          ttl: 60000,
-          limit: 1000, // Higher limit for testing
-        }]),
+        ThrottlerModule.forRoot([
+          {
+            ttl: 60000,
+            limit: 1000, // Higher limit for testing
+          },
+        ]),
         AuthModule,
         UsersModule,
       ],
@@ -51,16 +53,20 @@ describe('AuthController (Integration)', () => {
     // Clean up test users
     if (userRepository && testEmails.length > 0) {
       try {
-        await userRepository.createQueryBuilder()
+        await userRepository
+          .createQueryBuilder()
           .delete()
           .from(User)
           .where('email IN (:...emails)', { emails: testEmails })
           .execute();
       } catch (error) {
-        console.warn('Failed to clean up test users:', error instanceof Error ? error.message : String(error));
+        console.warn(
+          'Failed to clean up test users:',
+          error instanceof Error ? error.message : String(error),
+        );
       }
     }
-    
+
     if (app) {
       await app.close();
     }
@@ -107,10 +113,7 @@ describe('AuthController (Integration)', () => {
         role: UserRole.CUSTOMER,
       };
 
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(400);
+      return request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(400);
     });
 
     it('should reject registration with weak password', () => {
@@ -121,10 +124,7 @@ describe('AuthController (Integration)', () => {
         role: UserRole.CUSTOMER,
       };
 
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(400);
+      return request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(400);
     });
 
     it('should reject duplicate email registration', async () => {
@@ -137,22 +137,16 @@ describe('AuthController (Integration)', () => {
       trackTestEmail(registerDto.email);
 
       // First registration should succeed
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(201);
+      await request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(201);
 
       // Second registration with same email should fail
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(409); // Conflict
+      return request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(409); // Conflict
     });
   });
 
   describe('/auth/login (POST)', () => {
     let loginTestEmail: string;
-    
+
     beforeEach(async () => {
       // Register a user for login tests
       loginTestEmail = `login-test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`;
@@ -164,9 +158,7 @@ describe('AuthController (Integration)', () => {
       };
       trackTestEmail(loginTestEmail);
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto);
+      await request(app.getHttpServer()).post('/auth/register').send(registerDto);
     });
 
     it('should login with valid credentials', () => {
@@ -192,10 +184,7 @@ describe('AuthController (Integration)', () => {
         password: 'WrongPassword',
       };
 
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginDto)
-        .expect(401);
+      return request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(401);
     });
 
     it('should reject login with non-existent user', () => {
@@ -204,10 +193,7 @@ describe('AuthController (Integration)', () => {
         password: 'TestPassword123!',
       };
 
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginDto)
-        .expect(401);
+      return request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(401);
     });
   });
 
@@ -226,9 +212,7 @@ describe('AuthController (Integration)', () => {
       };
       trackTestEmail(jwtTestEmail);
 
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto);
+      const response = await request(app.getHttpServer()).post('/auth/register').send(registerDto);
 
       accessToken = response.body.accessToken;
     });

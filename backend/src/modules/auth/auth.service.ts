@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/login.dto';
 import { User } from '../users/entities/user.entity';
 
@@ -15,7 +15,7 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(email);
     console.log(`🔍 Validating user: ${email}, found: ${!!user}`);
-    
+
     if (user) {
       console.log(`🔐 Password hash starts with: ${user.password.substring(0, 20)}`);
       try {
@@ -25,7 +25,10 @@ export class AuthService {
           return user;
         }
       } catch (error) {
-        console.error(`❌ Bcrypt error for ${email}:`, error instanceof Error ? error.message : String(error));
+        console.error(
+          `❌ Bcrypt error for ${email}:`,
+          error instanceof Error ? error.message : String(error),
+        );
       }
     }
     return null;

@@ -4,9 +4,9 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UserRole } from '../users/entities/user.entity';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
-jest.mock('bcrypt');
+jest.mock('bcryptjs');
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -88,7 +88,7 @@ describe('AuthService', () => {
     it('should return auth response on successful login', async () => {
       const loginDto = { email: 'test@example.com', password: 'password' };
       const token = 'jwt-token';
-      
+
       jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser as any);
       mockJwtService.sign.mockReturnValue(token);
 
@@ -112,7 +112,7 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException when credentials are invalid', async () => {
       const loginDto = { email: 'test@example.com', password: 'wrongpassword' };
-      
+
       jest.spyOn(service, 'validateUser').mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
