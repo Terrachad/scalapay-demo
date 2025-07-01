@@ -47,3 +47,4 @@ docker/data/
 .claude
 *.md
 CLAUDE.md
+.claude/
