@@ -1,0 +1,10 @@
+npm error Lifecycle script `start:dev` failed with error:
+npm error workspace scalapay-backend@1.0.0
+npm error location /mnt/c/Users/BOMBSPINNER/Desktop/scala-demo/scalapay-demo/backend
+npm error Missing script: "start:dev"
+npm error
+npm error Did you mean this?
+npm error   npm run start:debug # run the "start:debug" package script
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run --workspace=scalapay-backend@1.0.0

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCartStore } from '@/store/cart-store';
+import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import {
   ShoppingCart,
@@ -21,17 +22,34 @@ import {
   Tag,
   Heart,
   Package,
+  MoreVertical,
 } from 'lucide-react';
 
 export default function CartPage() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } =
     useCartStore();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleClearCart = () => {
+    if (showClearConfirm) {
+      clearCart();
+      setShowClearConfirm(false);
+      toast({
+        title: "Cart cleared",
+        description: `All ${totalItems} items have been removed from your cart.`,
+      });
+    } else {
+      setShowClearConfirm(true);
+      setTimeout(() => setShowClearConfirm(false), 3000); // Auto-hide after 3 seconds
+    }
+  };
 
   if (!mounted) {
     return (
@@ -53,7 +71,27 @@ export default function CartPage() {
         {/* Header */}
         <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            {/* Mobile Layout */}
+            <div className="md:hidden">
+              <div className="flex items-center justify-between">
+                <Link href="/shop">
+                  <Button variant="ghost" size="sm" className="flex-shrink-0">
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    <span className="text-sm">Shop</span>
+                  </Button>
+                </Link>
+                
+                <div className="flex items-center space-x-2 flex-1 justify-center">
+                  <ShoppingCart className="w-5 h-5 text-primary" />
+                  <h1 className="text-lg font-bold gradient-text">Cart</h1>
+                </div>
+                
+                <div className="flex-shrink-0 w-16"></div> {/* Spacer for balance */}
+              </div>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden md:flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Link href="/shop">
                   <Button variant="ghost" size="sm">
@@ -103,7 +141,38 @@ export default function CartPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          {/* Mobile Layout */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between mb-4">
+              <Link href="/shop">
+                <Button variant="ghost" size="sm" className="flex-shrink-0">
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Shop</span>
+                </Button>
+              </Link>
+              
+              <div className="flex items-center space-x-2 flex-1 justify-center">
+                <ShoppingCart className="w-5 h-5 text-primary" />
+                <h1 className="text-lg font-bold gradient-text">Cart</h1>
+                <Badge variant="secondary" className="text-xs">
+                  {totalItems}
+                </Badge>
+              </div>
+              
+              <Button
+                variant={showClearConfirm ? "destructive" : "outline"}
+                size="sm"
+                onClick={handleClearCart}
+                className={`${showClearConfirm ? "animate-pulse" : "text-red-600 hover:text-red-700 hover:bg-red-50"} transition-all duration-200 flex-shrink-0`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="ml-1 text-xs">{showClearConfirm ? "Confirm" : "Clear"}</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/shop">
                 <Button variant="ghost" size="sm">
@@ -121,19 +190,19 @@ export default function CartPage() {
             </div>
 
             <Button
-              variant="outline"
-              onClick={clearCart}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              variant={showClearConfirm ? "destructive" : "outline"}
+              onClick={handleClearCart}
+              className={`${showClearConfirm ? "animate-pulse" : "text-red-600 hover:text-red-700 hover:bg-red-50"} transition-all duration-200`}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Clear Cart
+              {showClearConfirm ? "Click to Confirm" : "Clear Cart"}
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+      <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <motion.div
@@ -275,7 +344,7 @@ export default function CartPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="sticky top-24"
+              className="lg:sticky lg:top-24"
             >
               <Card className="shadow-elegant border-0">
                 <CardHeader>
@@ -314,17 +383,17 @@ export default function CartPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <Button
-                      className="w-full button-gradient"
+                      className="w-full button-gradient h-12"
                       onClick={() => router.push('/checkout')}
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
                       Proceed to Checkout
                     </Button>
 
-                    <Link href="/shop">
-                      <Button variant="outline" className="w-full">
+                    <Link href="/shop" className="block">
+                      <Button variant="outline" className="w-full h-12">
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Continue Shopping
                       </Button>
@@ -332,21 +401,21 @@ export default function CartPage() {
                   </div>
 
                   {/* Payment Options */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2 text-gray-900 dark:text-white">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-3 sm:p-4 rounded-lg">
+                    <h4 className="font-medium mb-2 text-sm sm:text-base text-gray-900 dark:text-white">
                       Payment Options
                     </h4>
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                         <span>Pay in 2 installments</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                         <span>Pay in 3 installments</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
                         <span>Pay in 4 installments</span>
                       </div>
                     </div>
