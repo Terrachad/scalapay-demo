@@ -19,7 +19,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       configService.get('frontend.url') || 'http://localhost:3000',
-      'https://affects-plc-processing-stars.trycloudflare.com/',
+      'https://affects-plc-processing-stars.trycloudflare.com',
+      'https://scala.vlady.website',
       /\.trycloudflare\.com$/, // Allow all Cloudflare tunnel URLs
     ],
     credentials: true,
@@ -33,8 +34,8 @@ async function bootstrap() {
   //   defaultVersion: '1',
   // });
 
-  // Global prefix
-  app.setGlobalPrefix('api');
+  // Global prefix - Disabled because frontend rewrite handles /api routing
+  // app.setGlobalPrefix('api');
 
   // Global pipes
   app.useGlobalPipes(
@@ -50,10 +51,7 @@ async function bootstrap() {
 
   // Global filters and interceptors
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(
-    new LoggingInterceptor(),
-    new TransformInterceptor(),
-  );
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
 
   // Swagger documentation
   const config = new DocumentBuilder()

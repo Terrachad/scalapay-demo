@@ -8,5 +8,4 @@ export interface ThrottleOptions {
   skipIf?: (context: any) => boolean;
 }
 
-export const CustomThrottle = (options: ThrottleOptions) => 
-  SetMetadata(THROTTLE_KEY, options);
+export const CustomThrottle = (options: ThrottleOptions) => SetMetadata(THROTTLE_KEY, options);

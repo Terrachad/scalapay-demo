@@ -21,8 +21,22 @@ export default () => ({
     },
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'your-secret-key',
+    secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || 'sk_test_demo_key',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_demo_secret',
+  },
+  integrations: {
+    experian: {
+      apiKey: process.env.EXPERIAN_API_KEY,
+      endpoint: process.env.EXPERIAN_ENDPOINT,
+    },
+    equifax: {
+      apiKey: process.env.EQUIFAX_API_KEY,
+      endpoint: process.env.EQUIFAX_ENDPOINT,
+    },
   },
   frontend: {
     url: process.env.FRONTEND_URL || 'http://localhost:3000',

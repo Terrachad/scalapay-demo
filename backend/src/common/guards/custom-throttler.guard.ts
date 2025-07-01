@@ -11,12 +11,12 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async getTracker(req: Record<string, any>): Promise<string> {
     // Use IP address as default tracker
     const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
-    
+
     // For authenticated users, use user ID for more accurate rate limiting
     if (req.user?.id) {
       return `user:${req.user.id}`;
     }
-    
+
     return ip;
   }
 

@@ -1,9 +1,4 @@
-import {
-  UseInterceptors,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { UseInterceptors, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { plainToClass } from 'class-transformer';
@@ -23,18 +18,22 @@ export class SerializeInterceptor implements NestInterceptor {
     return handler.handle().pipe(
       map((data: any) => {
         if (Array.isArray(data)) {
-          return data.map((item: any) => plainToClass(this.dto, item, {
-            excludeExtraneousValues: true,
-          }));
+          return data.map((item: any) =>
+            plainToClass(this.dto, item, {
+              excludeExtraneousValues: true,
+            }),
+          );
         }
 
         if (data && typeof data === 'object' && data.data) {
           // Handle wrapped responses
           return {
             ...data,
-            data: Array.isArray(data.data) 
-              ? data.data.map((item: any) => plainToClass(this.dto, item, { excludeExtraneousValues: true }))
-              : plainToClass(this.dto, data.data, { excludeExtraneousValues: true })
+            data: Array.isArray(data.data)
+              ? data.data.map((item: any) =>
+                  plainToClass(this.dto, item, { excludeExtraneousValues: true }),
+                )
+              : plainToClass(this.dto, data.data, { excludeExtraneousValues: true }),
           };
         }
 

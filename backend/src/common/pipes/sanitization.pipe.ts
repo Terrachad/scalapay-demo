@@ -13,7 +13,7 @@ export class SanitizationPipe implements PipeTransform<any> {
     const errors = await validate(object);
 
     if (errors.length > 0) {
-      const errorMessages = errors.map(error => {
+      const errorMessages = errors.map((error) => {
         return Object.values(error.constraints || {}).join(', ');
       });
       throw new BadRequestException(`Validation failed: ${errorMessages.join('; ')}`);
@@ -37,7 +37,7 @@ export class SanitizationPipe implements PipeTransform<any> {
     }
 
     if (Array.isArray(value)) {
-      return value.map(item => this.sanitizeValue(item));
+      return value.map((item) => this.sanitizeValue(item));
     }
 
     if (typeof value === 'object') {
