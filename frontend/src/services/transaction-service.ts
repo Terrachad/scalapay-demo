@@ -1,10 +1,10 @@
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from '@/lib/api-client';
 
 export interface Transaction {
   id: string;
   amount: number;
-  status: "pending" | "approved" | "rejected" | "completed" | "cancelled";
-  paymentPlan: "pay_in_2" | "pay_in_3" | "pay_in_4";
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+  paymentPlan: 'pay_in_2' | 'pay_in_3' | 'pay_in_4';
   items: Array<{
     name: string;
     price: number;
@@ -24,7 +24,7 @@ export interface Payment {
   id: string;
   amount: number;
   dueDate: string;
-  status: "scheduled" | "processing" | "completed" | "failed";
+  status: 'scheduled' | 'processing' | 'completed' | 'failed';
   paymentDate?: string;
 }
 
@@ -41,13 +41,13 @@ export interface CreateTransactionDto {
 
 export const transactionService = {
   async create(data: CreateTransactionDto): Promise<Transaction> {
-    const response = await apiClient.post<Transaction>("/transactions", data);
+    const response = await apiClient.post<Transaction>('/transactions', data);
     return response.data;
   },
 
   async getMyTransactions(): Promise<Transaction[]> {
-    const response = await apiClient.get<Transaction[]>("/transactions/my");
-    return response.data;
+    const response = await apiClient.get<{data: Transaction[]}>('/transactions/my');
+    return response.data.data;
   },
 
   async getById(id: string): Promise<Transaction> {
@@ -56,8 +56,8 @@ export const transactionService = {
   },
 
   async getMerchantTransactions(): Promise<Transaction[]> {
-    const response = await apiClient.get<Transaction[]>("/transactions/merchant");
-    return response.data;
+    const response = await apiClient.get<{data: Transaction[]}>('/transactions/merchant');
+    return response.data.data || response.data;
   },
 
   async updateStatus(id: string, status: string): Promise<Transaction> {
@@ -67,7 +67,7 @@ export const transactionService = {
 
   async processPayment(transactionId: string, paymentId: string): Promise<Payment> {
     const response = await apiClient.post<Payment>(
-      `/transactions/${transactionId}/payments/${paymentId}/process`
+      `/transactions/${transactionId}/payments/${paymentId}/process`,
     );
     return response.data;
   },

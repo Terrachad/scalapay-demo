@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client";
+import { apiClient } from '@/lib/api-client';
 
 export interface AnalyticsStats {
   totalRevenue: number;
@@ -29,7 +29,7 @@ export interface MerchantPerformance {
 }
 
 export const analyticsService = {
-  async getStats(period: "day" | "week" | "month" | "year" = "month"): Promise<AnalyticsStats> {
+  async getStats(period: 'day' | 'week' | 'month' | 'year' = 'month'): Promise<AnalyticsStats> {
     const response = await apiClient.get<AnalyticsStats>(`/analytics/stats?period=${period}`);
     return response.data;
   },
@@ -40,12 +40,12 @@ export const analyticsService = {
   },
 
   async getPaymentPlanDistribution(): Promise<PaymentPlanDistribution[]> {
-    const response = await apiClient.get<PaymentPlanDistribution[]>("/analytics/payment-plans");
+    const response = await apiClient.get<PaymentPlanDistribution[]>('/analytics/payment-plans');
     return response.data;
   },
 
   async getMerchantPerformance(): Promise<MerchantPerformance[]> {
-    const response = await apiClient.get<MerchantPerformance[]>("/analytics/merchant-performance");
+    const response = await apiClient.get<MerchantPerformance[]>('/analytics/merchant-performance');
     return response.data;
   },
 

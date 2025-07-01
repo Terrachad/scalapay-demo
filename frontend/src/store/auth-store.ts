@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -21,16 +21,21 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
       setUser: (user) => set({ user, isAuthenticated: true }),
-      setToken: (token) => set({ token }),
+      setToken: (token) => set({ token, isAuthenticated: !!token }),
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     {
-      name: "auth-storage",
-    }
-  )
+      name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state?.token && state?.user) {
+          state.isAuthenticated = true;
+        }
+      },
+    },
+  ),
 );
