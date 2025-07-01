@@ -1,52 +1,54 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { transactionService } from "@/services/transaction-service";
-import { useAuthStore } from "@/store/auth-store";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { 
-  CreditCard, 
-  ShoppingBag, 
-  Calendar, 
-  TrendingUp,
-  ArrowRight,
-  Clock
-} from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { transactionService } from '@/services/transaction-service';
+import { useAuthStore } from '@/store/auth-store';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { CreditCard, ShoppingBag, Calendar, TrendingUp, ArrowRight, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CustomerDashboard() {
   const { user } = useAuthStore();
   const [creditUsage, setCreditUsage] = useState(0);
 
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ["customer-transactions"],
+  const { data: transactions, isLoading, error } = useQuery({
+    queryKey: ['customer-transactions'],
     queryFn: transactionService.getMyTransactions,
   });
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Customer dashboard - transactions:', transactions);
+    console.log('Customer dashboard - isLoading:', isLoading);
+    console.log('Customer dashboard - error:', error);
+  }, [transactions, isLoading, error]);
 
   useEffect(() => {
     if (user) {
       const creditLimit = user.creditLimit ?? 0;
       const availableCredit = user.availableCredit ?? 0;
-      const used = (creditLimit - availableCredit) || 0;
+      const used = creditLimit - availableCredit || 0;
       const percentage = creditLimit > 0 ? (used / creditLimit) * 100 : 0;
       setCreditUsage(percentage);
     }
   }, [user]);
 
-  const upcomingPayments = transactions
-    ?.flatMap(t => t.payments)
-    .filter(p => p.status === "scheduled")
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 3);
+  const upcomingPayments = Array.isArray(transactions)
+    ? transactions
+        .flatMap((t) => t.payments || [])
+        .filter((p) => p.status === 'scheduled')
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+        .slice(0, 3)
+    : [];
 
-  const recentTransactions = transactions?.slice(0, 5);
+  const recentTransactions = Array.isArray(transactions) ? transactions.slice(0, 5) : [];
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -56,9 +58,7 @@ export default function CustomerDashboard() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Manage your purchases and payments
-        </p>
+        <p className="text-gray-600 dark:text-gray-400">Manage your purchases and payments</p>
       </motion.div>
 
       {/* Credit Summary */}
@@ -80,7 +80,7 @@ export default function CustomerDashboard() {
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-600">Credit Used</span>
                 <span className="text-sm font-medium">
-                  {formatCurrency((user?.creditLimit ?? 0) - (user?.availableCredit ?? 0))} / 
+                  {formatCurrency((user?.creditLimit ?? 0) - (user?.availableCredit ?? 0))} /
                   {formatCurrency(user?.creditLimit ?? 0)}
                 </span>
               </div>
@@ -95,9 +95,7 @@ export default function CustomerDashboard() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Purchases</p>
-                <p className="text-2xl font-bold">
-                  {transactions?.length || 0}
-                </p>
+                <p className="text-2xl font-bold">{transactions?.length || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -136,16 +134,16 @@ export default function CustomerDashboard() {
               <Calendar className="w-5 h-5" />
               Upcoming Payments
             </CardTitle>
-            <CardDescription>
-              Your next scheduled payments
-            </CardDescription>
+            <CardDescription>Your next scheduled payments</CardDescription>
           </CardHeader>
           <CardContent>
-            {upcomingPayments && upcomingPayments.length > 0 ? (
+{isLoading ? (
+              <p className="text-center text-gray-500 py-8">Loading...</p>
+            ) : upcomingPayments && upcomingPayments.length > 0 ? (
               <div className="space-y-4">
-                {upcomingPayments.map((payment, index) => (
+                {upcomingPayments.map((payment) => (
                   <div
-                    key={payment.id}
+                    key={payment.id || Math.random()}
                     className="flex items-center justify-between p-4 border rounded-lg"
                   >
                     <div className="flex items-center gap-4">
@@ -153,12 +151,8 @@ export default function CustomerDashboard() {
                         <Clock className="w-5 h-5 text-purple-600" />
                       </div>
                       <div>
-                        <p className="font-medium">
-                          {formatCurrency(payment.amount)}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Due {formatDate(payment.dueDate)}
-                        </p>
+                        <p className="font-medium">{formatCurrency(parseFloat(payment.amount.toString()))}</p>
+                        <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
                       </div>
                     </div>
                     <Badge variant="outline">Scheduled</Badge>
@@ -166,9 +160,7 @@ export default function CustomerDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">
-                No upcoming payments
-              </p>
+              <p className="text-center text-gray-500 py-8">No upcoming payments</p>
             )}
           </CardContent>
         </Card>
@@ -195,37 +187,35 @@ export default function CustomerDashboard() {
                 <TabsTrigger value="completed">Completed</TabsTrigger>
               </TabsList>
               <TabsContent value="all" className="space-y-4 mt-4">
-                {recentTransactions?.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {transaction.merchant.businessName}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {formatDate(transaction.createdAt)}
-                      </p>
+                {recentTransactions && recentTransactions.length > 0 ? (
+                  recentTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div>
+                        <p className="font-medium">{transaction.merchant?.businessName || 'Unknown Merchant'}</p>
+                        <p className="text-sm text-gray-600">{formatDate(transaction.createdAt)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">{formatCurrency(parseFloat(transaction.amount.toString()))}</p>
+                        <Badge
+                          variant={
+                            transaction.status === 'completed'
+                              ? 'default'
+                              : transaction.status === 'pending'
+                                ? 'secondary'
+                                : 'outline'
+                          }
+                        >
+                          {transaction.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        {formatCurrency(transaction.amount)}
-                      </p>
-                      <Badge
-                        variant={
-                          transaction.status === "completed"
-                            ? "default"
-                            : transaction.status === "pending"
-                            ? "secondary"
-                            : "outline"
-                        }
-                      >
-                        {transaction.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 py-8">No recent transactions</p>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>

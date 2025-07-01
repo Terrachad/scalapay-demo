@@ -1,21 +1,17 @@
-"use client";
+'use client';
 
-import { useAuthStore } from "@/store/auth-store";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { DashboardNav } from "@/components/layout/dashboard-nav";
+import { useAuthStore } from '@/store/auth-store';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { DashboardNav } from '@/components/layout/dashboard-nav';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push('/login');
     }
   }, [isAuthenticated, router]);
 

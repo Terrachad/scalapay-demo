@@ -1,24 +1,31 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuthStore } from "@/store/auth-store";
-import { authService } from "@/services/auth-service";
-import { Eye, EyeOff, CreditCard, Shield, Zap, ArrowRight, Star } from "lucide-react";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuthStore } from '@/store/auth-store';
+import { authService } from '@/services/auth-service';
+import { Eye, EyeOff, CreditCard, Shield, Zap, ArrowRight, Star } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -41,43 +48,43 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      console.log("🚀 Starting login process with:", data);
+      console.log('🚀 Starting login process with:', data);
       const response = await authService.login(data);
-      console.log("🔍 Full login response:", response);
-      console.log("🔍 Response type:", typeof response);
-      console.log("🔍 Response keys:", response ? Object.keys(response) : 'null/undefined');
-      
+      console.log('🔍 Full login response:', response);
+      console.log('🔍 Response type:', typeof response);
+      console.log('🔍 Response keys:', response ? Object.keys(response) : 'null/undefined');
+
       if (!response || !response.accessToken || !response.user) {
-        console.log("❌ Missing required fields:", {
+        console.log('❌ Missing required fields:', {
           hasResponse: !!response,
           hasAccessToken: !!response?.accessToken,
-          hasUser: !!response?.user
+          hasUser: !!response?.user,
         });
-        throw new Error("Invalid response format");
+        throw new Error('Invalid response format');
       }
-      
+
       setToken(response.accessToken);
       setUser(response.user);
-      
+
       toast({
-        title: "Welcome back! 🎉",
-        description: "You have successfully logged in.",
+        title: 'Welcome back! 🎉',
+        description: 'You have successfully logged in.',
       });
 
       // Redirect based on role
-      if (response.user.role === "merchant") {
-        router.push("/dashboard/merchant");
-      } else if (response.user.role === "admin") {
-        router.push("/dashboard/admin");
+      if (response.user.role === 'merchant') {
+        router.push('/dashboard/merchant');
+      } else if (response.user.role === 'admin') {
+        router.push('/dashboard/admin');
       } else {
-        router.push("/dashboard/customer");
+        router.push('/dashboard/customer');
       }
     } catch (error) {
-      console.error("❌ Login error:", error);
+      console.error('❌ Login error:', error);
       toast({
-        title: "Login failed",
-        description: "Invalid email or password",
-        variant: "destructive",
+        title: 'Login failed',
+        description: 'Invalid email or password',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -85,15 +92,15 @@ export default function LoginPage() {
   };
 
   const features = [
-    { icon: CreditCard, text: "Flexible Payment Plans" },
-    { icon: Shield, text: "Bank-level Security" },
-    { icon: Zap, text: "Instant Approvals" },
+    { icon: CreditCard, text: 'Flexible Payment Plans' },
+    { icon: Shield, text: 'Bank-level Security' },
+    { icon: Zap, text: 'Instant Approvals' },
   ];
 
   const demoAccounts = [
-    { role: "Customer", email: "customer@demo.com", color: "bg-blue-500" },
-    { role: "Merchant", email: "merchant@demo.com", color: "bg-green-500" },
-    { role: "Admin", email: "admin@demo.com", color: "bg-purple-500" },
+    { role: 'Customer', email: 'customer@demo.com', color: 'bg-blue-500' },
+    { role: 'Merchant', email: 'merchant@demo.com', color: 'bg-green-500' },
+    { role: 'Admin', email: 'admin@demo.com', color: 'bg-purple-500' },
   ];
 
   return (
@@ -113,9 +120,7 @@ export default function LoginPage() {
                 <CreditCard className="w-8 h-8" />
                 <h1 className="text-4xl font-bold">Scalapay</h1>
               </div>
-              <p className="text-xl text-white/90">
-                The Ultimate Buy Now Pay Later Platform
-              </p>
+              <p className="text-xl text-white/90">The Ultimate Buy Now Pay Later Platform</p>
             </div>
 
             <div className="space-y-6">
@@ -174,7 +179,7 @@ export default function LoginPage() {
                 Sign in to your Scalapay account
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
@@ -186,7 +191,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="Enter your email"
                     className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
-                    {...register("email")}
+                    {...register('email')}
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -200,10 +205,10 @@ export default function LoginPage() {
                   <div className="relative">
                     <Input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
                       className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
-                      {...register("password")}
+                      {...register('password')}
                     />
                     <button
                       type="button"
@@ -218,8 +223,8 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-12 button-gradient text-white font-semibold text-base"
                   disabled={isLoading}
                 >
@@ -241,7 +246,7 @@ export default function LoginPage() {
             <CardFooter className="space-y-6">
               <div className="text-center w-full">
                 <p className="text-sm text-gray-600">
-                  Don't have an account?{" "}
+                  Don't have an account?{' '}
                   <Link href="/register" className="text-primary hover:underline font-medium">
                     Create Account
                   </Link>

@@ -1,10 +1,21 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CreditCard, ShoppingBag, TrendingUp, Shield, Star, ArrowRight, CheckCircle, Zap, Users, DollarSign } from "lucide-react";
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  CreditCard,
+  ShoppingBag,
+  TrendingUp,
+  Shield,
+  Star,
+  ArrowRight,
+  CheckCircle,
+  Zap,
+  Users,
+  DollarSign,
+} from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -27,18 +38,26 @@ export default function HomePage() {
               The Ultimate Buy Now, Pay Later Platform
             </h2>
             <p className="text-xl lg:text-2xl mb-8 text-white/80 max-w-3xl mx-auto">
-              Split your purchases into flexible, interest-free installments. Shop smarter, live better.
+              Split your purchases into flexible, interest-free installments. Shop smarter, live
+              better.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/register">
-                <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 font-semibold px-8 py-4 text-lg h-auto shadow-xl">
+                <Button
+                  size="lg"
+                  className="bg-white text-purple-600 hover:bg-white/90 font-semibold px-8 py-4 text-lg h-auto shadow-xl"
+                >
                   Get Started Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white text-white bg-transparent hover:bg-purple-600 hover:border-purple-600 font-semibold px-8 py-4 text-lg h-auto transition-all duration-200">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white bg-transparent hover:bg-purple-600 hover:border-purple-600 font-semibold px-8 py-4 text-lg h-auto transition-all duration-200"
+                >
                   Sign In
                 </Button>
               </Link>
@@ -80,7 +99,7 @@ export default function HomePage() {
               Experience the future of payments with our innovative BNPL platform
             </p>
           </motion.div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <motion.div
@@ -93,8 +112,12 @@ export default function HomePage() {
                   <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6">
                     <feature.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">{feature.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {feature.description}
+                  </p>
                 </Card>
               </motion.div>
             ))}
@@ -112,9 +135,7 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Trusted Worldwide
-            </h2>
+            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">Trusted Worldwide</h2>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
               Join millions of satisfied customers and thousands of merchant partners
             </p>
@@ -174,8 +195,12 @@ export default function HomePage() {
                     {index + 1}
                   </div>
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">{step.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">{step.description}</p>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+                  {step.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                  {step.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -192,22 +217,28 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="max-w-4xl mx-auto text-white"
           >
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-              Ready to Start Shopping?
-            </h2>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">Ready to Start Shopping?</h2>
             <p className="text-xl mb-10 text-white/90">
-              Join millions of users who shop smarter with Scalapay. No fees, no interest, just flexibility.
+              Join millions of users who shop smarter with Scalapay. No fees, no interest, just
+              flexibility.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
-                <Button size="lg" className="bg-white text-purple-600 hover:bg-white/90 font-semibold px-8 py-4 text-lg h-auto shadow-xl">
+                <Button
+                  size="lg"
+                  className="bg-white text-purple-600 hover:bg-white/90 font-semibold px-8 py-4 text-lg h-auto shadow-xl"
+                >
                   Create Free Account
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link href="/shop">
-                <Button size="lg" variant="outline" className="border-white text-white bg-transparent hover:bg-purple-600 hover:border-purple-600 font-semibold px-8 py-4 text-lg h-auto transition-all duration-200">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white bg-transparent hover:bg-purple-600 hover:border-purple-600 font-semibold px-8 py-4 text-lg h-auto transition-all duration-200"
+                >
                   Browse Merchants
                 </Button>
               </Link>
@@ -222,46 +253,50 @@ export default function HomePage() {
 const features = [
   {
     icon: CreditCard,
-    title: "Flexible Payments",
-    description: "Split your purchase into 2, 3, or 4 interest-free payments with complete transparency",
+    title: 'Flexible Payments',
+    description:
+      'Split your purchase into 2, 3, or 4 interest-free payments with complete transparency',
   },
   {
     icon: ShoppingBag,
-    title: "Shop Anywhere",
-    description: "Available at thousands of online and in-store merchants across all categories",
+    title: 'Shop Anywhere',
+    description: 'Available at thousands of online and in-store merchants across all categories',
   },
   {
     icon: TrendingUp,
-    title: "Build Credit",
-    description: "Improve your credit score with responsible payment history and smart spending",
+    title: 'Build Credit',
+    description: 'Improve your credit score with responsible payment history and smart spending',
   },
   {
     icon: Shield,
-    title: "Secure & Safe",
-    description: "Bank-level security protects your personal information with advanced encryption",
+    title: 'Secure & Safe',
+    description: 'Bank-level security protects your personal information with advanced encryption',
   },
 ];
 
 const stats = [
-  { icon: Users, value: "6.5M+", label: "Active Users" },
-  { icon: ShoppingBag, value: "8,000+", label: "Partner Merchants" },
-  { icon: DollarSign, value: "$2.5B+", label: "Transactions Processed" },
+  { icon: Users, value: '6.5M+', label: 'Active Users' },
+  { icon: ShoppingBag, value: '8,000+', label: 'Partner Merchants' },
+  { icon: DollarSign, value: '$2.5B+', label: 'Transactions Processed' },
 ];
 
 const howItWorks = [
   {
     icon: CheckCircle,
-    title: "Create Account",
-    description: "Sign up in minutes with just your email and basic information. No credit check required to get started.",
+    title: 'Create Account',
+    description:
+      'Sign up in minutes with just your email and basic information. No credit check required to get started.',
   },
   {
     icon: Zap,
-    title: "Shop & Select",
-    description: "Browse your favorite merchants and choose Scalapay at checkout. Get instant approval decisions.",
+    title: 'Shop & Select',
+    description:
+      'Browse your favorite merchants and choose Scalapay at checkout. Get instant approval decisions.',
   },
   {
     icon: CreditCard,
-    title: "Pay Over Time",
-    description: "Make your first payment today and the rest over time with automated, interest-free installments.",
+    title: 'Pay Over Time',
+    description:
+      'Make your first payment today and the rest over time with automated, interest-free installments.',
   },
 ];

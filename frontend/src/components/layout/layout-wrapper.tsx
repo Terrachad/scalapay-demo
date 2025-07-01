@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import { MainNav } from "./main-nav";
+import { usePathname } from 'next/navigation';
+import { MainNav } from './main-nav';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -9,10 +9,10 @@ interface LayoutWrapperProps {
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
-  
+
   // Don't show MainNav on dashboard pages since they have their own DashboardNav
-  const isDashboard = pathname.startsWith("/dashboard");
-  
+  const isDashboard = pathname.startsWith('/dashboard');
+
   return (
     <>
       {!isDashboard && <MainNav />}

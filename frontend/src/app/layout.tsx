@@ -1,23 +1,19 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "@/components/query-provider";
-import { LayoutWrapper } from "@/components/layout/layout-wrapper";
-import { Toaster } from "@/components/ui/toaster";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
+import { QueryProvider } from '@/components/query-provider';
+import { LayoutWrapper } from '@/components/layout/layout-wrapper';
+import { Toaster } from '@/components/ui/toaster';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Scalapay - Buy Now Pay Later",
-  description: "The Ultimate BNPL Platform Demo",
+  title: 'Scalapay - Buy Now Pay Later',
+  description: 'The Ultimate BNPL Platform Demo',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -28,9 +24,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
+            <LayoutWrapper>{children}</LayoutWrapper>
             <Toaster />
           </QueryProvider>
         </ThemeProvider>

@@ -1,29 +1,47 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { authService } from "@/services/auth-service";
-import { Eye, EyeOff, CreditCard, Users, Clock, TrendingUp, ArrowRight, CheckCircle } from "lucide-react";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { authService } from '@/services/auth-service';
+import {
+  Eye,
+  EyeOff,
+  CreditCard,
+  Users,
+  Clock,
+  TrendingUp,
+  ArrowRight,
+  CheckCircle,
+} from 'lucide-react';
 
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
@@ -49,20 +67,20 @@ export default function RegisterPage() {
         name: data.name,
         email: data.email,
         password: data.password,
-        role: "customer",
-      });
-      
-      toast({
-        title: "Welcome to Scalapay! 🎉",
-        description: "Your account has been created successfully.",
+        role: 'customer',
       });
 
-      router.push("/login");
+      toast({
+        title: 'Welcome to Scalapay! 🎉',
+        description: 'Your account has been created successfully.',
+      });
+
+      router.push('/login');
     } catch (error) {
       toast({
-        title: "Registration failed",
-        description: "Email might already be in use. Please try again.",
-        variant: "destructive",
+        title: 'Registration failed',
+        description: 'Email might already be in use. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -70,16 +88,16 @@ export default function RegisterPage() {
   };
 
   const benefits = [
-    { icon: Users, text: "Join 6.5M+ Users", desc: "Trusted worldwide" },
-    { icon: Clock, text: "Instant Approvals", desc: "Get approved in seconds" },
-    { icon: TrendingUp, text: "Build Credit", desc: "Improve your credit score" },
+    { icon: Users, text: 'Join 6.5M+ Users', desc: 'Trusted worldwide' },
+    { icon: Clock, text: 'Instant Approvals', desc: 'Get approved in seconds' },
+    { icon: TrendingUp, text: 'Build Credit', desc: 'Improve your credit score' },
   ];
 
   const features = [
-    "No hidden fees or interest",
-    "Flexible payment terms",
-    "Secure & encrypted data",
-    "24/7 customer support",
+    'No hidden fees or interest',
+    'Flexible payment terms',
+    'Secure & encrypted data',
+    '24/7 customer support',
   ];
 
   return (
@@ -103,12 +121,14 @@ export default function RegisterPage() {
 
           <Card className="shadow-elegant border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader className="space-y-2 text-center">
-              <CardTitle className="text-2xl font-bold text-gray-900">Create Your Account</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Create Your Account
+              </CardTitle>
               <CardDescription className="text-base text-gray-600">
                 Join millions who shop smarter with Scalapay
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div className="space-y-2">
@@ -120,11 +140,9 @@ export default function RegisterPage() {
                     type="text"
                     placeholder="Enter your full name"
                     className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
-                    {...register("name")}
+                    {...register('name')}
                   />
-                  {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name.message}</p>
-                  )}
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -136,7 +154,7 @@ export default function RegisterPage() {
                     type="email"
                     placeholder="Enter your email"
                     className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 text-gray-900"
-                    {...register("email")}
+                    {...register('email')}
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -150,10 +168,10 @@ export default function RegisterPage() {
                   <div className="relative">
                     <Input
                       id="password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Create a strong password"
                       className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
-                      {...register("password")}
+                      {...register('password')}
                     />
                     <button
                       type="button"
@@ -175,17 +193,21 @@ export default function RegisterPage() {
                   <div className="relative">
                     <Input
                       id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="Confirm your password"
                       className="h-12 bg-white border-muted focus:border-primary transition-all duration-200 pr-12 text-gray-900"
-                      {...register("confirmPassword")}
+                      {...register('confirmPassword')}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                   {errors.confirmPassword && (
@@ -193,8 +215,8 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-12 button-gradient text-white font-semibold text-base"
                   disabled={isLoading}
                 >
@@ -215,7 +237,7 @@ export default function RegisterPage() {
 
             <CardFooter className="text-center">
               <p className="text-sm text-gray-600">
-                Already have an account?{" "}
+                Already have an account?{' '}
                 <Link href="/login" className="text-primary hover:underline font-medium">
                   Sign In
                 </Link>

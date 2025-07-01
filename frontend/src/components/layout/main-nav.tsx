@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Sheet,
   SheetContent,
@@ -19,14 +19,14 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { useAuthStore } from "@/store/auth-store";
-import { useCartStore } from "@/store/cart-store";
-import { 
+} from '@/components/ui/sheet';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { useAuthStore } from '@/store/auth-store';
+import { useCartStore } from '@/store/cart-store';
+import {
   Home,
-  ShoppingCart, 
+  ShoppingCart,
   LogIn,
   UserPlus,
   LayoutDashboard,
@@ -34,10 +34,10 @@ import {
   LogOut,
   User,
   Moon,
-  Sun
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
+  Sun,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 interface NavItem {
   title: string;
@@ -48,26 +48,26 @@ interface NavItem {
 
 const publicNavItems: NavItem[] = [
   {
-    title: "Home",
-    href: "/",
+    title: 'Home',
+    href: '/',
     icon: Home,
   },
   {
-    title: "Shop",
-    href: "/shop",
+    title: 'Shop',
+    href: '/shop',
     icon: ShoppingCart,
   },
 ];
 
 const authNavItems: NavItem[] = [
   {
-    title: "Login",
-    href: "/login",
+    title: 'Login',
+    href: '/login',
     icon: LogIn,
   },
   {
-    title: "Register",
-    href: "/register",
+    title: 'Register',
+    href: '/register',
     icon: UserPlus,
   },
 ];
@@ -76,33 +76,30 @@ export function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { getTotalItems } = useCartStore();
+  const { getTotalItems, items } = useCartStore();
   const { theme, setTheme } = useTheme();
-  const [cartItemCount, setCartItemCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    setCartItemCount(getTotalItems());
-  }, [getTotalItems]);
+  
+  const cartItemCount = getTotalItems();
 
   const handleLogout = () => {
     logout();
-    router.push("/");
+    router.push('/');
     setIsMobileMenuOpen(false);
   };
 
   const getDashboardLink = () => {
-    if (!user) return "/";
+    if (!user) return '/';
     return `/dashboard/${user.role}`;
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const isActivePath = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
+    if (href === '/') {
+      return pathname === '/';
     }
     return pathname.startsWith(href);
   };
@@ -113,8 +110,8 @@ export function MainNav() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
             >
               Scalapay
@@ -128,10 +125,10 @@ export function MainNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                  'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
                   isActivePath(item.href)
-                    ? "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    ? 'bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
                 )}
               >
                 <item.icon className="w-4 h-4" />
@@ -147,8 +144,8 @@ export function MainNav() {
               <Button variant="ghost" size="sm" className="relative">
                 <ShoppingCart className="w-4 h-4" />
                 {cartItemCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
+                  <Badge
+                    variant="destructive"
                     className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
                   >
                     {cartItemCount}
@@ -182,7 +179,7 @@ export function MainNav() {
                       <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100">
-                            {user.name?.charAt(0).toUpperCase() || "U"}
+                            {user.name?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                       </Button>
@@ -191,9 +188,7 @@ export function MainNav() {
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">{user.name}</p>
-                          <p className="text-xs leading-none text-muted-foreground">
-                            {user.email}
-                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                           <Badge variant="secondary" className="w-fit mt-1">
                             {user.role}
                           </Badge>
@@ -218,10 +213,14 @@ export function MainNav() {
                 <>
                   {authNavItems.map((item) => (
                     <Link key={item.href} href={item.href}>
-                      <Button 
-                        variant={item.title === "Register" ? "default" : "ghost"} 
+                      <Button
+                        variant={item.title === 'Register' ? 'default' : 'ghost'}
                         size="sm"
-                        className={item.title === "Register" ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" : ""}
+                        className={
+                          item.title === 'Register'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                            : ''
+                        }
                       >
                         <item.icon className="w-4 h-4 mr-2" />
                         {item.title}
@@ -251,14 +250,14 @@ export function MainNav() {
                       Navigate through our platform
                     </SheetDescription>
                   </SheetHeader>
-                  
+
                   <div className="flex flex-col gap-4 mt-6">
                     {/* User Info */}
                     {user && (
                       <div className="flex items-center gap-3 p-3 border rounded-lg">
                         <Avatar className="h-10 w-10">
                           <AvatarFallback className="bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100">
-                            {user.name?.charAt(0).toUpperCase() || "U"}
+                            {user.name?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
@@ -279,10 +278,10 @@ export function MainNav() {
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors w-full",
+                            'flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-colors w-full',
                             isActivePath(item.href)
-                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100"
-                              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                              ? 'bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100'
+                              : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
                           )}
                         >
                           <item.icon className="w-5 h-5" />
@@ -317,9 +316,9 @@ export function MainNav() {
                     {/* Mobile Actions */}
                     {user && (
                       <div className="pt-4 border-t">
-                        <Button 
+                        <Button
                           onClick={handleLogout}
-                          variant="ghost" 
+                          variant="ghost"
                           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                         >
                           <LogOut className="w-5 h-5 mr-3" />
