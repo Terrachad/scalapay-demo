@@ -1,38 +1,32 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { useCartStore } from "@/store/cart-store";
-import { formatCurrency } from "@/lib/utils";
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ArrowLeft, 
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { useCartStore } from '@/store/cart-store';
+import { formatCurrency } from '@/lib/utils';
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  ArrowLeft,
   ArrowRight,
   CreditCard,
   Tag,
   Heart,
-  Package
-} from "lucide-react";
+  Package,
+} from 'lucide-react';
 
 export default function CartPage() {
   const router = useRouter();
-  const { 
-    items, 
-    removeItem, 
-    updateQuantity, 
-    clearCart, 
-    getTotalItems, 
-    getTotalPrice 
-  } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } =
+    useCartStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -125,9 +119,9 @@ export default function CartPage() {
                 </Badge>
               </div>
             </div>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={clearCart}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
@@ -138,14 +132,14 @@ export default function CartPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
             >
               {items.map((item, index) => (
                 <motion.div
@@ -155,16 +149,16 @@ export default function CartPage() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Card className="card-hover shadow-elegant border-0 overflow-hidden">
-                    <CardContent className="p-6">
-                      <div className="flex gap-6">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex gap-4 sm:gap-6">
                         {/* Product Image */}
-                        <div className="w-32 h-32 rounded-xl flex-shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl flex-shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                           <img
                             src={item.image}
                             alt={item.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = "/api/placeholder/300/300";
+                              e.currentTarget.src = '/api/placeholder/300/300';
                             }}
                           />
                           {item.isOnSale && (
@@ -175,13 +169,13 @@ export default function CartPage() {
                         </div>
 
                         {/* Product Details */}
-                        <div className="flex-1 space-y-4">
+                        <div className="flex-1 space-y-3 sm:space-y-4">
                           <div className="flex justify-between items-start">
-                            <div>
-                              <Badge variant="secondary" className="mb-2">
+                            <div className="flex-1 min-w-0">
+                              <Badge variant="secondary" className="mb-1 sm:mb-2 text-xs">
                                 {item.category}
                               </Badge>
-                              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                              <h3 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-white line-clamp-2">
                                 {item.name}
                               </h3>
                             </div>
@@ -189,7 +183,7 @@ export default function CartPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => removeItem(item.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2 flex-shrink-0"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -198,7 +192,9 @@ export default function CartPage() {
                           {/* Colors */}
                           {item.colors && item.colors.length > 0 && (
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600 dark:text-gray-300">Colors:</span>
+                              <span className="text-sm text-gray-600 dark:text-gray-300">
+                                Colors:
+                              </span>
                               {item.colors.map((color, i) => (
                                 <div
                                   key={i}
@@ -210,20 +206,20 @@ export default function CartPage() {
                           )}
 
                           {/* Price and Quantity */}
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <span className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                                   {formatCurrency(item.price)}
                                 </span>
                                 {item.originalPrice && (
-                                  <span className="text-lg text-gray-500 line-through">
+                                  <span className="text-sm sm:text-lg text-gray-500 line-through">
                                     {formatCurrency(item.originalPrice)}
                                   </span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-primary">
+                                <span className="text-xs sm:text-sm font-medium text-primary">
                                   or 4x {formatCurrency(item.price / 4)}
                                 </span>
                                 <span className="text-xs text-gray-500">with Scalapay</span>
@@ -231,20 +227,22 @@ export default function CartPage() {
                             </div>
 
                             {/* Quantity Controls */}
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
-                                <Minus className="w-4 h-4" />
+                                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                               <Input
                                 type="number"
                                 value={item.quantity}
-                                onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                                className="w-16 text-center"
+                                onChange={(e) =>
+                                  updateQuantity(item.id, parseInt(e.target.value) || 1)
+                                }
+                                className="w-12 sm:w-16 text-center text-sm"
                                 min="1"
                               />
                               <Button
@@ -252,14 +250,14 @@ export default function CartPage() {
                                 variant="outline"
                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                             </div>
                           </div>
 
                           {/* Item Total */}
                           <div className="text-right">
-                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <p className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                               Subtotal: {formatCurrency(item.price * item.quantity)}
                             </p>
                           </div>
@@ -317,14 +315,14 @@ export default function CartPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <Button 
+                    <Button
                       className="w-full button-gradient"
                       onClick={() => router.push('/checkout')}
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
                       Proceed to Checkout
                     </Button>
-                    
+
                     <Link href="/shop">
                       <Button variant="outline" className="w-full">
                         <ArrowLeft className="w-4 h-4 mr-2" />
