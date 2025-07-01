@@ -34,6 +34,6 @@ export class Merchant {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @OneToMany(() => Transaction, transaction => transaction.merchant)
+  @OneToMany(() => Transaction, (transaction) => transaction.merchant)
   transactions!: Transaction[];
 }
