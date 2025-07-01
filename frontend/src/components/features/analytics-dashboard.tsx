@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from "recharts";
-import { wsService } from "@/services/websocket-service";
-import { formatCurrency } from "@/lib/utils";
-import { TrendingUp, Users, ShoppingCart, DollarSign } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { wsService } from '@/services/websocket-service';
+import { formatCurrency } from '@/lib/utils';
+import { TrendingUp, Users, ShoppingCart, DollarSign } from 'lucide-react';
 
-const COLORS = ["#8b5cf6", "#ec4899", "#3b82f6", "#10b981"];
+const COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981'];
 
 export function AnalyticsDashboard() {
   const [stats, setStats] = useState({
@@ -32,65 +32,65 @@ export function AnalyticsDashboard() {
   });
 
   const [revenueData, setRevenueData] = useState([
-    { name: "Jan", value: 65000 },
-    { name: "Feb", value: 85000 },
-    { name: "Mar", value: 95000 },
-    { name: "Apr", value: 110000 },
-    { name: "May", value: 125000 },
-    { name: "Jun", value: 140000 },
+    { name: 'Jan', value: 65000 },
+    { name: 'Feb', value: 85000 },
+    { name: 'Mar', value: 95000 },
+    { name: 'Apr', value: 110000 },
+    { name: 'May', value: 125000 },
+    { name: 'Jun', value: 140000 },
   ]);
 
   const [paymentPlanData] = useState([
-    { name: "Pay in 2", value: 35 },
-    { name: "Pay in 3", value: 45 },
-    { name: "Pay in 4", value: 20 },
+    { name: 'Pay in 2', value: 35 },
+    { name: 'Pay in 3', value: 45 },
+    { name: 'Pay in 4', value: 20 },
   ]);
 
   useEffect(() => {
     wsService.connect();
     wsService.subscribeToAnalytics((data) => {
       // Update stats with real-time data
-      if (data.type === "stats") {
+      if (data.type === 'stats') {
         setStats(data.stats);
       }
-      if (data.type === "revenue") {
+      if (data.type === 'revenue') {
         setRevenueData(data.revenue);
       }
     });
 
     return () => {
-      wsService.unsubscribe("analytics:update");
+      wsService.unsubscribe('analytics:update');
     };
   }, []);
 
   const statCards = [
     {
-      title: "Total Revenue",
+      title: 'Total Revenue',
       value: formatCurrency(stats.totalRevenue),
       icon: DollarSign,
-      change: "+12.5%",
-      color: "text-green-600",
+      change: '+12.5%',
+      color: 'text-green-600',
     },
     {
-      title: "Active Users",
+      title: 'Active Users',
       value: stats.activeUsers.toLocaleString(),
       icon: Users,
-      change: "+8.2%",
-      color: "text-blue-600",
+      change: '+8.2%',
+      color: 'text-blue-600',
     },
     {
-      title: "Transactions",
+      title: 'Transactions',
       value: stats.transactions.toLocaleString(),
       icon: ShoppingCart,
-      change: "+15.3%",
-      color: "text-purple-600",
+      change: '+15.3%',
+      color: 'text-purple-600',
     },
     {
-      title: "Avg Order Value",
+      title: 'Avg Order Value',
       value: formatCurrency(stats.avgOrderValue),
       icon: TrendingUp,
-      change: "+5.7%",
-      color: "text-pink-600",
+      change: '+5.7%',
+      color: 'text-pink-600',
     },
   ];
 
@@ -109,13 +109,9 @@ export function AnalyticsDashboard() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {stat.title}
-                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{stat.title}</p>
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                    <p className={`text-sm mt-2 ${stat.color}`}>
-                      {stat.change} from last month
-                    </p>
+                    <p className={`text-sm mt-2 ${stat.color}`}>{stat.change} from last month</p>
                   </div>
                   <stat.icon className={`w-12 h-12 ${stat.color} opacity-20`} />
                 </div>
@@ -138,12 +134,12 @@ export function AnalyticsDashboard() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#8b5cf6" 
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#8b5cf6"
                   strokeWidth={2}
-                  dot={{ fill: "#8b5cf6" }}
+                  dot={{ fill: '#8b5cf6' }}
                 />
               </LineChart>
             </ResponsiveContainer>
