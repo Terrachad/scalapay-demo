@@ -11,7 +11,7 @@ services:
       MYSQL_USER: scalapay_user
       MYSQL_PASSWORD: scalapay_pass
     ports:
-      - "3306:3306"
+      - '3306:3306'
     volumes:
       - ./docker/data/mysql:/var/lib/mysql
     networks:
@@ -22,7 +22,7 @@ services:
     container_name: scalapay-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - ./docker/data/redis:/data
     networks:
@@ -36,7 +36,7 @@ services:
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
     ports:
-      - "4566:4566"
+      - '4566:4566'
     volumes:
       - ./docker/data/localstack:/tmp/localstack
     networks:

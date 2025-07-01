@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -8,15 +8,15 @@ jest.mock('next/navigation', () => ({
       replace: jest.fn(),
       prefetch: jest.fn(),
       back: jest.fn(),
-    }
+    };
   },
   usePathname() {
-    return ''
+    return '';
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
-}))
+}));
 
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
@@ -25,4 +25,4 @@ jest.mock('framer-motion', () => ({
     section: ({ children, ...props }) => <section {...props}>{children}</section>,
   },
   AnimatePresence: ({ children }) => children,
-}))
+}));
