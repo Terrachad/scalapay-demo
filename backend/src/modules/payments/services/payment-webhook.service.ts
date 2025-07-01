@@ -125,7 +125,7 @@ export class PaymentWebhookService {
     payment.status = PaymentStatus.FAILED;
     payment.failureReason = paymentIntent.last_payment_error?.message || 'Payment failed';
     payment.retryCount = (payment.retryCount || 0) + 1;
-    
+
     // Schedule retry if under retry limit
     if (payment.retryCount < 3) {
       payment.nextRetryAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Retry in 24 hours
@@ -201,8 +201,10 @@ export class PaymentWebhookService {
 
     if (user) {
       // You might want to store the payment method ID in user profile
-      this.logger.log(`Setup intent succeeded for user ${user.id}, payment method: ${paymentMethodId}`);
-      
+      this.logger.log(
+        `Setup intent succeeded for user ${user.id}, payment method: ${paymentMethodId}`,
+      );
+
       this.eventEmitter.emit('payment_method.setup_completed', {
         userId: user.id,
         customerId,
@@ -216,9 +218,7 @@ export class PaymentWebhookService {
       where: { transactionId: transaction.id },
     });
 
-    const allCompleted = allPayments.every(
-      payment => payment.status === PaymentStatus.COMPLETED
-    );
+    const allCompleted = allPayments.every((payment) => payment.status === PaymentStatus.COMPLETED);
 
     if (allCompleted && transaction.status !== TransactionStatus.COMPLETED) {
       transaction.status = TransactionStatus.COMPLETED;

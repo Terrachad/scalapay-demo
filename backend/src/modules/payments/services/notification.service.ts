@@ -13,7 +13,6 @@ export interface EmailTemplate {
   textContent: string;
 }
 
-
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
@@ -138,7 +137,7 @@ export class NotificationService {
     // Integration with email service (SendGrid, AWS SES, etc.)
     // For now, just log the email content
     this.logger.log(`Sending email to ${to}: ${template.subject}`);
-    
+
     // Example implementation with a hypothetical email service:
     /*
     const emailService = this.configService.get('EMAIL_SERVICE');
@@ -150,7 +149,6 @@ export class NotificationService {
     });
     */
   }
-
 
   private getPaymentSuccessTemplate(payment: Payment): EmailTemplate {
     return {
@@ -260,7 +258,6 @@ export class NotificationService {
       textContent: `Transaction Complete! Your transaction of $${transaction.amount} has been completed.`,
     };
   }
-
 
   private generatePaymentActionUrl(clientSecret: string): string {
     const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';

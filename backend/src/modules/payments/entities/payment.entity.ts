@@ -67,6 +67,6 @@ export class Payment {
   @Index()
   transactionId!: string;
 
-  @ManyToOne(() => Transaction, transaction => transaction.payments)
+  @ManyToOne(() => Transaction, (transaction) => transaction.payments)
   transaction!: Transaction;
 }

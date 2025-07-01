@@ -55,10 +55,7 @@ export class WebhooksController {
     @Body() payload: { paymentId: string; reminderType: string },
   ): Promise<{ processed: boolean }> {
     try {
-      await this.webhookService.handlePaymentReminder(
-        payload.paymentId,
-        payload.reminderType,
-      );
+      await this.webhookService.handlePaymentReminder(payload.paymentId, payload.reminderType);
 
       return { processed: true };
     } catch (error) {

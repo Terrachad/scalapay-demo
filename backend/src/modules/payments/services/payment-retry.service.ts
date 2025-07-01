@@ -21,9 +21,9 @@ export class PaymentRetryService {
   private readonly defaultRetryStrategy: RetryStrategy = {
     maxRetries: 3,
     delays: [
-      24 * 60 * 60 * 1000,  // 24 hours
-      48 * 60 * 60 * 1000,  // 48 hours  
-      72 * 60 * 60 * 1000,  // 72 hours
+      24 * 60 * 60 * 1000, // 24 hours
+      48 * 60 * 60 * 1000, // 48 hours
+      72 * 60 * 60 * 1000, // 72 hours
     ],
     backoffMultiplier: 1.5,
   };
@@ -63,7 +63,7 @@ export class PaymentRetryService {
       this.logger.log(`Retrying payment: ${payment.id} (attempt ${payment.retryCount + 1})`);
 
       const user = payment.transaction.user;
-      
+
       // Check if user still has a valid payment method
       if (!user.stripeCustomerId) {
         this.logger.warn(`User ${user.id} has no Stripe customer ID, cannot retry payment`);
@@ -103,16 +103,19 @@ export class PaymentRetryService {
       if (paymentIntent.status === 'succeeded') {
         payment.paymentDate = new Date();
         this.logger.log(`Payment retry successful: ${payment.id}`);
-        
+
         await this.notificationService.sendPaymentRetrySuccessNotification(payment);
-        
+
         this.eventEmitter.emit('payment.retry_succeeded', {
           paymentId: payment.id,
           retryCount: payment.retryCount,
         });
       } else if (paymentIntent.status === 'requires_action') {
         // Handle 3D Secure or other required actions
-        await this.notificationService.sendPaymentActionRequiredNotification(payment, paymentIntent);
+        await this.notificationService.sendPaymentActionRequiredNotification(
+          payment,
+          paymentIntent,
+        );
       } else {
         // Payment failed again, schedule next retry or mark as final failure
         await this.scheduleNextRetry(payment, paymentIntent.last_payment_error?.message);
@@ -120,10 +123,9 @@ export class PaymentRetryService {
 
       await this.paymentRepository.save(payment);
       return paymentIntent.status === 'succeeded';
-
     } catch (error) {
       this.logger.error(`Payment retry failed for ${payment.id}:`, error);
-      
+
       await this.scheduleNextRetry(payment, (error as Error).message);
       return false;
     }
@@ -137,7 +139,7 @@ export class PaymentRetryService {
 
     const delayIndex = Math.min(payment.retryCount, this.defaultRetryStrategy.delays.length - 1);
     const baseDelay = this.defaultRetryStrategy.delays[delayIndex];
-    const jitteredDelay = baseDelay + (Math.random() * 0.1 * baseDelay); // Add 10% jitter
+    const jitteredDelay = baseDelay + Math.random() * 0.1 * baseDelay; // Add 10% jitter
 
     payment.nextRetryAt = new Date(Date.now() + jitteredDelay);
     payment.status = PaymentStatus.SCHEDULED;
@@ -159,7 +161,7 @@ export class PaymentRetryService {
     payment.status = PaymentStatus.FAILED;
     payment.failureReason = reason;
     payment.nextRetryAt = undefined;
-    
+
     await this.paymentRepository.save(payment);
 
     this.logger.warn(`Payment marked as final failure: ${payment.id} - ${reason}`);
@@ -209,7 +211,9 @@ export class PaymentRetryService {
       await this.paymentRepository.save(payment);
     }
 
-    this.logger.log(`Updated payment method for ${pendingPayments.length} pending payments for user ${userId}`);
+    this.logger.log(
+      `Updated payment method for ${pendingPayments.length} pending payments for user ${userId}`,
+    );
   }
 
   async getRetryStatistics(): Promise<{
@@ -227,19 +231,25 @@ export class PaymentRetryService {
     const [successfulRetries] = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', { status: PaymentStatus.COMPLETED })
+      .where('payment.retryCount > 0 AND payment.status = :status', {
+        status: PaymentStatus.COMPLETED,
+      })
       .getRawOne();
 
     const [failedRetries] = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', { status: PaymentStatus.FAILED })
+      .where('payment.retryCount > 0 AND payment.status = :status', {
+        status: PaymentStatus.FAILED,
+      })
       .getRawOne();
 
     const [pendingRetries] = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', { status: PaymentStatus.SCHEDULED })
+      .where('payment.retryCount > 0 AND payment.status = :status', {
+        status: PaymentStatus.SCHEDULED,
+      })
       .getRawOne();
 
     return {

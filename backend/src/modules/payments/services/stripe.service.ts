@@ -23,7 +23,10 @@ export class StripeService {
   private stripe: Stripe;
 
   constructor(private configService: ConfigService) {
-    const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_...';
+    const secretKey = this.configService.get<string>('stripe.secretKey');
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is required but not configured');
+    }
     this.stripe = new Stripe(secretKey, {
       apiVersion: '2025-05-28.basil',
     });
@@ -78,7 +81,9 @@ export class StripeService {
   async confirmPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     try {
       const paymentIntent = await this.stripe.paymentIntents.confirm(paymentIntentId);
-      this.logger.log(`Confirmed payment intent: ${paymentIntentId}, status: ${paymentIntent.status}`);
+      this.logger.log(
+        `Confirmed payment intent: ${paymentIntentId}, status: ${paymentIntent.status}`,
+      );
       return paymentIntent;
     } catch (error) {
       this.logger.error(`Failed to confirm payment intent: ${paymentIntentId}`, error);
@@ -205,9 +210,9 @@ export class StripeService {
   }
 
   async constructWebhookEvent(body: any, signature: string): Promise<Stripe.Event> {
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+    const webhookSecret = this.configService.get<string>('stripe.webhookSecret');
     if (!webhookSecret) {
-      throw new Error('Stripe webhook secret not configured');
+      throw new Error('STRIPE_WEBHOOK_SECRET is required but not configured');
     }
 
     try {
