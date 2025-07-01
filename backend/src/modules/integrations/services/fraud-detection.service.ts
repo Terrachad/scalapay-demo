@@ -56,15 +56,12 @@ export class FraudDetectionService {
 
   async checkForFraud(request: FraudCheckRequest): Promise<FraudCheckResponse> {
     try {
-      this.logger.log(`Performing fraud check for user ${request.userId}, amount: $${request.transactionAmount}`);
+      this.logger.log(
+        `Performing fraud check for user ${request.userId}, amount: $${request.transactionAmount}`,
+      );
 
       // Run multiple fraud detection checks in parallel
-      const [
-        velocityCheck,
-        patternCheck,
-        deviceCheck,
-        amountCheck,
-      ] = await Promise.all([
+      const [velocityCheck, patternCheck, deviceCheck, amountCheck] = await Promise.all([
         this.checkTransactionVelocity(request),
         this.checkSuspiciousPatterns(request),
         this.checkDeviceRisk(request),
@@ -99,10 +96,9 @@ export class FraudDetectionService {
       this.logger.log(`Fraud check result for ${request.userId}: ${decision}, score: ${riskScore}`);
 
       return response;
-
     } catch (error) {
       this.logger.error(`Fraud check failed for user ${request.userId}:`, error);
-      
+
       // Return conservative decision on error
       return {
         riskScore: 75,
@@ -215,7 +211,7 @@ export class FraudDetectionService {
         score += 40;
         factors.push('Transaction from Tor network');
       }
-      
+
       if (this.isVPN(request.ipAddress)) {
         score += 25;
         factors.push('Transaction from VPN/Proxy');
@@ -243,7 +239,7 @@ export class FraudDetectionService {
 
     if (avgAmount > 0) {
       const deviationRatio = request.transactionAmount / avgAmount;
-      
+
       if (deviationRatio > 5) {
         score += 30;
         factors.push('Transaction amount significantly higher than user average');
@@ -268,7 +264,7 @@ export class FraudDetectionService {
   private calculateRiskScore(checks: Array<{ score: number; factors: string[] }>): number {
     // Weight different checks
     const weights = [0.3, 0.25, 0.25, 0.2]; // velocity, patterns, device, amount
-    
+
     let weightedScore = 0;
     checks.forEach((check, index) => {
       weightedScore += check.score * weights[index];
@@ -279,7 +275,7 @@ export class FraudDetectionService {
 
   private collectRiskFactors(checks: Array<{ score: number; factors: string[] }>): string[] {
     const allFactors: string[] = [];
-    checks.forEach(check => {
+    checks.forEach((check) => {
       allFactors.push(...check.factors);
     });
     return allFactors;
@@ -302,7 +298,7 @@ export class FraudDetectionService {
       case 'DECLINE':
         return 'Transaction blocked due to high fraud risk';
       case 'REVIEW':
-        return riskScore >= 60 
+        return riskScore >= 60
           ? 'Escalate to senior fraud analyst for review'
           : 'Standard manual review required';
       default:
@@ -329,7 +325,7 @@ export class FraudDetectionService {
 
   async logFraudAttempt(userId: string, details: any): Promise<void> {
     this.logger.warn(`Fraud attempt detected for user ${userId}:`, details);
-    
+
     // In production, store fraud attempts in a dedicated table
     // and potentially trigger additional security measures
   }

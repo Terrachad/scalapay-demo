@@ -40,20 +40,23 @@ export class CreditCheckService {
 
   async performCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
     try {
-      this.logger.log(`Performing credit check for user ${request.userId}, amount: $${request.requestedAmount}`);
+      this.logger.log(
+        `Performing credit check for user ${request.userId}, amount: $${request.requestedAmount}`,
+      );
 
       // For demo purposes, we'll use a mock credit check
       // In production, integrate with real credit bureau APIs like Experian, Equifax, etc.
       const mockResponse = await this.mockCreditCheck(request);
-      
+
       // Log the decision for audit purposes
-      this.logger.log(`Credit check result for ${request.userId}: ${mockResponse.approved ? 'APPROVED' : 'DENIED'}, score: ${mockResponse.creditScore}`);
+      this.logger.log(
+        `Credit check result for ${request.userId}: ${mockResponse.approved ? 'APPROVED' : 'DENIED'}, score: ${mockResponse.creditScore}`,
+      );
 
       return mockResponse;
-
     } catch (error) {
       this.logger.error(`Credit check failed for user ${request.userId}:`, error);
-      
+
       // Return conservative decision on error
       return {
         approved: false,
@@ -90,21 +93,21 @@ export class CreditCheckService {
 
   private async mockCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Mock credit scoring algorithm
     const baseScore = 650 + Math.floor(Math.random() * 200); // 650-850
     const emailDomain = request.email.split('@')[1];
-    
+
     // Business rules for approval
     const maxAmount = this.calculateMaxAmount(baseScore);
     const requestedAmount = request.requestedAmount;
-    
+
     // Risk assessment
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
     if (baseScore >= 750) riskLevel = 'LOW';
     if (baseScore < 600) riskLevel = 'HIGH';
-    
+
     // Approval logic
     const approved = baseScore >= 580 && requestedAmount <= maxAmount;
     const approvedAmount = approved ? requestedAmount : Math.min(requestedAmount, maxAmount * 0.5);
@@ -121,7 +124,7 @@ export class CreditCheckService {
 
   private async mockBureauReport(user: User): Promise<CreditBureauResponse> {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     return {
       score: 680 + Math.floor(Math.random() * 120),
@@ -164,8 +167,12 @@ export class CreditCheckService {
   // Real-world integration methods (commented for reference)
   /*
   private async callExperianAPI(request: CreditCheckRequest): Promise<CreditCheckResponse> {
-    const apiKey = this.configService.get('EXPERIAN_API_KEY');
-    const endpoint = this.configService.get('EXPERIAN_ENDPOINT');
+    const apiKey = this.configService.get('integrations.experian.apiKey');
+    const endpoint = this.configService.get('integrations.experian.endpoint');
+    
+    if (!apiKey || !endpoint) {
+      throw new Error('Experian API configuration is missing');
+    }
     
     const response = await firstValueFrom(
       this.httpService.post(`${endpoint}/credit-check`, {
@@ -187,8 +194,12 @@ export class CreditCheckService {
   }
 
   private async callEquifaxAPI(request: CreditCheckRequest): Promise<CreditCheckResponse> {
-    const apiKey = this.configService.get('EQUIFAX_API_KEY');
-    const endpoint = this.configService.get('EQUIFAX_ENDPOINT');
+    const apiKey = this.configService.get('integrations.equifax.apiKey');
+    const endpoint = this.configService.get('integrations.equifax.endpoint');
+    
+    if (!apiKey || !endpoint) {
+      throw new Error('Equifax API configuration is missing');
+    }
     
     // Implementation for Equifax API
     // ...

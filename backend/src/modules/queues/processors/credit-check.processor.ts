@@ -23,12 +23,12 @@ export class CreditCheckProcessor {
   @Process('perform-credit-check')
   async handleCreditCheck(job: Job<CreditCheckJob>): Promise<void> {
     const { userId, requestedAmount, transactionId } = job.data;
-    
+
     this.logger.log(`Processing credit check for user: ${userId}, amount: $${requestedAmount}`);
 
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
-      
+
       if (!user) {
         throw new Error(`User not found: ${userId}`);
       }
@@ -41,7 +41,9 @@ export class CreditCheckProcessor {
         name: user.name,
       });
 
-      this.logger.log(`Credit check result for user ${userId}: ${creditCheckResult.approved ? 'APPROVED' : 'DENIED'}`);
+      this.logger.log(
+        `Credit check result for user ${userId}: ${creditCheckResult.approved ? 'APPROVED' : 'DENIED'}`,
+      );
 
       // Update transaction if provided
       if (transactionId) {
@@ -52,16 +54,17 @@ export class CreditCheckProcessor {
       await this.updateUserCreditInfo(user, creditCheckResult);
 
       // Log analytics
-      this.logger.log(`Credit check analytics: User ${userId}, Score: ${creditCheckResult.creditScore}, Risk: ${creditCheckResult.riskLevel}`);
-
+      this.logger.log(
+        `Credit check analytics: User ${userId}, Score: ${creditCheckResult.creditScore}, Risk: ${creditCheckResult.riskLevel}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to process credit check for user ${userId}:`, error);
-      
+
       // Mark transaction as rejected if provided
       if (transactionId) {
         await this.handleCreditCheckFailure(transactionId, (error as Error).message);
       }
-      
+
       throw error; // Re-throw to trigger Bull retry mechanism
     }
   }
@@ -69,12 +72,12 @@ export class CreditCheckProcessor {
   @Process('periodic-credit-review')
   async handlePeriodicCreditReview(job: Job<{ userId: string }>): Promise<void> {
     const { userId } = job.data;
-    
+
     this.logger.log(`Processing periodic credit review for user: ${userId}`);
 
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
-      
+
       if (!user) {
         this.logger.warn(`User not found for periodic review: ${userId}`);
         return;
@@ -89,30 +92,30 @@ export class CreditCheckProcessor {
 
       // Calculate metrics for credit review
       const metrics = this.calculateUserMetrics(recentTransactions);
-      
+
       // Perform credit bureau check
       const bureauReport = await this.creditCheckService.getBureauReport(user);
-      
+
       if (bureauReport) {
         this.logger.log(`Bureau report for user ${userId}: Score ${bureauReport.score}`);
-        
+
         // Update credit limit based on performance and bureau score
         const newLimit = this.calculateNewCreditLimit(user, metrics, bureauReport.score);
-        
+
         if (newLimit !== Number(user.creditLimit)) {
           const oldLimit = Number(user.creditLimit);
           user.creditLimit = newLimit;
-          
+
           // Adjust available credit proportionally
-          const creditUtilization = (Number(user.creditLimit) - Number(user.availableCredit)) / Number(user.creditLimit);
-          user.availableCredit = newLimit - (newLimit * creditUtilization);
-          
+          const creditUtilization =
+            (Number(user.creditLimit) - Number(user.availableCredit)) / Number(user.creditLimit);
+          user.availableCredit = newLimit - newLimit * creditUtilization;
+
           await this.userRepository.save(user);
-          
+
           this.logger.log(`Updated credit limit for user ${userId}: $${oldLimit} -> $${newLimit}`);
         }
       }
-
     } catch (error) {
       this.logger.error(`Failed to process periodic credit review for user ${userId}:`, error);
       throw error;
@@ -151,14 +154,17 @@ export class CreditCheckProcessor {
       const increase = Math.min(creditResult.approvedAmount - Number(user.creditLimit), 1000); // Cap increase
       user.creditLimit = Number(user.creditLimit) + increase;
       user.availableCredit = Number(user.availableCredit) + increase;
-      
+
       await this.userRepository.save(user);
-      
+
       this.logger.log(`Increased credit limit for user ${user.id} by $${increase}`);
     }
   }
 
-  private async handleCreditCheckFailure(transactionId: string, errorMessage: string): Promise<void> {
+  private async handleCreditCheckFailure(
+    transactionId: string,
+    errorMessage: string,
+  ): Promise<void> {
     try {
       const transaction = await this.transactionRepository.findOne({
         where: { id: transactionId },
@@ -188,9 +194,9 @@ export class CreditCheckProcessor {
       };
     }
 
-    const completedTransactions = transactions.filter(t => t.status === 'completed');
+    const completedTransactions = transactions.filter((t) => t.status === 'completed');
     const totalAmount = completedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-    
+
     return {
       onTimePayments: completedTransactions.length,
       totalPayments: transactions.length,
@@ -199,11 +205,7 @@ export class CreditCheckProcessor {
     };
   }
 
-  private calculateNewCreditLimit(
-    user: User,
-    metrics: any,
-    bureauScore: number,
-  ): number {
+  private calculateNewCreditLimit(user: User, metrics: any, bureauScore: number): number {
     const currentLimit = Number(user.creditLimit);
     let newLimit = currentLimit;
 

@@ -23,7 +23,7 @@ export class FraudCheckProcessor {
   @Process('fraud-analysis')
   async handleFraudAnalysis(job: Job<FraudCheckJob>): Promise<void> {
     const { transactionId, userId, amount, metadata } = job.data;
-    
+
     this.logger.log(`Processing fraud analysis for transaction: ${transactionId}`);
 
     try {
@@ -51,20 +51,26 @@ export class FraudCheckProcessor {
         billingAddress: metadata?.billingAddress,
       });
 
-      this.logger.log(`Fraud analysis result for transaction ${transactionId}: ${fraudResult.decision}, risk score: ${fraudResult.riskScore}`);
+      this.logger.log(
+        `Fraud analysis result for transaction ${transactionId}: ${fraudResult.decision}, risk score: ${fraudResult.riskScore}`,
+      );
 
       // Handle the fraud detection result
       await this.handleFraudResult(transaction, fraudResult);
 
       // Log analytics
-      this.logger.log(`Fraud analytics: Transaction ${transactionId}, Score: ${fraudResult.riskScore}, Decision: ${fraudResult.decision}`);
-
+      this.logger.log(
+        `Fraud analytics: Transaction ${transactionId}, Score: ${fraudResult.riskScore}, Decision: ${fraudResult.decision}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to process fraud analysis for transaction ${transactionId}:`, error);
-      
+      this.logger.error(
+        `Failed to process fraud analysis for transaction ${transactionId}:`,
+        error,
+      );
+
       // On error, flag transaction for manual review
       await this.flagTransactionForReview(transactionId, (error as Error).message);
-      
+
       throw error; // Re-throw to trigger Bull retry mechanism
     }
   }
@@ -72,22 +78,21 @@ export class FraudCheckProcessor {
   @Process('risk-pattern-analysis')
   async handleRiskPatternAnalysis(job: Job<{ userId: string; timeframe: string }>): Promise<void> {
     const { userId, timeframe } = job.data;
-    
+
     this.logger.log(`Processing risk pattern analysis for user: ${userId}`);
 
     try {
       // Analyze user's transaction patterns over time
       const patterns = await this.analyzeUserPatterns(userId, timeframe);
-      
+
       if (patterns.riskLevel === 'HIGH') {
         this.logger.warn(`High risk patterns detected for user ${userId}`);
-        
+
         // Flag user for review or apply restrictions
         await this.applyRiskMeasures(userId, patterns);
       }
 
       this.logger.log(`Risk pattern analysis completed for user ${userId}: ${patterns.riskLevel}`);
-
     } catch (error) {
       this.logger.error(`Failed to process risk pattern analysis for user ${userId}:`, error);
       throw error;
@@ -105,9 +110,9 @@ export class FraudCheckProcessor {
         // Block the transaction
         transaction.status = TransactionStatus.REJECTED;
         await this.transactionRepository.save(transaction);
-        
+
         this.logger.warn(`Transaction ${transaction.id} declined due to fraud risk`);
-        
+
         // Log fraud attempt
         await this.fraudDetectionService.logFraudAttempt(transaction.userId, {
           transactionId: transaction.id,
@@ -119,7 +124,7 @@ export class FraudCheckProcessor {
       case 'REVIEW':
         // Flag for manual review
         await this.flagTransactionForReview(transaction.id, fraudResult.recommendedAction);
-        
+
         this.logger.log(`Transaction ${transaction.id} flagged for manual review`);
         break;
 
@@ -141,7 +146,7 @@ export class FraudCheckProcessor {
         // You might want to add a 'review' status or use metadata to flag for review
         // For now, we'll just log it
         this.logger.warn(`Transaction ${transactionId} flagged for manual review: ${reason}`);
-        
+
         // In a real system, you might:
         // - Set transaction status to 'under_review'
         // - Create a review ticket
@@ -153,7 +158,10 @@ export class FraudCheckProcessor {
     }
   }
 
-  private async analyzeUserPatterns(userId: string, timeframe: string): Promise<{
+  private async analyzeUserPatterns(
+    userId: string,
+    timeframe: string,
+  ): Promise<{
     riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
     patterns: string[];
     score: number;
@@ -179,7 +187,7 @@ export class FraudCheckProcessor {
     }
 
     // Analyze transaction amounts
-    const amounts = transactions.map(t => Number(t.amount));
+    const amounts = transactions.map((t) => Number(t.amount));
     const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length || 0;
     const maxAmount = Math.max(...amounts);
 
@@ -189,9 +197,9 @@ export class FraudCheckProcessor {
     }
 
     // Analyze transaction timing
-    const hours = transactions.map(t => new Date(t.createdAt).getHours());
-    const nightTransactions = hours.filter(h => h >= 22 || h <= 5).length;
-    
+    const hours = transactions.map((t) => new Date(t.createdAt).getHours());
+    const nightTransactions = hours.filter((h) => h >= 22 || h <= 5).length;
+
     if (nightTransactions > transactions.length * 0.3) {
       score += 10;
       patterns.push('High frequency of late-night transactions');
@@ -207,23 +215,27 @@ export class FraudCheckProcessor {
 
   private async applyRiskMeasures(userId: string, patterns: any): Promise<void> {
     this.logger.warn(`Applying risk measures for user ${userId}: ${patterns.patterns.join(', ')}`);
-    
+
     // Could implement various risk measures:
     // - Reduce credit limit
     // - Require additional verification
     // - Flag all future transactions for review
     // - Contact user for verification
-    
+
     // For now, just log the action
     this.logger.log(`Risk measures applied for user ${userId}`);
   }
 
   private parseTimeframe(timeframe: string): number {
     switch (timeframe) {
-      case 'week': return 7;
-      case 'month': return 30;
-      case 'quarter': return 90;
-      default: return 30;
+      case 'week':
+        return 7;
+      case 'month':
+        return 30;
+      case 'quarter':
+        return 90;
+      default:
+        return 30;
     }
   }
 }

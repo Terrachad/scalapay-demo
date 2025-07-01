@@ -29,12 +29,7 @@ import { Payment } from '../payments/entities/payment.entity';
     }),
     TypeOrmModule.forFeature([User, Transaction, Payment]),
   ],
-  providers: [
-    PaymentEventHandler,
-    TransactionEventHandler,
-    UserEventHandler,
-    NotificationService,
-  ],
+  providers: [PaymentEventHandler, TransactionEventHandler, UserEventHandler, NotificationService],
   exports: [EventEmitterModule],
 })
 export class EventsModule {}

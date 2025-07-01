@@ -39,7 +39,9 @@ export class UserEventHandler {
 
     try {
       // Log registration analytics
-      this.logger.log(`User registration analytics: New user ${event.userId} registered with email ${event.email}`);
+      this.logger.log(
+        `User registration analytics: New user ${event.userId} registered with email ${event.email}`,
+      );
 
       // Could trigger:
       // - Welcome email sequence
@@ -49,7 +51,6 @@ export class UserEventHandler {
 
       // Example: Schedule welcome email
       this.logger.log(`Scheduling welcome email for user ${event.userId}`);
-
     } catch (error) {
       this.logger.error(`Error handling user registered event:`, error);
     }
@@ -61,15 +62,20 @@ export class UserEventHandler {
 
     try {
       // Log credit limit change analytics
-      this.logger.log(`Credit limit analytics: User ${event.userId} limit changed from $${event.oldLimit} to $${event.newLimit}, reason: ${event.reason}`);
+      this.logger.log(
+        `Credit limit analytics: User ${event.userId} limit changed from $${event.oldLimit} to $${event.newLimit}, reason: ${event.reason}`,
+      );
 
       // Could trigger notification to user about limit change
       if (event.newLimit > event.oldLimit) {
-        this.logger.log(`Credit limit increased for user ${event.userId} - consider sending congratulatory notification`);
+        this.logger.log(
+          `Credit limit increased for user ${event.userId} - consider sending congratulatory notification`,
+        );
       } else {
-        this.logger.log(`Credit limit decreased for user ${event.userId} - consider sending explanation notification`);
+        this.logger.log(
+          `Credit limit decreased for user ${event.userId} - consider sending explanation notification`,
+        );
       }
-
     } catch (error) {
       this.logger.error(`Error handling credit limit updated event:`, error);
     }
@@ -81,21 +87,26 @@ export class UserEventHandler {
 
     try {
       // Log suspension analytics
-      this.logger.warn(`User suspension analytics: User ${event.userId} suspended, reason: ${event.reason}, by: ${event.suspendedBy}`);
+      this.logger.warn(
+        `User suspension analytics: User ${event.userId} suspended, reason: ${event.reason}, by: ${event.suspendedBy}`,
+      );
 
       // Could trigger:
       // - Notification to user about suspension
       // - Cancellation of pending transactions
       // - Customer service ticket creation
       // - Legal/compliance workflow
-
     } catch (error) {
       this.logger.error(`Error handling user suspended event:`, error);
     }
   }
 
   @OnEvent('user.login')
-  async handleUserLogin(event: { userId: string; ipAddress?: string; userAgent?: string }): Promise<void> {
+  async handleUserLogin(event: {
+    userId: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<void> {
     this.logger.log(`Handling user login event: ${event.userId}`);
 
     try {
@@ -111,50 +122,61 @@ export class UserEventHandler {
           // Could trigger additional verification
         }
       }
-
     } catch (error) {
       this.logger.error(`Error handling user login event:`, error);
     }
   }
 
   @OnEvent('user.password_changed')
-  async handlePasswordChanged(event: { userId: string; changedBy: 'user' | 'admin' | 'reset' }): Promise<void> {
+  async handlePasswordChanged(event: {
+    userId: string;
+    changedBy: 'user' | 'admin' | 'reset';
+  }): Promise<void> {
     this.logger.log(`Handling password changed event: ${event.userId}`);
 
     try {
       // Log security event
-      this.logger.log(`Security analytics: User ${event.userId} password changed by ${event.changedBy}`);
+      this.logger.log(
+        `Security analytics: User ${event.userId} password changed by ${event.changedBy}`,
+      );
 
       // Could trigger:
       // - Security notification to user
       // - Session invalidation
       // - Security audit log entry
-
     } catch (error) {
       this.logger.error(`Error handling password changed event:`, error);
     }
   }
 
   @OnEvent('user.account_locked')
-  async handleAccountLocked(event: { userId: string; reason: string; lockDuration?: number }): Promise<void> {
+  async handleAccountLocked(event: {
+    userId: string;
+    reason: string;
+    lockDuration?: number;
+  }): Promise<void> {
     this.logger.log(`Handling account locked event: ${event.userId}`);
 
     try {
       // Log security event
-      this.logger.warn(`Security analytics: User ${event.userId} account locked, reason: ${event.reason}`);
+      this.logger.warn(
+        `Security analytics: User ${event.userId} account locked, reason: ${event.reason}`,
+      );
 
       // Could trigger:
       // - Notification to user
       // - Customer service alert
       // - Automatic unlock timer
-
     } catch (error) {
       this.logger.error(`Error handling account locked event:`, error);
     }
   }
 
   @OnEvent('user.kyc_completed')
-  async handleKYCCompleted(event: { userId: string; kycLevel: 'basic' | 'enhanced' | 'premium' }): Promise<void> {
+  async handleKYCCompleted(event: {
+    userId: string;
+    kycLevel: 'basic' | 'enhanced' | 'premium';
+  }): Promise<void> {
     this.logger.log(`Handling KYC completed event: ${event.userId}`);
 
     try {
@@ -162,7 +184,9 @@ export class UserEventHandler {
       const user = await this.userRepository.findOne({ where: { id: event.userId } });
       if (user) {
         // Could update credit limits, transaction limits, etc. based on KYC level
-        this.logger.log(`KYC ${event.kycLevel} completed for user ${event.userId} - consider updating limits`);
+        this.logger.log(
+          `KYC ${event.kycLevel} completed for user ${event.userId} - consider updating limits`,
+        );
 
         switch (event.kycLevel) {
           case 'basic':
@@ -172,7 +196,8 @@ export class UserEventHandler {
             // Enhanced verification - could increase limits
             if (Number(user.creditLimit) < 7500) {
               user.creditLimit = 7500;
-              user.availableCredit = Number(user.availableCredit) + (7500 - Number(user.creditLimit));
+              user.availableCredit =
+                Number(user.availableCredit) + (7500 - Number(user.creditLimit));
               await this.userRepository.save(user);
             }
             break;
@@ -180,13 +205,13 @@ export class UserEventHandler {
             // Premium verification - highest limits
             if (Number(user.creditLimit) < 15000) {
               user.creditLimit = 15000;
-              user.availableCredit = Number(user.availableCredit) + (15000 - Number(user.creditLimit));
+              user.availableCredit =
+                Number(user.availableCredit) + (15000 - Number(user.creditLimit));
               await this.userRepository.save(user);
             }
             break;
         }
       }
-
     } catch (error) {
       this.logger.error(`Error handling KYC completed event:`, error);
     }
@@ -195,12 +220,14 @@ export class UserEventHandler {
   private isSuspiciousLogin(ipAddress?: string, userAgent?: string): boolean {
     // Simple suspicious login detection
     if (!ipAddress || !userAgent) return false;
-    
+
     // Check for known suspicious patterns
     const suspiciousIPs = ['127.0.0.1']; // Mock suspicious IPs
     const suspiciousUserAgents = ['bot', 'crawler', 'scraper'];
-    
-    return suspiciousIPs.includes(ipAddress) || 
-           suspiciousUserAgents.some(pattern => userAgent.toLowerCase().includes(pattern));
+
+    return (
+      suspiciousIPs.includes(ipAddress) ||
+      suspiciousUserAgents.some((pattern) => userAgent.toLowerCase().includes(pattern))
+    );
   }
 }

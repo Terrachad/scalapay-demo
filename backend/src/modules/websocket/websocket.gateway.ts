@@ -31,13 +31,13 @@ export class ScalaPayWebSocketGateway implements OnGatewayConnection, OnGatewayD
       const payload = this.jwtService.verify(token);
       client.data.userId = payload.sub;
       client.data.role = payload.role;
-      
+
       // Join user to their personal room
       client.join(`user:${payload.sub}`);
-      
+
       // Join role-based room
       client.join(`role:${payload.role}`);
-      
+
       this.logger.log(`Client connected: ${client.id} - User: ${payload.sub}`);
     } catch (error: any) {
       this.logger.error(`Connection rejected: ${error.message}`);

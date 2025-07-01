@@ -13,10 +13,12 @@ describe('AuthController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
@@ -55,10 +57,7 @@ describe('AuthController (e2e)', () => {
         role: 'customer',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(400);
+      await request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(400);
     });
 
     it('should fail with duplicate email', async () => {
@@ -69,10 +68,7 @@ describe('AuthController (e2e)', () => {
         role: 'customer',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send(registerDto)
-        .expect(409);
+      await request(app.getHttpServer()).post('/auth/register').send(registerDto).expect(409);
     });
   });
 
@@ -98,10 +94,7 @@ describe('AuthController (e2e)', () => {
         password: 'wrongpassword',
       };
 
-      await request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/auth/login').send(loginDto).expect(401);
     });
   });
 });

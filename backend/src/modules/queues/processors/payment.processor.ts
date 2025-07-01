@@ -20,7 +20,7 @@ export class PaymentProcessor {
   @Process('process-payment')
   async handlePaymentProcessing(job: Job<PaymentProcessingJob>): Promise<void> {
     const { paymentId, type, metadata } = job.data;
-    
+
     this.logger.log(`Processing payment job: ${paymentId}, type: ${type}`);
 
     try {
@@ -48,20 +48,19 @@ export class PaymentProcessor {
       }
 
       this.logger.log(`Successfully processed payment: ${paymentId}, type: ${type}`);
-
     } catch (error) {
       this.logger.error(`Failed to process payment ${paymentId}:`, error);
-      
+
       // Update payment status on failure
       await this.handlePaymentFailure(paymentId, (error as Error).message);
-      
+
       throw error; // Re-throw to trigger Bull retry mechanism
     }
   }
 
   private async processCharge(payment: Payment): Promise<void> {
     const user = payment.transaction.user;
-    
+
     if (!user.stripeCustomerId || !payment.stripePaymentMethodId) {
       throw new Error('Missing Stripe customer ID or payment method');
     }
@@ -98,7 +97,7 @@ export class PaymentProcessor {
     // Update retry count
     payment.retryCount = retryCount + 1;
     payment.nextRetryAt = undefined; // Clear next retry time
-    
+
     // Process as regular charge
     await this.processCharge(payment);
   }
@@ -108,13 +107,10 @@ export class PaymentProcessor {
       throw new Error('No Stripe payment intent ID for refund');
     }
 
-    const refund = await this.stripeService.refundPayment(
-      payment.stripePaymentIntentId,
-      amount,
-    );
+    const refund = await this.stripeService.refundPayment(payment.stripePaymentIntentId, amount);
 
     this.logger.log(`Processed refund: ${refund.id} for payment: ${payment.id}`);
-    
+
     // You might want to update payment status or create a refund record
     // This depends on your business logic
   }

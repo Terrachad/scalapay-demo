@@ -33,19 +33,19 @@ export class QueueService {
   private readonly logger = new Logger(QueueService.name);
 
   constructor(
-    @InjectQueue('payment-processing') 
+    @InjectQueue('payment-processing')
     private paymentQueue: Queue<PaymentProcessingJob>,
-    @InjectQueue('notifications') 
+    @InjectQueue('notifications')
     private notificationQueue: Queue<NotificationJob>,
-    @InjectQueue('credit-checks') 
+    @InjectQueue('credit-checks')
     private creditCheckQueue: Queue<CreditCheckJob>,
-    @InjectQueue('fraud-detection') 
+    @InjectQueue('fraud-detection')
     private fraudDetectionQueue: Queue<FraudCheckJob>,
   ) {}
 
   // Payment Processing Queue Methods
   async schedulePaymentProcessing(
-    job: PaymentProcessingJob, 
+    job: PaymentProcessingJob,
     delay?: number,
     options?: JobOptions,
   ): Promise<void> {
@@ -57,7 +57,7 @@ export class QueueService {
       };
 
       await this.paymentQueue.add('process-payment', job, jobOptions);
-      
+
       this.logger.log(`Scheduled payment processing job: ${job.paymentId}, type: ${job.type}`);
     } catch (error) {
       this.logger.error(`Failed to schedule payment processing job:`, error);
@@ -65,13 +65,9 @@ export class QueueService {
     }
   }
 
-  async schedulePaymentRetry(
-    paymentId: string, 
-    retryAt: Date,
-    retryCount: number,
-  ): Promise<void> {
+  async schedulePaymentRetry(paymentId: string, retryAt: Date, retryCount: number): Promise<void> {
     const delay = retryAt.getTime() - Date.now();
-    
+
     await this.schedulePaymentProcessing(
       {
         paymentId,
@@ -109,7 +105,7 @@ export class QueueService {
       };
 
       await this.notificationQueue.add('send-notification', job, jobOptions);
-      
+
       this.logger.log(`Scheduled notification: ${job.type} to ${job.recipient}`);
     } catch (error) {
       this.logger.error(`Failed to schedule notification:`, error);
@@ -123,45 +119,44 @@ export class QueueService {
     data: any,
     delay?: number,
   ): Promise<void> {
-    await this.scheduleNotification({
-      type: 'email',
-      recipient,
-      template,
-      data,
-    }, delay);
+    await this.scheduleNotification(
+      {
+        type: 'email',
+        recipient,
+        template,
+        data,
+      },
+      delay,
+    );
   }
 
-  async scheduleReminderEmail(
-    recipient: string,
-    paymentId: string,
-    dueDate: Date,
-  ): Promise<void> {
+  async scheduleReminderEmail(recipient: string, paymentId: string, dueDate: Date): Promise<void> {
     // Schedule reminder 24 hours before due date
     const reminderTime = new Date(dueDate.getTime() - 24 * 60 * 60 * 1000);
     const delay = reminderTime.getTime() - Date.now();
 
     if (delay > 0) {
-      await this.scheduleNotification({
-        type: 'email',
-        recipient,
-        template: 'payment-reminder',
-        data: { paymentId, dueDate },
-      }, delay);
+      await this.scheduleNotification(
+        {
+          type: 'email',
+          recipient,
+          template: 'payment-reminder',
+          data: { paymentId, dueDate },
+        },
+        delay,
+      );
     }
   }
 
   // Credit Check Queue Methods
-  async scheduleCreditCheck(
-    job: CreditCheckJob,
-    priority: number = 10,
-  ): Promise<void> {
+  async scheduleCreditCheck(job: CreditCheckJob, priority: number = 10): Promise<void> {
     try {
       await this.creditCheckQueue.add('perform-credit-check', job, {
         priority,
         removeOnComplete: 20,
         removeOnFail: 10,
       });
-      
+
       this.logger.log(`Scheduled credit check for user: ${job.userId}`);
     } catch (error) {
       this.logger.error(`Failed to schedule credit check:`, error);
@@ -173,7 +168,7 @@ export class QueueService {
     // Schedule monthly credit review
     const monthFromNow = new Date();
     monthFromNow.setMonth(monthFromNow.getMonth() + 1);
-    
+
     await this.creditCheckQueue.add(
       'periodic-credit-review',
       { userId, requestedAmount: 0 },
@@ -195,7 +190,7 @@ export class QueueService {
         removeOnComplete: 30,
         removeOnFail: 15,
       });
-      
+
       this.logger.log(`Scheduled fraud check for transaction: ${job.transactionId}`);
     } catch (error) {
       this.logger.error(`Failed to schedule fraud check:`, error);
@@ -209,12 +204,15 @@ export class QueueService {
     amount: number,
     metadata: any,
   ): Promise<void> {
-    await this.scheduleFraudCheck({
-      transactionId,
-      userId,
-      amount,
-      metadata,
-    }, 20); // Very high priority
+    await this.scheduleFraudCheck(
+      {
+        transactionId,
+        userId,
+        amount,
+        metadata,
+      },
+      20,
+    ); // Very high priority
   }
 
   // Queue Management Methods
@@ -257,7 +255,7 @@ export class QueueService {
         default:
           throw new Error(`Unknown queue: ${queueName}`);
       }
-      
+
       this.logger.log(`Paused queue: ${queueName}`);
     } catch (error) {
       this.logger.error(`Failed to pause queue ${queueName}:`, error);
@@ -283,7 +281,7 @@ export class QueueService {
         default:
           throw new Error(`Unknown queue: ${queueName}`);
       }
-      
+
       this.logger.log(`Resumed queue: ${queueName}`);
     } catch (error) {
       this.logger.error(`Failed to resume queue ${queueName}:`, error);
@@ -309,7 +307,7 @@ export class QueueService {
         default:
           throw new Error(`Unknown queue: ${queueName}`);
       }
-      
+
       this.logger.log(`Cleared queue: ${queueName}`);
     } catch (error) {
       this.logger.error(`Failed to clear queue ${queueName}:`, error);

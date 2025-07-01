@@ -13,7 +13,7 @@ export class NotificationProcessor {
   @Process('send-notification')
   async handleNotification(job: Job<NotificationJob>): Promise<void> {
     const { type, recipient, template, data } = job.data;
-    
+
     this.logger.log(`Processing notification: ${type} to ${recipient}, template: ${template}`);
 
     try {
@@ -32,7 +32,6 @@ export class NotificationProcessor {
       }
 
       this.logger.log(`Successfully sent ${type} notification to ${recipient}`);
-
     } catch (error) {
       this.logger.error(`Failed to send notification to ${recipient}:`, error);
       throw error; // Re-throw to trigger Bull retry mechanism
@@ -42,35 +41,44 @@ export class NotificationProcessor {
   private async sendEmail(recipient: string, template: string, data: any): Promise<void> {
     // Generate email content based on template
     const emailTemplate = this.generateEmailTemplate(template, data);
-    
+
     // Use the notification service to send email
     // Note: This is a simplified implementation
     // In reality, you'd call the appropriate method on notificationService
     this.logger.log(`Sending email to ${recipient} with template ${template}`);
-    
+
     // For demo purposes, just log the email content
-    this.logger.debug(`Email content: Subject: ${emailTemplate.subject}, Body: ${emailTemplate.htmlContent.substring(0, 100)}...`);
+    this.logger.debug(
+      `Email content: Subject: ${emailTemplate.subject}, Body: ${emailTemplate.htmlContent.substring(0, 100)}...`,
+    );
   }
 
   private async sendSMS(recipient: string, template: string, data: any): Promise<void> {
     const message = this.generateSMSMessage(template, data);
-    
+
     this.logger.log(`Sending SMS to ${recipient}: ${message}`);
-    
+
     // Integration with SMS service would go here
     // For demo purposes, just log
   }
 
-  private async sendPushNotification(recipient: string, template: string, data: any): Promise<void> {
+  private async sendPushNotification(
+    recipient: string,
+    template: string,
+    data: any,
+  ): Promise<void> {
     const notification = this.generatePushNotification(template, data);
-    
+
     this.logger.log(`Sending push notification to ${recipient}: ${notification.title}`);
-    
+
     // Integration with push notification service would go here
     // For demo purposes, just log
   }
 
-  private generateEmailTemplate(template: string, data: any): { subject: string; htmlContent: string; textContent: string } {
+  private generateEmailTemplate(
+    template: string,
+    data: any,
+  ): { subject: string; htmlContent: string; textContent: string } {
     switch (template) {
       case 'payment-reminder':
         return {
@@ -82,7 +90,7 @@ export class NotificationProcessor {
           `,
           textContent: `Payment Reminder: Your payment of $${data.amount} is due on ${new Date(data.dueDate).toLocaleDateString()}.`,
         };
-      
+
       case 'payment-success':
         return {
           subject: 'Payment Successful - Scalapay',
@@ -93,7 +101,7 @@ export class NotificationProcessor {
           `,
           textContent: `Payment Successful! Your payment of $${data.amount} has been processed.`,
         };
-      
+
       case 'payment-failed':
         return {
           subject: 'Payment Failed - Scalapay',
@@ -105,7 +113,7 @@ export class NotificationProcessor {
           `,
           textContent: `Payment Failed: Your payment of $${data.amount} could not be processed. Reason: ${data.reason}`,
         };
-      
+
       case 'welcome':
         return {
           subject: 'Welcome to Scalapay!',
@@ -116,7 +124,7 @@ export class NotificationProcessor {
           `,
           textContent: `Welcome to Scalapay! Thank you for joining us, ${data.name}!`,
         };
-      
+
       default:
         return {
           subject: 'Notification from Scalapay',
@@ -130,13 +138,13 @@ export class NotificationProcessor {
     switch (template) {
       case 'payment-reminder':
         return `Scalapay: Payment of $${data.amount} due ${new Date(data.dueDate).toLocaleDateString()}. ID: ${data.paymentId}`;
-      
+
       case 'payment-success':
         return `Scalapay: Payment of $${data.amount} successful. ID: ${data.paymentId}`;
-      
+
       case 'payment-failed':
         return `Scalapay: Payment of $${data.amount} failed. We'll retry automatically. ID: ${data.paymentId}`;
-      
+
       default:
         return 'You have a new notification from Scalapay.';
     }
@@ -149,19 +157,19 @@ export class NotificationProcessor {
           title: 'Payment Due Soon',
           body: `Your payment of $${data.amount} is due on ${new Date(data.dueDate).toLocaleDateString()}`,
         };
-      
+
       case 'payment-success':
         return {
           title: 'Payment Successful',
           body: `Your payment of $${data.amount} has been processed successfully`,
         };
-      
+
       case 'payment-failed':
         return {
           title: 'Payment Failed',
           body: `Your payment could not be processed. We'll retry automatically.`,
         };
-      
+
       default:
         return {
           title: 'Scalapay Notification',
