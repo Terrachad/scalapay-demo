@@ -42,7 +42,7 @@ export class User {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 5000 })
   creditLimit!: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 5000 })
   availableCredit!: number;
 
   @Column({ nullable: true })
@@ -54,6 +54,6 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @OneToMany(() => Transaction, transaction => transaction.user)
+  @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions!: Transaction[];
 }

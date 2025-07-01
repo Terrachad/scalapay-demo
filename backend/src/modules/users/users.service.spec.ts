@@ -85,9 +85,7 @@ describe('UsersService', () => {
     it('should throw NotFoundException when user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findById('non-existent')).rejects.toThrow(NotFoundException);
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: 'non-existent' },
       });

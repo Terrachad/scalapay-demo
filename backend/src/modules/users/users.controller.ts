@@ -1,6 +1,9 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Put, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -16,9 +19,66 @@ export class UsersController {
     return this.usersService.findById(req.user.id);
   }
 
+  @Get('analytics')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get admin analytics' })
+  @ApiResponse({ status: 200, description: 'Admin analytics data' })
+  async getAdminAnalytics() {
+    return this.usersService.getAdminAnalytics();
+  }
+
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users (admin only)' })
-  async findAll() {
-    return this.usersService.findAll();
+  @ApiResponse({ status: 200, description: 'List of users' })
+  async findAll(@Query('role') role?: UserRole) {
+    return this.usersService.getUsersByRole(role);
+  }
+
+  @Put(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update user (admin only)' })
+  @ApiResponse({ status: 200, description: 'Updated user' })
+  async updateUser(@Param('id') id: string, @Body() updateData: any) {
+    return this.usersService.updateUser(id, updateData);
+  }
+
+  @Get('pending-approvals')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get pending user approvals (admin only)' })
+  @ApiResponse({ status: 200, description: 'List of users pending approval' })
+  async getPendingApprovals() {
+    return this.usersService.getPendingApprovals();
+  }
+
+  @Put(':id/approve')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Approve user (admin only)' })
+  @ApiResponse({ status: 200, description: 'User approved' })
+  async approveUser(@Param('id') id: string) {
+    return this.usersService.approveUser(id);
+  }
+
+  @Put(':id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Reject user (admin only)' })
+  @ApiResponse({ status: 200, description: 'User rejected' })
+  async rejectUser(@Param('id') id: string) {
+    return this.usersService.rejectUser(id);
+  }
+
+  @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get user by ID (admin only)' })
+  @ApiResponse({ status: 200, description: 'User details' })
+  async findOne(@Param('id') id: string) {
+    return this.usersService.findById(id);
   }
 }
