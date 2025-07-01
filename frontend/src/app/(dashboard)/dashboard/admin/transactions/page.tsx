@@ -13,7 +13,6 @@ import { useToast } from '@/components/ui/use-toast';
 import {
   CreditCard,
   Search,
-  Filter,
   CheckCircle,
   XCircle,
   Clock,
@@ -23,7 +22,6 @@ import {
   User,
   Building2,
   Eye,
-  MoreHorizontal
 } from 'lucide-react';
 
 export default function AdminTransactionsPage() {
@@ -43,8 +41,8 @@ export default function AdminTransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
       toast({
-        title: "Transaction Approved",
-        description: "Transaction has been approved and will be processed.",
+        title: 'Transaction Approved',
+        description: 'Transaction has been approved and will be processed.',
       });
     },
   });
@@ -54,47 +52,61 @@ export default function AdminTransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
       toast({
-        title: "Transaction Rejected",
-        description: "Transaction has been rejected and cancelled.",
+        title: 'Transaction Rejected',
+        description: 'Transaction has been rejected and cancelled.',
       });
     },
   });
 
-  const filteredTransactions = transactions?.filter(transaction => {
-    const customerName = transaction.user?.name || 'Unknown';
-    const merchantName = transaction.merchant?.businessName || transaction.merchant?.name || 'Unknown';
-    
-    const matchesSearch = 
-      transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      merchantName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (statusFilter && statusFilter !== '') {
-      return matchesSearch && transaction.status === statusFilter;
-    }
-    
-    return matchesSearch;
-  }) || [];
+  const filteredTransactions =
+    transactions?.filter((transaction) => {
+      const customerName = transaction.user?.name || 'Unknown';
+      const merchantName =
+        transaction.merchant?.businessName || transaction.merchant?.name || 'Unknown';
+
+      const matchesSearch =
+        transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        merchantName.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (statusFilter && statusFilter !== '') {
+        return matchesSearch && transaction.status === statusFilter;
+      }
+
+      return matchesSearch;
+    }) || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
-      case 'pending': return <Clock className="w-4 h-4" />;
-      case 'failed': return <XCircle className="w-4 h-4" />;
-      case 'cancelled': return <XCircle className="w-4 h-4" />;
-      case 'processing': return <AlertTriangle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'pending':
+        return <Clock className="w-4 h-4" />;
+      case 'failed':
+        return <XCircle className="w-4 h-4" />;
+      case 'cancelled':
+        return <XCircle className="w-4 h-4" />;
+      case 'processing':
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <Clock className="w-4 h-4" />;
     }
   };
 
@@ -126,9 +138,10 @@ export default function AdminTransactionsPage() {
     );
   }
 
-  const pendingCount = transactions?.filter(t => t.status === 'pending').length || 0;
-  const processingCount = transactions?.filter(t => t.status === 'processing').length || 0;
-  const totalVolume = transactions?.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
+  const pendingCount = transactions?.filter((t) => t.status === 'pending').length || 0;
+  const processingCount = transactions?.filter((t) => t.status === 'processing').length || 0;
+  const totalVolume =
+    transactions?.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
@@ -142,7 +155,9 @@ export default function AdminTransactionsPage() {
             <CreditCard className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold">Transaction Management</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">Scalapay transaction approval and risk management system</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Scalapay transaction approval and risk management system
+          </p>
         </motion.div>
 
         {/* Stats Cards */}
@@ -281,7 +296,11 @@ export default function AdminTransactionsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <Building2 className="w-4 h-4" />
-                              <span>{transaction.merchant?.businessName || transaction.merchant?.name || 'Unknown Merchant'}</span>
+                              <span>
+                                {transaction.merchant?.businessName ||
+                                  transaction.merchant?.name ||
+                                  'Unknown Merchant'}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
@@ -294,9 +313,7 @@ export default function AdminTransactionsPage() {
                         <div className="text-lg font-bold text-green-600">
                           {formatCurrency(transaction.amount)}
                         </div>
-                        <Badge variant="outline">
-                          {transaction.paymentPlan}
-                        </Badge>
+                        <Badge variant="outline">{transaction.paymentPlan}</Badge>
                         {transaction.riskScore && (
                           <Badge variant={transaction.riskScore > 70 ? 'destructive' : 'secondary'}>
                             Risk: {transaction.riskScore}%
@@ -304,7 +321,7 @@ export default function AdminTransactionsPage() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -314,7 +331,7 @@ export default function AdminTransactionsPage() {
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
-                      
+
                       {canApprove(transaction) && (
                         <Button
                           variant="default"
@@ -326,7 +343,7 @@ export default function AdminTransactionsPage() {
                           Approve
                         </Button>
                       )}
-                      
+
                       {canReject(transaction) && (
                         <Button
                           variant="destructive"
@@ -369,7 +386,9 @@ export default function AdminTransactionsPage() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
-                        <p className="text-xl font-bold text-green-600">{formatCurrency(selectedTransaction.amount)}</p>
+                        <p className="text-xl font-bold text-green-600">
+                          {formatCurrency(selectedTransaction.amount)}
+                        </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Status</label>
@@ -396,24 +415,36 @@ export default function AdminTransactionsPage() {
                           <label className="text-sm font-medium text-gray-600">Risk Score</label>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-200 rounded-full h-2">
-                              <div 
+                              <div
                                 className={`h-2 rounded-full ${selectedTransaction.riskScore > 70 ? 'bg-red-500' : selectedTransaction.riskScore > 40 ? 'bg-yellow-500' : 'bg-green-500'}`}
                                 style={{ width: `${selectedTransaction.riskScore}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm font-medium">{selectedTransaction.riskScore}%</span>
+                            <span className="text-sm font-medium">
+                              {selectedTransaction.riskScore}%
+                            </span>
                           </div>
                         </div>
                       )}
                       <div>
                         <label className="text-sm font-medium text-gray-600">Customer</label>
                         <div className="space-y-1">
-                          <p className="font-medium">{selectedTransaction.user?.name || 'Unknown'}</p>
-                          <p className="text-sm text-gray-500">{selectedTransaction.user?.email || 'No email'}</p>
+                          <p className="font-medium">
+                            {selectedTransaction.user?.name || 'Unknown'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {selectedTransaction.user?.email || 'No email'}
+                          </p>
                           {selectedTransaction.user?.creditLimit && (
                             <p className="text-sm text-gray-500">
-                              Credit: {formatCurrency(parseFloat(selectedTransaction.user.availableCredit || '0'))} / 
-                              {formatCurrency(parseFloat(selectedTransaction.user.creditLimit || '0'))}
+                              Credit:{' '}
+                              {formatCurrency(
+                                parseFloat(selectedTransaction.user.availableCredit || '0'),
+                              )}{' '}
+                              /
+                              {formatCurrency(
+                                parseFloat(selectedTransaction.user.creditLimit || '0'),
+                              )}
                             </p>
                           )}
                         </div>
@@ -421,10 +452,18 @@ export default function AdminTransactionsPage() {
                       <div>
                         <label className="text-sm font-medium text-gray-600">Merchant</label>
                         <div className="space-y-1">
-                          <p className="font-medium">{selectedTransaction.merchant?.businessName || selectedTransaction.merchant?.name || 'Unknown'}</p>
-                          <p className="text-sm text-gray-500">{selectedTransaction.merchant?.email || 'No email'}</p>
+                          <p className="font-medium">
+                            {selectedTransaction.merchant?.businessName ||
+                              selectedTransaction.merchant?.name ||
+                              'Unknown'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {selectedTransaction.merchant?.email || 'No email'}
+                          </p>
                           {selectedTransaction.merchant?.feePercentage && (
-                            <p className="text-sm text-gray-500">Fee: {selectedTransaction.merchant.feePercentage}%</p>
+                            <p className="text-sm text-gray-500">
+                              Fee: {selectedTransaction.merchant.feePercentage}%
+                            </p>
                           )}
                         </div>
                       </div>
@@ -438,7 +477,10 @@ export default function AdminTransactionsPage() {
                     <h3 className="font-semibold text-lg">Items Purchased</h3>
                     <div className="space-y-3">
                       {selectedTransaction.items.map((item: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        >
                           <div className="flex-1">
                             <p className="font-medium">{item.name}</p>
                             <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
@@ -454,7 +496,9 @@ export default function AdminTransactionsPage() {
                       <div className="border-t pt-3">
                         <div className="flex justify-between items-center font-semibold">
                           <span>Total Amount:</span>
-                          <span className="text-lg text-green-600">{formatCurrency(selectedTransaction.amount)}</span>
+                          <span className="text-lg text-green-600">
+                            {formatCurrency(selectedTransaction.amount)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -467,9 +511,14 @@ export default function AdminTransactionsPage() {
                     <h3 className="font-semibold text-lg">Payment Schedule</h3>
                     <div className="space-y-3">
                       {selectedTransaction.payments.map((payment: any, index: number) => (
-                        <div key={payment.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div
+                          key={payment.id}
+                          className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        >
                           <div className="flex-1">
-                            <p className="font-medium">Payment #{payment.installmentNumber || index + 1}</p>
+                            <p className="font-medium">
+                              Payment #{payment.installmentNumber || index + 1}
+                            </p>
                             <p className="text-sm text-gray-600">
                               Due: {formatDate(payment.dueDate)}
                             </p>
@@ -481,11 +530,13 @@ export default function AdminTransactionsPage() {
                           </div>
                           <div className="text-right">
                             <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                            <Badge 
+                            <Badge
                               variant={
-                                payment.status === 'completed' ? 'default' : 
-                                payment.status === 'failed' ? 'destructive' : 
-                                'secondary'
+                                payment.status === 'completed'
+                                  ? 'default'
+                                  : payment.status === 'failed'
+                                    ? 'destructive'
+                                    : 'secondary'
                               }
                               className="text-xs"
                             >

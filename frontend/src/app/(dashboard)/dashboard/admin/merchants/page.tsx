@@ -12,17 +12,14 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   Store,
   Search,
-  Edit,
   Building2,
   Mail,
   Calendar,
   DollarSign,
-  CreditCard,
   TrendingUp,
-  ShoppingCart,
   Globe,
   Phone,
-  MapPin
+  MapPin,
 } from 'lucide-react';
 
 export default function AdminMerchantsPage() {
@@ -39,32 +36,42 @@ export default function AdminMerchantsPage() {
     queryFn: adminService.getAllTransactions,
   });
 
-  const filteredMerchants = merchants?.filter(merchant =>
-    merchant.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    merchant.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredMerchants =
+    merchants?.filter(
+      (merchant) =>
+        merchant.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        merchant.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || [];
 
   // Calculate merchant stats
   const getMerchantStats = (merchantId: string) => {
-    const merchantTransactions = transactions?.filter(t => t.merchantId === merchantId) || [];
-    const totalRevenue = merchantTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-    const completedTransactions = merchantTransactions.filter(t => t.status === 'completed');
-    const completedRevenue = completedTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-    
+    const merchantTransactions = transactions?.filter((t) => t.merchantId === merchantId) || [];
+    const totalRevenue = merchantTransactions.reduce(
+      (sum, t) => sum + parseFloat(t.amount.toString()),
+      0,
+    );
+    const completedTransactions = merchantTransactions.filter((t) => t.status === 'completed');
+    const completedRevenue = completedTransactions.reduce(
+      (sum, t) => sum + parseFloat(t.amount.toString()),
+      0,
+    );
+
     return {
       totalTransactions: merchantTransactions.length,
       totalRevenue,
       completedTransactions: completedTransactions.length,
       completedRevenue,
-      avgTransactionValue: merchantTransactions.length > 0 ? totalRevenue / merchantTransactions.length : 0
+      avgTransactionValue:
+        merchantTransactions.length > 0 ? totalRevenue / merchantTransactions.length : 0,
     };
   };
 
-  const activeMerchants = merchants?.filter(m => m.isActive).length || 0;
-  const totalRevenue = merchants?.reduce((sum, m) => {
-    const stats = getMerchantStats(m.id);
-    return sum + stats.completedRevenue;
-  }, 0) || 0;
+  const activeMerchants = merchants?.filter((m) => m.isActive).length || 0;
+  const totalRevenue =
+    merchants?.reduce((sum, m) => {
+      const stats = getMerchantStats(m.id);
+      return sum + stats.completedRevenue;
+    }, 0) || 0;
 
   if (isLoading) {
     return (
@@ -90,7 +97,9 @@ export default function AdminMerchantsPage() {
             <Store className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold">Merchant Management</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">Manage merchant accounts and monitor their performance</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage merchant accounts and monitor their performance
+          </p>
         </motion.div>
 
         {/* Stats Cards */}
@@ -168,8 +177,10 @@ export default function AdminMerchantsPage() {
                 whileHover={{ y: -2 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => setSelectedMerchant(merchant)}>
+                <Card
+                  className="h-full hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => setSelectedMerchant(merchant)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="min-w-0 flex-1">
@@ -188,21 +199,21 @@ export default function AdminMerchantsPage() {
                       <Mail className="w-4 h-4" />
                       <span className="truncate">{merchant.email}</span>
                     </div>
-                    
+
                     {merchant.website && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Globe className="w-4 h-4" />
                         <span className="truncate">{merchant.website}</span>
                       </div>
                     )}
-                    
+
                     {merchant.phone && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Phone className="w-4 h-4" />
                         <span>{merchant.phone}</span>
                       </div>
                     )}
-                    
+
                     {merchant.address && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin className="w-4 h-4" />
@@ -213,7 +224,9 @@ export default function AdminMerchantsPage() {
                     <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Revenue</p>
-                        <p className="font-bold text-green-600">{formatCurrency(stats.completedRevenue)}</p>
+                        <p className="font-bold text-green-600">
+                          {formatCurrency(stats.completedRevenue)}
+                        </p>
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600">Transactions</p>
@@ -286,19 +299,27 @@ export default function AdminMerchantsPage() {
                         return (
                           <>
                             <div className="text-center p-4 border rounded-lg">
-                              <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.completedRevenue)}</p>
+                              <p className="text-2xl font-bold text-green-600">
+                                {formatCurrency(stats.completedRevenue)}
+                              </p>
                               <p className="text-sm text-gray-600">Total Revenue</p>
                             </div>
                             <div className="text-center p-4 border rounded-lg">
-                              <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions}</p>
+                              <p className="text-2xl font-bold text-blue-600">
+                                {stats.totalTransactions}
+                              </p>
                               <p className="text-sm text-gray-600">Total Transactions</p>
                             </div>
                             <div className="text-center p-4 border rounded-lg">
-                              <p className="text-2xl font-bold text-purple-600">{stats.completedTransactions}</p>
+                              <p className="text-2xl font-bold text-purple-600">
+                                {stats.completedTransactions}
+                              </p>
                               <p className="text-sm text-gray-600">Completed</p>
                             </div>
                             <div className="text-center p-4 border rounded-lg">
-                              <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats.avgTransactionValue)}</p>
+                              <p className="text-2xl font-bold text-orange-600">
+                                {formatCurrency(stats.avgTransactionValue)}
+                              </p>
                               <p className="text-sm text-gray-600">Avg Transaction</p>
                             </div>
                           </>

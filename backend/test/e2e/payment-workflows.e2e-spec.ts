@@ -56,27 +56,27 @@ describe('Payment Workflows (E2E)', () => {
   afterAll(async () => {
     // Clean up test data
     const dataSource = app.get('DataSource');
-    
+
     try {
       // Clean up in reverse dependency order
       if (testPaymentIds.length > 0) {
         await dataSource.query(
           `DELETE FROM payments WHERE id IN (${testPaymentIds.map(() => '?').join(',')})`,
-          testPaymentIds
+          testPaymentIds,
         );
       }
 
       if (testTransactionIds.length > 0) {
         await dataSource.query(
           `DELETE FROM transactions WHERE id IN (${testTransactionIds.map(() => '?').join(',')})`,
-          testTransactionIds
+          testTransactionIds,
         );
       }
 
       if (testUserIds.length > 0) {
         await dataSource.query(
           `DELETE FROM users WHERE id IN (${testUserIds.map(() => '?').join(',')})`,
-          testUserIds
+          testUserIds,
         );
       }
     } catch (error) {

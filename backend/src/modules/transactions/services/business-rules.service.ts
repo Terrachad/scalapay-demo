@@ -97,9 +97,12 @@ export class BusinessRulesService {
   }
 
   private async validateCreditLimit(user: User, amount: number): Promise<void> {
+    // Allow the transaction to proceed even if credit is insufficient
+    // Stripe payment will be used as fallback when credit is not sufficient
     if (user.availableCredit < amount) {
-      throw new BadRequestException(
-        `Insufficient credit. Available: $${user.availableCredit}, Required: $${amount}`,
+      // Log the insufficient credit but don't throw error
+      console.log(
+        `Insufficient credit for user ${user.id}. Available: $${user.availableCredit}, Required: $${amount}. Will use Stripe payment.`,
       );
     }
 

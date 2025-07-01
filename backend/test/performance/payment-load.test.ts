@@ -41,7 +41,7 @@ describe('Payment System Load Testing', () => {
   afterAll(async () => {
     // Clean up load test data
     const dataSource = app.get('DataSource');
-    
+
     try {
       // Clean up payments created during load tests
       if (testPaymentIds.length > 0) {
@@ -51,7 +51,7 @@ describe('Payment System Load Testing', () => {
           const batch = testPaymentIds.slice(i, i + batchSize);
           await dataSource.query(
             `DELETE FROM payments WHERE id IN (${batch.map(() => '?').join(',')})`,
-            batch
+            batch,
           );
         }
       }
@@ -60,7 +60,7 @@ describe('Payment System Load Testing', () => {
       if (testUserIds.length > 0) {
         await dataSource.query(
           `DELETE FROM users WHERE id IN (${testUserIds.map(() => '?').join(',')})`,
-          testUserIds
+          testUserIds,
         );
       }
     } catch (error) {

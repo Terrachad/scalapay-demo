@@ -46,7 +46,7 @@ export const transactionService = {
   },
 
   async getMyTransactions(): Promise<Transaction[]> {
-    const response = await apiClient.get<{data: Transaction[]}>('/transactions/my');
+    const response = await apiClient.get<{ data: Transaction[] }>('/transactions/my');
     return response.data.data;
   },
 
@@ -56,7 +56,7 @@ export const transactionService = {
   },
 
   async getMerchantTransactions(): Promise<Transaction[]> {
-    const response = await apiClient.get<{data: Transaction[]}>('/transactions/merchant');
+    const response = await apiClient.get<{ data: Transaction[] }>('/transactions/merchant');
     return response.data.data || response.data;
   },
 

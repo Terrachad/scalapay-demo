@@ -79,7 +79,7 @@ export function MainNav() {
   const { getTotalItems, items } = useCartStore();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const cartItemCount = getTotalItems();
 
   const handleLogout = () => {

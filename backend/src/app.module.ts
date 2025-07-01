@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CqrsModule } from '@nestjs/cqrs';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { MerchantsModule } from './modules/merchants/merchants.module';
@@ -52,6 +53,7 @@ import configuration from './config/configuration';
       },
     ]),
     CqrsModule.forRoot(),
+    EventEmitterModule.forRoot(),
     RedisModule,
     DynamoDBModule,
     AuthModule,

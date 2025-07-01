@@ -66,7 +66,9 @@ export default function CheckoutSuccessPage() {
               {transaction && (
                 <>
                   <div className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg">
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Order Number</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Order Number
+                    </p>
                     <p className="font-mono font-bold text-base sm:text-lg">
                       #{transaction.id.slice(0, 8).toUpperCase()}
                     </p>
@@ -80,7 +82,9 @@ export default function CheckoutSuccessPage() {
                           <span className="flex-1 min-w-0 pr-2">
                             {item.name} x{item.quantity}
                           </span>
-                          <span className="flex-shrink-0">{formatCurrency(item.price * item.quantity)}</span>
+                          <span className="flex-shrink-0">
+                            {formatCurrency(item.price * item.quantity)}
+                          </span>
                         </div>
                       ))}
                       <div className="border-t pt-2 mt-2">
@@ -113,7 +117,9 @@ export default function CheckoutSuccessPage() {
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-xs sm:text-sm">{formatCurrency(payment.amount)}</p>
+                            <p className="font-bold text-xs sm:text-sm">
+                              {formatCurrency(payment.amount)}
+                            </p>
                             <Badge
                               variant={index === 0 ? 'default' : 'secondary'}
                               className="text-xs"
@@ -139,7 +145,9 @@ export default function CheckoutSuccessPage() {
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4">
                 <Link href="/dashboard/customer/transactions" className="w-full sm:w-auto">
-                  <Button variant="outline" className="w-full sm:w-auto text-sm">View Order Details</Button>
+                  <Button variant="outline" className="w-full sm:w-auto text-sm">
+                    View Order Details
+                  </Button>
                 </Link>
                 <Link href="/shop" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto text-sm">

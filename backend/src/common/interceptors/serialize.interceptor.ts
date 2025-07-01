@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { plainToClass } from 'class-transformer';
 
 interface ClassConstructor {
-  new (...args: any[]): {};
+  new (...args: any[]): object;
 }
 
 export function Serialize(dto: ClassConstructor) {

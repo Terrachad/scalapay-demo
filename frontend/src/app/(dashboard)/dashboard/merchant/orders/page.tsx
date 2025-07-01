@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { transactionService, Transaction } from '@/services/transaction-service';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  Package, 
+import {
+  Package,
   Calendar,
   DollarSign,
   Clock,
@@ -17,7 +17,6 @@ import {
   AlertCircle,
   ChevronRight,
   Users,
-  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -66,18 +65,18 @@ export default function MerchantOrdersPage() {
 
   const getPaymentProgress = (transaction: Transaction) => {
     if (!transaction.payments || transaction.payments.length === 0) return 0;
-    const completedPayments = transaction.payments.filter(p => p.status === 'completed').length;
+    const completedPayments = transaction.payments.filter((p) => p.status === 'completed').length;
     return Math.round((completedPayments / transaction.payments.length) * 100);
   };
 
   const getTotalRevenue = () => {
     return orders
-      .filter(order => order.status === 'completed')
+      .filter((order) => order.status === 'completed')
       .reduce((sum, order) => sum + order.amount, 0);
   };
 
   const getUniqueCustomers = () => {
-    const customerIds = new Set(orders.map(order => order.id));
+    const customerIds = new Set(orders.map((order) => order.id));
     return customerIds.size;
   };
 
@@ -115,16 +114,10 @@ export default function MerchantOrdersPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Package className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Orders Management
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Orders Management</h1>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
             Track and manage your store orders and payments
@@ -142,7 +135,9 @@ export default function MerchantOrdersPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Orders</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Orders
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {orders.length}
                     </p>
@@ -162,7 +157,9 @@ export default function MerchantOrdersPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Revenue</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Revenue
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {formatCurrency(getTotalRevenue())}
                     </p>
@@ -182,7 +179,9 @@ export default function MerchantOrdersPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Customers</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Customers
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {getUniqueCustomers()}
                     </p>
@@ -204,7 +203,7 @@ export default function MerchantOrdersPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Pending</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {orders.filter(o => ['pending', 'approved'].includes(o.status)).length}
+                      {orders.filter((o) => ['pending', 'approved'].includes(o.status)).length}
                     </p>
                   </div>
                   <Clock className="w-8 h-8 text-yellow-500" />
@@ -232,7 +231,9 @@ export default function MerchantOrdersPage() {
                   <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">
                     No orders yet
                   </h3>
-                  <p className="text-gray-500 mb-4">Orders will appear here when customers make purchases</p>
+                  <p className="text-gray-500 mb-4">
+                    Orders will appear here when customers make purchases
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -261,7 +262,9 @@ export default function MerchantOrdersPage() {
                           <p className="text-lg font-bold text-gray-900 dark:text-white">
                             {formatCurrency(order.amount)}
                           </p>
-                          <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+                          <Badge
+                            className={statusColors[order.status as keyof typeof statusColors]}
+                          >
                             <span className="flex items-center gap-1">
                               {getStatusIcon(order.status)}
                               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -272,22 +275,28 @@ export default function MerchantOrdersPage() {
 
                       <div className="grid md:grid-cols-4 gap-4 mb-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Payment Plan</p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Payment Plan
+                          </p>
                           <p className="text-sm text-gray-900 dark:text-white">
                             {order.paymentPlan.replace('_', ' ').toUpperCase()}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Order Date</p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Order Date
+                          </p>
                           <p className="text-sm text-gray-900 dark:text-white">
                             {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Payment Progress</p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Payment Progress
+                          </p>
                           <div className="flex items-center gap-2">
                             <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div 
+                              <div
                                 className="bg-primary h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${getPaymentProgress(order)}%` }}
                               />
@@ -298,7 +307,9 @@ export default function MerchantOrdersPage() {
                           </div>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Customer Email</p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Customer Email
+                          </p>
                           <p className="text-sm text-gray-900 dark:text-white">
                             {order.user?.email || 'N/A'}
                           </p>
@@ -306,7 +317,9 @@ export default function MerchantOrdersPage() {
                       </div>
 
                       <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Items Ordered</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                          Items Ordered
+                        </p>
                         <div className="space-y-1">
                           {order.items.map((item, index) => (
                             <div key={index} className="flex justify-between text-sm">
@@ -323,10 +336,15 @@ export default function MerchantOrdersPage() {
 
                       {order.payments && order.payments.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Payment Schedule</p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                            Payment Schedule
+                          </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                             {order.payments.slice(0, 3).map((payment, index) => (
-                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                              >
                                 <div>
                                   <p className="text-xs text-gray-600 dark:text-gray-300">
                                     Payment {index + 1}
@@ -335,7 +353,7 @@ export default function MerchantOrdersPage() {
                                     {formatCurrency(payment.amount)}
                                   </p>
                                 </div>
-                                <Badge 
+                                <Badge
                                   variant={payment.status === 'completed' ? 'default' : 'secondary'}
                                   className="text-xs"
                                 >

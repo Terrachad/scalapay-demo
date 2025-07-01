@@ -87,7 +87,10 @@ async function seedDemoUsers() {
       console.log(`✅ Created demo merchant: ${demoMerchant.name}`);
     }
   } catch (error) {
-    console.error(`❌ Failed to create/update merchant ${demoMerchant.name}:`, error instanceof Error ? error.message : String(error));
+    console.error(
+      `❌ Failed to create/update merchant ${demoMerchant.name}:`,
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   console.log('🎉 Demo user seeding completed!');

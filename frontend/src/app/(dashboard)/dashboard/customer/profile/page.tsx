@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,23 +14,20 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth-store';
 import { transactionService } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { 
+import {
   User,
   CreditCard,
   Bell,
-  Shield,
   Save,
   Edit,
   Mail,
   Phone,
-  MapPin,
-  Calendar,
   DollarSign,
   TrendingUp,
   ShoppingBag,
   CheckCircle,
   Clock,
-  Settings
+  Settings,
 } from 'lucide-react';
 
 export default function CustomerProfilePage() {
@@ -70,7 +67,7 @@ export default function CustomerProfilePage() {
   // Load user data into form
   useEffect(() => {
     if (user) {
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
         name: user.name || '',
         email: user.email || '',
@@ -79,28 +76,34 @@ export default function CustomerProfilePage() {
   }, [user]);
 
   // Calculate stats
-  const totalSpent = transactions ? 
-    transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) : 0;
-  
-  const completedTransactions = transactions ? 
-    transactions.filter(t => t.status === 'completed').length : 0;
-  
-  const creditUsage = user ? 
-    ((parseFloat(user.creditLimit.toString()) - parseFloat(user.availableCredit.toString())) / 
-     parseFloat(user.creditLimit.toString())) * 100 : 0;
+  const totalSpent = transactions
+    ? transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0)
+    : 0;
 
-  const upcomingPayments = transactions ? 
-    transactions.flatMap(t => t.payments || [])
-      .filter(p => p.status === 'scheduled')
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .slice(0, 3) : [];
+  const completedTransactions = transactions
+    ? transactions.filter((t) => t.status === 'completed').length
+    : 0;
+
+  const creditUsage = user
+    ? ((parseFloat(user.creditLimit.toString()) - parseFloat(user.availableCredit.toString())) /
+        parseFloat(user.creditLimit.toString())) *
+      100
+    : 0;
+
+  const upcomingPayments = transactions
+    ? transactions
+        .flatMap((t) => t.payments || [])
+        .filter((p) => p.status === 'scheduled')
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+        .slice(0, 3)
+    : [];
 
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
       // Simulate API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Update local user state
       if (user) {
         setUser({
@@ -109,16 +112,16 @@ export default function CustomerProfilePage() {
           email: profileData.email,
         });
       }
-      
+
       toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+        title: 'Profile updated',
+        description: 'Your profile has been updated successfully.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update profile. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -128,16 +131,16 @@ export default function CustomerProfilePage() {
   const handleSaveNotifications = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       toast({
-        title: "Notification settings saved",
-        description: "Your notification preferences have been updated.",
+        title: 'Notification settings saved',
+        description: 'Your notification preferences have been updated.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save notification settings.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save notification settings.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -147,16 +150,16 @@ export default function CustomerProfilePage() {
   const handleSaveSecurity = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       toast({
-        title: "Security settings saved",
-        description: "Your security settings have been updated.",
+        title: 'Security settings saved',
+        description: 'Your security settings have been updated.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save security settings.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save security settings.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -167,11 +170,7 @@ export default function CustomerProfilePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <User className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
@@ -270,7 +269,9 @@ export default function CustomerProfilePage() {
                           <Input
                             id="name"
                             value={profileData.name}
-                            onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                            onChange={(e) =>
+                              setProfileData({ ...profileData, name: e.target.value })
+                            }
                             placeholder="Enter your full name"
                           />
                         </div>
@@ -280,7 +281,9 @@ export default function CustomerProfilePage() {
                             id="email"
                             type="email"
                             value={profileData.email}
-                            onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                            onChange={(e) =>
+                              setProfileData({ ...profileData, email: e.target.value })
+                            }
                             placeholder="Enter your email"
                           />
                         </div>
@@ -289,7 +292,9 @@ export default function CustomerProfilePage() {
                           <Input
                             id="phone"
                             value={profileData.phone}
-                            onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                            onChange={(e) =>
+                              setProfileData({ ...profileData, phone: e.target.value })
+                            }
                             placeholder="Enter your phone number"
                           />
                         </div>
@@ -299,7 +304,9 @@ export default function CustomerProfilePage() {
                             id="dob"
                             type="date"
                             value={profileData.dateOfBirth}
-                            onChange={(e) => setProfileData({...profileData, dateOfBirth: e.target.value})}
+                            onChange={(e) =>
+                              setProfileData({ ...profileData, dateOfBirth: e.target.value })
+                            }
                           />
                         </div>
                       </div>
@@ -308,7 +315,9 @@ export default function CustomerProfilePage() {
                         <Input
                           id="address"
                           value={profileData.address}
-                          onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({ ...profileData, address: e.target.value })
+                          }
                           placeholder="Enter your address"
                         />
                       </div>
@@ -320,7 +329,9 @@ export default function CustomerProfilePage() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <span>Credit Limit</span>
-                          <span className="font-bold">{formatCurrency(parseFloat(user?.creditLimit?.toString() || '0'))}</span>
+                          <span className="font-bold">
+                            {formatCurrency(parseFloat(user?.creditLimit?.toString() || '0'))}
+                          </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span>Available Credit</span>
@@ -352,23 +363,48 @@ export default function CustomerProfilePage() {
                       <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
                       <div className="space-y-4">
                         {[
-                          { key: 'paymentReminders', label: 'Payment Reminders', description: 'Get notified about upcoming payments' },
-                          { key: 'orderUpdates', label: 'Order Updates', description: 'Receive updates about your orders' },
-                          { key: 'promotions', label: 'Promotions & Offers', description: 'Get notified about special deals' },
-                          { key: 'newsletter', label: 'Newsletter', description: 'Receive our monthly newsletter' },
+                          {
+                            key: 'paymentReminders',
+                            label: 'Payment Reminders',
+                            description: 'Get notified about upcoming payments',
+                          },
+                          {
+                            key: 'orderUpdates',
+                            label: 'Order Updates',
+                            description: 'Receive updates about your orders',
+                          },
+                          {
+                            key: 'promotions',
+                            label: 'Promotions & Offers',
+                            description: 'Get notified about special deals',
+                          },
+                          {
+                            key: 'newsletter',
+                            label: 'Newsletter',
+                            description: 'Receive our monthly newsletter',
+                          },
                         ].map((item) => (
-                          <div key={item.key} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div
+                            key={item.key}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
                             <div>
                               <p className="font-medium">{item.label}</p>
                               <p className="text-sm text-gray-600">{item.description}</p>
                             </div>
                             <input
                               type="checkbox"
-                              checked={notificationSettings[item.key as keyof typeof notificationSettings] as boolean}
-                              onChange={(e) => setNotificationSettings({
-                                ...notificationSettings,
-                                [item.key]: e.target.checked
-                              })}
+                              checked={
+                                notificationSettings[
+                                  item.key as keyof typeof notificationSettings
+                                ] as boolean
+                              }
+                              onChange={(e) =>
+                                setNotificationSettings({
+                                  ...notificationSettings,
+                                  [item.key]: e.target.checked,
+                                })
+                              }
                               className="w-4 h-4"
                             />
                           </div>
@@ -384,18 +420,27 @@ export default function CustomerProfilePage() {
                           { key: 'sms', label: 'SMS', icon: Phone },
                           { key: 'push', label: 'Push Notifications', icon: Bell },
                         ].map((method) => (
-                          <div key={method.key} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div
+                            key={method.key}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
                             <div className="flex items-center gap-3">
                               <method.icon className="w-4 h-4" />
                               <span className="font-medium">{method.label}</span>
                             </div>
                             <input
                               type="checkbox"
-                              checked={notificationSettings[method.key as keyof typeof notificationSettings] as boolean}
-                              onChange={(e) => setNotificationSettings({
-                                ...notificationSettings,
-                                [method.key]: e.target.checked
-                              })}
+                              checked={
+                                notificationSettings[
+                                  method.key as keyof typeof notificationSettings
+                                ] as boolean
+                              }
+                              onChange={(e) =>
+                                setNotificationSettings({
+                                  ...notificationSettings,
+                                  [method.key]: e.target.checked,
+                                })
+                              }
                               className="w-4 h-4"
                             />
                           </div>
@@ -422,13 +467,20 @@ export default function CustomerProfilePage() {
                             <p className="text-sm text-gray-600">Add an extra layer of security</p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <Badge variant={securitySettings.twoFactorEnabled ? "default" : "secondary"}>
-                              {securitySettings.twoFactorEnabled ? "Enabled" : "Disabled"}
+                            <Badge
+                              variant={securitySettings.twoFactorEnabled ? 'default' : 'secondary'}
+                            >
+                              {securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}
                             </Badge>
                             <input
                               type="checkbox"
                               checked={securitySettings.twoFactorEnabled}
-                              onChange={(e) => setSecuritySettings({...securitySettings, twoFactorEnabled: e.target.checked})}
+                              onChange={(e) =>
+                                setSecuritySettings({
+                                  ...securitySettings,
+                                  twoFactorEnabled: e.target.checked,
+                                })
+                              }
                               className="w-4 h-4"
                             />
                           </div>
@@ -442,7 +494,12 @@ export default function CustomerProfilePage() {
                           <input
                             type="checkbox"
                             checked={securitySettings.loginNotifications}
-                            onChange={(e) => setSecuritySettings({...securitySettings, loginNotifications: e.target.checked})}
+                            onChange={(e) =>
+                              setSecuritySettings({
+                                ...securitySettings,
+                                loginNotifications: e.target.checked,
+                              })
+                            }
                             className="w-4 h-4"
                           />
                         </div>
@@ -452,7 +509,12 @@ export default function CustomerProfilePage() {
                           <Input
                             id="sessionTimeout"
                             value={securitySettings.sessionTimeout}
-                            onChange={(e) => setSecuritySettings({...securitySettings, sessionTimeout: e.target.value})}
+                            onChange={(e) =>
+                              setSecuritySettings({
+                                ...securitySettings,
+                                sessionTimeout: e.target.value,
+                              })
+                            }
                             placeholder="30"
                           />
                         </div>
@@ -501,7 +563,9 @@ export default function CustomerProfilePage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Member Since</span>
-                    <span className="text-sm font-medium">{formatDate(user?.createdAt || new Date().toISOString())}</span>
+                    <span className="text-sm font-medium">
+                      {formatDate(user?.createdAt || new Date().toISOString())}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Verification Status</span>
@@ -525,7 +589,9 @@ export default function CustomerProfilePage() {
                     {upcomingPayments.map((payment) => (
                       <div key={payment.id} className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{formatCurrency(parseFloat(payment.amount.toString()))}</p>
+                          <p className="font-medium">
+                            {formatCurrency(parseFloat(payment.amount.toString()))}
+                          </p>
                           <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
                         </div>
                         <Clock className="w-4 h-4 text-gray-400" />

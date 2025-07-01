@@ -11,9 +11,14 @@ import { BusinessRulesService } from './services/business-rules.service';
 import { PaymentSchedulerService } from './services/payment-scheduler.service';
 import { TransactionStateMachineService } from './services/transaction-state-machine.service';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction, User, Merchant, Payment]), WebSocketModule],
+  imports: [
+    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment]), 
+    WebSocketModule,
+    PaymentsModule,
+  ],
   controllers: [TransactionsController],
   providers: [
     TransactionsService,

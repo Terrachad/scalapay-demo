@@ -25,8 +25,8 @@ export default () => ({
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY || 'sk_test_demo_key',
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_demo_secret',
+    secretKey: process.env.STRIPE_SECRET_KEY || 'sk_test_51Rf1hcP1x4I62TtzPrlCtiRHmO9hIZVy6e2mKjeQ1W612fII0HFu042gN2JT9GWkUw2iEsZ8MiqeTWk2EyjK9NtV000Tz4wWsM',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_971f8d8db7eb8378330c0aa262d97f7baaecec70c9517929211ac3b252d305db',
   },
   integrations: {
     experian: {

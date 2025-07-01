@@ -125,11 +125,21 @@ describe('TransactionsService', () => {
         user: { id: 'user-123' },
       };
 
+      mockMerchantRepository.findOne.mockResolvedValue({
+        id: 'merchant-123',
+        businessName: 'Test Merchant',
+      });
       mockBusinessRulesService.validateTransactionCreation.mockResolvedValue(true);
       mockRepository.create.mockReturnValue(mockTransaction);
       mockRepository.save.mockResolvedValue(mockTransaction);
       mockPaymentSchedulerService.createPaymentSchedule.mockResolvedValue(undefined);
-      mockUserRepository.findOne.mockResolvedValue({ id: 'user-123', availableCredit: 1000 });
+      // Mock for calculateRiskScore
+      mockUserRepository.findOne.mockResolvedValue({
+        id: 'user-123',
+        availableCredit: 1000,
+        creditLimit: 2000,
+      });
+      mockRepository.find.mockResolvedValue([]); // No previous transactions for risk calculation
       mockUserRepository.save.mockResolvedValue(undefined);
       mockRepository.findOne.mockResolvedValue(completeTransaction);
 

@@ -11,7 +11,6 @@ import {
   Request,
   HttpStatus,
   HttpException,
-  UseInterceptors,
   ValidationPipe,
   UsePipes,
 } from '@nestjs/common';
@@ -21,8 +20,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -254,8 +251,14 @@ export class TransactionsController {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
 
-    if (transaction.status !== TransactionStatus.PENDING && transaction.status !== TransactionStatus.PROCESSING) {
-      throw new HttpException('Transaction cannot be approved in current status', HttpStatus.BAD_REQUEST);
+    if (
+      transaction.status !== TransactionStatus.PENDING &&
+      transaction.status !== TransactionStatus.PROCESSING
+    ) {
+      throw new HttpException(
+        'Transaction cannot be approved in current status',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
@@ -280,8 +283,14 @@ export class TransactionsController {
       throw new HttpException('Transaction not found', HttpStatus.NOT_FOUND);
     }
 
-    if (transaction.status !== TransactionStatus.PENDING && transaction.status !== TransactionStatus.PROCESSING) {
-      throw new HttpException('Transaction cannot be rejected in current status', HttpStatus.BAD_REQUEST);
+    if (
+      transaction.status !== TransactionStatus.PENDING &&
+      transaction.status !== TransactionStatus.PROCESSING
+    ) {
+      throw new HttpException(
+        'Transaction cannot be rejected in current status',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {

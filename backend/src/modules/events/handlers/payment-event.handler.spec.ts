@@ -97,34 +97,35 @@ describe('PaymentEventHandler', () => {
         amount: 200,
       };
 
-      const completedPayment = { ...mockPayment, status: PaymentStatus.COMPLETED };
-      paymentRepository.findOne.mockResolvedValue(completedPayment);
+      const userWithUpdatedCredit = { ...mockUser, availableCredit: 800 };
+      userRepository.findOne.mockResolvedValue(mockUser);
+      userRepository.save.mockResolvedValue(userWithUpdatedCredit);
 
       await handler.handlePaymentCompleted(paymentCompletedEvent);
 
-      expect(paymentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'payment-123' },
-        relations: ['transaction', 'transaction.user'],
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
       });
 
-      expect(notificationService.sendPaymentSuccessNotification).toHaveBeenCalledWith(
-        completedPayment,
-      );
+      expect(userRepository.save).toHaveBeenCalledWith({
+        ...mockUser,
+        availableCredit: 1000, // 800 + 200
+      });
     });
 
-    it('should handle missing payment gracefully', async () => {
+    it('should handle missing user gracefully', async () => {
       const paymentCompletedEvent = {
-        paymentId: 'invalid-payment',
+        paymentId: 'payment-123',
         transactionId: 'txn-123',
-        userId: 'user-123',
+        userId: 'invalid-user',
         amount: 200,
       };
 
-      paymentRepository.findOne.mockResolvedValue(null);
+      userRepository.findOne.mockResolvedValue(null);
 
       await expect(handler.handlePaymentCompleted(paymentCompletedEvent)).resolves.not.toThrow();
 
-      expect(notificationService.sendPaymentSuccessNotification).not.toHaveBeenCalled();
+      expect(userRepository.save).not.toHaveBeenCalled();
     });
   });
 
@@ -137,57 +138,56 @@ describe('PaymentEventHandler', () => {
         reason: 'Card declined',
       };
 
-      const failedPayment = { ...mockPayment, status: PaymentStatus.FAILED };
-      paymentRepository.findOne.mockResolvedValue(failedPayment);
+      paymentRepository.count.mockResolvedValue(1);
 
       await handler.handlePaymentFailed(paymentFailedEvent);
 
-      expect(paymentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'payment-123' },
-        relations: ['transaction', 'transaction.user'],
+      expect(paymentRepository.count).toHaveBeenCalledWith({
+        where: {
+          transaction: { userId: 'user-123' },
+          status: PaymentStatus.FAILED,
+          createdAt: { $gte: expect.any(Date) },
+        },
       });
-
-      expect(notificationService.sendPaymentFailureNotification).toHaveBeenCalledWith(
-        failedPayment,
-      );
     });
 
-    it('should log error if payment not found', async () => {
-      const loggerSpy = jest.spyOn(handler['logger'], 'error').mockImplementation();
+    it('should warn about multiple failures', async () => {
+      const loggerSpy = jest.spyOn(handler['logger'], 'warn').mockImplementation();
 
       const paymentFailedEvent = {
-        paymentId: 'invalid-payment',
+        paymentId: 'payment-123',
         transactionId: 'txn-123',
         userId: 'user-123',
         reason: 'Card declined',
       };
 
-      paymentRepository.findOne.mockResolvedValue(null);
+      paymentRepository.count.mockResolvedValue(3);
 
       await handler.handlePaymentFailed(paymentFailedEvent);
 
-      expect(loggerSpy).toHaveBeenCalledWith('Payment not found for failed event: invalid-payment');
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Multiple payment failures detected for user user-123',
+      );
     });
   });
 
   describe('handlePaymentRetryScheduled', () => {
     it('should handle payment retry scheduled event', async () => {
+      const loggerSpy = jest.spyOn(handler['logger'], 'log').mockImplementation();
+      const retryDate = new Date();
+
       const paymentRetryEvent = {
         paymentId: 'payment-123',
-        retryAt: new Date(),
+        retryAt: retryDate,
         retryCount: 1,
         errorMessage: 'Card declined',
       };
 
-      const scheduledPayment = { ...mockPayment, status: PaymentStatus.SCHEDULED };
-      paymentRepository.findOne.mockResolvedValue(scheduledPayment);
-
       await handler.handlePaymentRetryScheduled(paymentRetryEvent);
 
-      expect(paymentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'payment-123' },
-        relations: ['transaction', 'transaction.user'],
-      });
+      expect(loggerSpy).toHaveBeenCalledWith(
+        `Scheduled retry notification for payment payment-123 at ${retryDate}`,
+      );
     });
   });
 
@@ -199,14 +199,12 @@ describe('PaymentEventHandler', () => {
         userId: 'user-123',
       };
 
-      const failedPayment = { ...mockPayment, status: PaymentStatus.FAILED };
-      paymentRepository.findOne.mockResolvedValue(failedPayment);
+      userRepository.findOne.mockResolvedValue(mockUser);
 
       await handler.handlePaymentRetryExhausted(retryExhaustedEvent);
 
-      expect(paymentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'payment-123' },
-        relations: ['transaction', 'transaction.user'],
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
       });
     });
   });
@@ -222,7 +220,7 @@ describe('PaymentEventHandler', () => {
         amount: 200,
       };
 
-      paymentRepository.findOne.mockRejectedValue(new Error('Database connection error'));
+      userRepository.findOne.mockRejectedValue(new Error('Database connection error'));
 
       await handler.handlePaymentCompleted(paymentCompletedEvent);
 

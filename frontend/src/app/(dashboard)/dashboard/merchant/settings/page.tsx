@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { merchantService } from '@/services/merchant-service';
-import { 
+import {
   Settings,
   Store,
   CreditCard,
@@ -19,22 +19,16 @@ import {
   Shield,
   Key,
   Save,
-  Upload,
-  Globe,
   Mail,
   Phone,
-  MapPin,
-  DollarSign,
-  Percent,
-  Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 
 export default function MerchantSettingsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  
+
   const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ['merchant-profile'],
     queryFn: merchantService.getProfile,
@@ -48,18 +42,18 @@ export default function MerchantSettingsPage() {
     website: 'https://demo-electronics.com',
     description: 'Premium electronics and gadgets for tech enthusiasts',
     feePercentage: '2.50',
-    isActive: true
+    isActive: true,
   });
 
   // Update form when profile data loads
   useEffect(() => {
     if (profile) {
-      setStoreSettings(prev => ({
+      setStoreSettings((prev) => ({
         ...prev,
         businessName: profile.businessName || '',
         email: profile.email || '',
         feePercentage: profile.feePercentage || '2.50',
-        isActive: profile.isActive ?? true
+        isActive: profile.isActive ?? true,
       }));
     }
   }, [profile]);
@@ -71,7 +65,7 @@ export default function MerchantSettingsPage() {
     minimumAmount: '50.00',
     maximumAmount: '5000.00',
     autoApprove: true,
-    requireManualReview: false
+    requireManualReview: false,
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -83,7 +77,7 @@ export default function MerchantSettingsPage() {
     monthlyReport: true,
     email: true,
     sms: false,
-    inApp: true
+    inApp: true,
   });
 
   const [securitySettings, setSecuritySettings] = useState({
@@ -91,7 +85,7 @@ export default function MerchantSettingsPage() {
     sessionTimeout: '30',
     ipWhitelist: '',
     webhookUrl: 'https://api.demo-electronics.com/webhooks/scalapay',
-    apiKey: 'sk_live_*********************'
+    apiKey: 'sk_live_*********************',
   });
 
   const handleSaveStoreSettings = async () => {
@@ -102,19 +96,19 @@ export default function MerchantSettingsPage() {
         email: storeSettings.email,
         name: storeSettings.businessName, // Use businessName as name
       });
-      
+
       await refetchProfile(); // Refresh the profile data
-      
+
       toast({
-        title: "Settings saved",
-        description: "Your store settings have been updated successfully.",
+        title: 'Settings saved',
+        description: 'Your store settings have been updated successfully.',
       });
     } catch (error) {
       console.error('Failed to save profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save settings. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -126,14 +120,14 @@ export default function MerchantSettingsPage() {
     try {
       await merchantService.updatePaymentSettings(paymentSettings);
       toast({
-        title: "Payment settings saved",
-        description: "Your payment configuration has been updated.",
+        title: 'Payment settings saved',
+        description: 'Your payment configuration has been updated.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save payment settings.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save payment settings.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -145,14 +139,14 @@ export default function MerchantSettingsPage() {
     try {
       await merchantService.updateNotificationSettings(notificationSettings);
       toast({
-        title: "Notification settings saved",
-        description: "Your notification preferences have been updated.",
+        title: 'Notification settings saved',
+        description: 'Your notification preferences have been updated.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save notification settings.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save notification settings.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -164,14 +158,14 @@ export default function MerchantSettingsPage() {
     try {
       await merchantService.updateSecuritySettings(securitySettings);
       toast({
-        title: "Security settings saved",
-        description: "Your security configuration has been updated.",
+        title: 'Security settings saved',
+        description: 'Your security configuration has been updated.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to save security settings.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save security settings.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -182,16 +176,16 @@ export default function MerchantSettingsPage() {
     setLoading(true);
     try {
       const { apiKey } = await merchantService.regenerateApiKey();
-      setSecuritySettings(prev => ({ ...prev, apiKey }));
+      setSecuritySettings((prev) => ({ ...prev, apiKey }));
       toast({
-        title: "API key regenerated",
-        description: "Your new API key has been generated successfully.",
+        title: 'API key regenerated',
+        description: 'Your new API key has been generated successfully.',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to regenerate API key.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to regenerate API key.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -202,16 +196,10 @@ export default function MerchantSettingsPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Settings className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Store Settings
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Store Settings</h1>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
             Manage your store configuration and preferences
@@ -253,7 +241,9 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="businessName"
                             value={storeSettings.businessName}
-                            onChange={(e) => setStoreSettings({...storeSettings, businessName: e.target.value})}
+                            onChange={(e) =>
+                              setStoreSettings({ ...storeSettings, businessName: e.target.value })
+                            }
                             placeholder="Your business name"
                           />
                         </div>
@@ -263,7 +253,9 @@ export default function MerchantSettingsPage() {
                             id="email"
                             type="email"
                             value={storeSettings.email}
-                            onChange={(e) => setStoreSettings({...storeSettings, email: e.target.value})}
+                            onChange={(e) =>
+                              setStoreSettings({ ...storeSettings, email: e.target.value })
+                            }
                             placeholder="contact@yourbusiness.com"
                           />
                         </div>
@@ -272,7 +264,9 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="phone"
                             value={storeSettings.phone}
-                            onChange={(e) => setStoreSettings({...storeSettings, phone: e.target.value})}
+                            onChange={(e) =>
+                              setStoreSettings({ ...storeSettings, phone: e.target.value })
+                            }
                             placeholder="+1 (555) 123-4567"
                           />
                         </div>
@@ -281,18 +275,22 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="website"
                             value={storeSettings.website}
-                            onChange={(e) => setStoreSettings({...storeSettings, website: e.target.value})}
+                            onChange={(e) =>
+                              setStoreSettings({ ...storeSettings, website: e.target.value })
+                            }
                             placeholder="https://yourbusiness.com"
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="address">Business Address</Label>
                         <Input
                           id="address"
                           value={storeSettings.address}
-                          onChange={(e) => setStoreSettings({...storeSettings, address: e.target.value})}
+                          onChange={(e) =>
+                            setStoreSettings({ ...storeSettings, address: e.target.value })
+                          }
                           placeholder="123 Business Street, City, State, ZIP"
                         />
                       </div>
@@ -303,7 +301,9 @@ export default function MerchantSettingsPage() {
                           id="description"
                           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           value={storeSettings.description}
-                          onChange={(e) => setStoreSettings({...storeSettings, description: e.target.value})}
+                          onChange={(e) =>
+                            setStoreSettings({ ...storeSettings, description: e.target.value })
+                          }
                           placeholder="Describe your business..."
                         />
                       </div>
@@ -314,16 +314,20 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="feePercentage"
                             value={storeSettings.feePercentage}
-                            onChange={(e) => setStoreSettings({...storeSettings, feePercentage: e.target.value})}
+                            onChange={(e) =>
+                              setStoreSettings({ ...storeSettings, feePercentage: e.target.value })
+                            }
                             placeholder="2.50"
                             disabled
                           />
-                          <p className="text-sm text-gray-500">Contact support to modify commission rates</p>
+                          <p className="text-sm text-gray-500">
+                            Contact support to modify commission rates
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label>Store Status</Label>
                           <div className="flex items-center gap-2">
-                            <Badge variant={storeSettings.isActive ? "default" : "secondary"}>
+                            <Badge variant={storeSettings.isActive ? 'default' : 'secondary'}>
                               {storeSettings.isActive ? (
                                 <>
                                   <CheckCircle className="w-3 h-3 mr-1" />
@@ -371,16 +375,23 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={paymentSettings.enablePayIn2}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, enablePayIn2: e.target.checked})}
+                                onChange={(e) =>
+                                  setPaymentSettings({
+                                    ...paymentSettings,
+                                    enablePayIn2: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Pay in 2</p>
-                                <p className="text-sm text-gray-600">Split payment into 2 installments</p>
+                                <p className="text-sm text-gray-600">
+                                  Split payment into 2 installments
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={paymentSettings.enablePayIn2 ? "default" : "secondary"}>
-                              {paymentSettings.enablePayIn2 ? "Enabled" : "Disabled"}
+                            <Badge variant={paymentSettings.enablePayIn2 ? 'default' : 'secondary'}>
+                              {paymentSettings.enablePayIn2 ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
 
@@ -389,16 +400,23 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={paymentSettings.enablePayIn3}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, enablePayIn3: e.target.checked})}
+                                onChange={(e) =>
+                                  setPaymentSettings({
+                                    ...paymentSettings,
+                                    enablePayIn3: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Pay in 3</p>
-                                <p className="text-sm text-gray-600">Split payment into 3 installments</p>
+                                <p className="text-sm text-gray-600">
+                                  Split payment into 3 installments
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={paymentSettings.enablePayIn3 ? "default" : "secondary"}>
-                              {paymentSettings.enablePayIn3 ? "Enabled" : "Disabled"}
+                            <Badge variant={paymentSettings.enablePayIn3 ? 'default' : 'secondary'}>
+                              {paymentSettings.enablePayIn3 ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
 
@@ -407,16 +425,23 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={paymentSettings.enablePayIn4}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, enablePayIn4: e.target.checked})}
+                                onChange={(e) =>
+                                  setPaymentSettings({
+                                    ...paymentSettings,
+                                    enablePayIn4: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Pay in 4</p>
-                                <p className="text-sm text-gray-600">Split payment into 4 installments</p>
+                                <p className="text-sm text-gray-600">
+                                  Split payment into 4 installments
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={paymentSettings.enablePayIn4 ? "default" : "secondary"}>
-                              {paymentSettings.enablePayIn4 ? "Enabled" : "Disabled"}
+                            <Badge variant={paymentSettings.enablePayIn4 ? 'default' : 'secondary'}>
+                              {paymentSettings.enablePayIn4 ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
                         </div>
@@ -428,7 +453,12 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="minimumAmount"
                             value={paymentSettings.minimumAmount}
-                            onChange={(e) => setPaymentSettings({...paymentSettings, minimumAmount: e.target.value})}
+                            onChange={(e) =>
+                              setPaymentSettings({
+                                ...paymentSettings,
+                                minimumAmount: e.target.value,
+                              })
+                            }
                             placeholder="50.00"
                           />
                         </div>
@@ -437,7 +467,12 @@ export default function MerchantSettingsPage() {
                           <Input
                             id="maximumAmount"
                             value={paymentSettings.maximumAmount}
-                            onChange={(e) => setPaymentSettings({...paymentSettings, maximumAmount: e.target.value})}
+                            onChange={(e) =>
+                              setPaymentSettings({
+                                ...paymentSettings,
+                                maximumAmount: e.target.value,
+                              })
+                            }
                             placeholder="5000.00"
                           />
                         </div>
@@ -451,12 +486,19 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={paymentSettings.autoApprove}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, autoApprove: e.target.checked})}
+                                onChange={(e) =>
+                                  setPaymentSettings({
+                                    ...paymentSettings,
+                                    autoApprove: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Auto-approve orders</p>
-                                <p className="text-sm text-gray-600">Automatically approve eligible orders</p>
+                                <p className="text-sm text-gray-600">
+                                  Automatically approve eligible orders
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -466,12 +508,19 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={paymentSettings.requireManualReview}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, requireManualReview: e.target.checked})}
+                                onChange={(e) =>
+                                  setPaymentSettings({
+                                    ...paymentSettings,
+                                    requireManualReview: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Require manual review</p>
-                                <p className="text-sm text-gray-600">Flag high-value orders for manual review</p>
+                                <p className="text-sm text-gray-600">
+                                  Flag high-value orders for manual review
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -505,19 +554,40 @@ export default function MerchantSettingsPage() {
                         <h3 className="text-lg font-semibold">Transaction Notifications</h3>
                         <div className="space-y-3">
                           {[
-                            { key: 'newOrders', label: 'New Orders', description: 'Get notified when customers place new orders' },
-                            { key: 'paymentReceived', label: 'Payment Received', description: 'Get notified when payments are processed' },
-                            { key: 'paymentFailed', label: 'Payment Failed', description: 'Get notified when payments fail' }
+                            {
+                              key: 'newOrders',
+                              label: 'New Orders',
+                              description: 'Get notified when customers place new orders',
+                            },
+                            {
+                              key: 'paymentReceived',
+                              label: 'Payment Received',
+                              description: 'Get notified when payments are processed',
+                            },
+                            {
+                              key: 'paymentFailed',
+                              label: 'Payment Failed',
+                              description: 'Get notified when payments fail',
+                            },
                           ].map((item) => (
-                            <div key={item.key} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div
+                              key={item.key}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
                               <div className="flex items-center gap-3">
                                 <input
                                   type="checkbox"
-                                  checked={notificationSettings[item.key as keyof typeof notificationSettings] as boolean}
-                                  onChange={(e) => setNotificationSettings({
-                                    ...notificationSettings,
-                                    [item.key]: e.target.checked
-                                  })}
+                                  checked={
+                                    notificationSettings[
+                                      item.key as keyof typeof notificationSettings
+                                    ] as boolean
+                                  }
+                                  onChange={(e) =>
+                                    setNotificationSettings({
+                                      ...notificationSettings,
+                                      [item.key]: e.target.checked,
+                                    })
+                                  }
                                   className="w-4 h-4"
                                 />
                                 <div>
@@ -534,19 +604,40 @@ export default function MerchantSettingsPage() {
                         <h3 className="text-lg font-semibold">Report Notifications</h3>
                         <div className="space-y-3">
                           {[
-                            { key: 'dailySummary', label: 'Daily Summary', description: 'Daily overview of transactions and revenue' },
-                            { key: 'weeklyReport', label: 'Weekly Report', description: 'Weekly performance and analytics report' },
-                            { key: 'monthlyReport', label: 'Monthly Report', description: 'Comprehensive monthly business report' }
+                            {
+                              key: 'dailySummary',
+                              label: 'Daily Summary',
+                              description: 'Daily overview of transactions and revenue',
+                            },
+                            {
+                              key: 'weeklyReport',
+                              label: 'Weekly Report',
+                              description: 'Weekly performance and analytics report',
+                            },
+                            {
+                              key: 'monthlyReport',
+                              label: 'Monthly Report',
+                              description: 'Comprehensive monthly business report',
+                            },
                           ].map((item) => (
-                            <div key={item.key} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div
+                              key={item.key}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
                               <div className="flex items-center gap-3">
                                 <input
                                   type="checkbox"
-                                  checked={notificationSettings[item.key as keyof typeof notificationSettings] as boolean}
-                                  onChange={(e) => setNotificationSettings({
-                                    ...notificationSettings,
-                                    [item.key]: e.target.checked
-                                  })}
+                                  checked={
+                                    notificationSettings[
+                                      item.key as keyof typeof notificationSettings
+                                    ] as boolean
+                                  }
+                                  onChange={(e) =>
+                                    setNotificationSettings({
+                                      ...notificationSettings,
+                                      [item.key]: e.target.checked,
+                                    })
+                                  }
                                   className="w-4 h-4"
                                 />
                                 <div>
@@ -565,17 +656,26 @@ export default function MerchantSettingsPage() {
                           {[
                             { key: 'email', label: 'Email', icon: Mail },
                             { key: 'sms', label: 'SMS', icon: Phone },
-                            { key: 'inApp', label: 'In-App', icon: Bell }
+                            { key: 'inApp', label: 'In-App', icon: Bell },
                           ].map((method) => (
-                            <div key={method.key} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div
+                              key={method.key}
+                              className="flex items-center justify-between p-4 border rounded-lg"
+                            >
                               <div className="flex items-center gap-3">
                                 <input
                                   type="checkbox"
-                                  checked={notificationSettings[method.key as keyof typeof notificationSettings] as boolean}
-                                  onChange={(e) => setNotificationSettings({
-                                    ...notificationSettings,
-                                    [method.key]: e.target.checked
-                                  })}
+                                  checked={
+                                    notificationSettings[
+                                      method.key as keyof typeof notificationSettings
+                                    ] as boolean
+                                  }
+                                  onChange={(e) =>
+                                    setNotificationSettings({
+                                      ...notificationSettings,
+                                      [method.key]: e.target.checked,
+                                    })
+                                  }
                                   className="w-4 h-4"
                                 />
                                 <method.icon className="w-4 h-4" />
@@ -617,16 +717,25 @@ export default function MerchantSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={securitySettings.twoFactorEnabled}
-                                onChange={(e) => setSecuritySettings({...securitySettings, twoFactorEnabled: e.target.checked})}
+                                onChange={(e) =>
+                                  setSecuritySettings({
+                                    ...securitySettings,
+                                    twoFactorEnabled: e.target.checked,
+                                  })
+                                }
                                 className="w-4 h-4"
                               />
                               <div>
                                 <p className="font-medium">Two-Factor Authentication</p>
-                                <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                                <p className="text-sm text-gray-600">
+                                  Add an extra layer of security to your account
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={securitySettings.twoFactorEnabled ? "default" : "secondary"}>
-                              {securitySettings.twoFactorEnabled ? "Enabled" : "Disabled"}
+                            <Badge
+                              variant={securitySettings.twoFactorEnabled ? 'default' : 'secondary'}
+                            >
+                              {securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}
                             </Badge>
                           </div>
 
@@ -635,7 +744,12 @@ export default function MerchantSettingsPage() {
                             <Input
                               id="sessionTimeout"
                               value={securitySettings.sessionTimeout}
-                              onChange={(e) => setSecuritySettings({...securitySettings, sessionTimeout: e.target.value})}
+                              onChange={(e) =>
+                                setSecuritySettings({
+                                  ...securitySettings,
+                                  sessionTimeout: e.target.value,
+                                })
+                              }
                               placeholder="30"
                             />
                           </div>
@@ -645,10 +759,17 @@ export default function MerchantSettingsPage() {
                             <Input
                               id="ipWhitelist"
                               value={securitySettings.ipWhitelist}
-                              onChange={(e) => setSecuritySettings({...securitySettings, ipWhitelist: e.target.value})}
+                              onChange={(e) =>
+                                setSecuritySettings({
+                                  ...securitySettings,
+                                  ipWhitelist: e.target.value,
+                                })
+                              }
                               placeholder="192.168.1.1, 10.0.0.1"
                             />
-                            <p className="text-sm text-gray-500">Comma-separated list of allowed IP addresses</p>
+                            <p className="text-sm text-gray-500">
+                              Comma-separated list of allowed IP addresses
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -661,10 +782,17 @@ export default function MerchantSettingsPage() {
                             <Input
                               id="webhookUrl"
                               value={securitySettings.webhookUrl}
-                              onChange={(e) => setSecuritySettings({...securitySettings, webhookUrl: e.target.value})}
+                              onChange={(e) =>
+                                setSecuritySettings({
+                                  ...securitySettings,
+                                  webhookUrl: e.target.value,
+                                })
+                              }
                               placeholder="https://your-domain.com/webhooks/scalapay"
                             />
-                            <p className="text-sm text-gray-500">URL to receive real-time notifications</p>
+                            <p className="text-sm text-gray-500">
+                              URL to receive real-time notifications
+                            </p>
                           </div>
 
                           <div className="space-y-2">
@@ -673,16 +801,27 @@ export default function MerchantSettingsPage() {
                               <Input
                                 id="apiKey"
                                 value={securitySettings.apiKey}
-                                onChange={(e) => setSecuritySettings({...securitySettings, apiKey: e.target.value})}
+                                onChange={(e) =>
+                                  setSecuritySettings({
+                                    ...securitySettings,
+                                    apiKey: e.target.value,
+                                  })
+                                }
                                 placeholder="sk_live_*********************"
                                 type="password"
                               />
-                              <Button variant="outline" onClick={handleRegenerateApiKey} disabled={loading}>
+                              <Button
+                                variant="outline"
+                                onClick={handleRegenerateApiKey}
+                                disabled={loading}
+                              >
                                 <Key className="w-4 h-4 mr-2" />
                                 Regenerate
                               </Button>
                             </div>
-                            <p className="text-sm text-gray-500">Keep your API key secure and don't share it publicly</p>
+                            <p className="text-sm text-gray-500">
+                              Keep your API key secure and don&apos;t share it publicly
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -690,11 +829,13 @@ export default function MerchantSettingsPage() {
                       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <AlertCircle className="w-4 h-4 text-yellow-600" />
-                          <span className="font-medium text-yellow-800 dark:text-yellow-300">Security Notice</span>
+                          <span className="font-medium text-yellow-800 dark:text-yellow-300">
+                            Security Notice
+                          </span>
                         </div>
                         <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                          Always use HTTPS for webhook URLs and keep your API keys secure. 
-                          Contact support if you suspect any unauthorized access.
+                          Always use HTTPS for webhook URLs and keep your API keys secure. Contact
+                          support if you suspect any unauthorized access.
                         </p>
                       </div>
 

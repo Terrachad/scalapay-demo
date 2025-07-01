@@ -23,7 +23,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Percent
+  Percent,
 } from 'lucide-react';
 
 interface PlatformSettings {
@@ -40,7 +40,7 @@ interface PlatformSettings {
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [settings, setSettings] = useState<PlatformSettings>({
     merchantFeeRate: 2.5,
     latePaymentFee: 25,
@@ -49,14 +49,15 @@ export default function AdminSettingsPage() {
     enableFraudDetection: true,
     requireMerchantApproval: true,
     enableEmailNotifications: true,
-    maintenanceMode: false
+    maintenanceMode: false,
   });
 
   const { data: pendingMerchants } = useQuery({
     queryKey: ['pending-merchants'],
-    queryFn: () => adminService.getAllUsers('merchant').then(merchants => 
-      merchants.filter(m => !m.isActive)
-    ),
+    queryFn: () =>
+      adminService
+        .getAllUsers('merchant')
+        .then((merchants) => merchants.filter((m) => !m.isActive)),
   });
 
   const { data: systemStats } = useQuery({
@@ -65,14 +66,14 @@ export default function AdminSettingsPage() {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (newSettings: PlatformSettings) => {
+    mutationFn: (_newSettings: PlatformSettings) => {
       // Simulate API call - in real implementation, this would call adminService.updateSettings
-      return new Promise(resolve => setTimeout(resolve, 1000));
+      return new Promise((resolve) => setTimeout(resolve, 1000));
     },
     onSuccess: () => {
       toast({
-        title: "Settings Updated",
-        description: "Platform configuration has been saved successfully.",
+        title: 'Settings Updated',
+        description: 'Platform configuration has been saved successfully.',
       });
     },
   });
@@ -82,8 +83,8 @@ export default function AdminSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-merchants'] });
       toast({
-        title: "Merchant Approved",
-        description: "Merchant account has been activated.",
+        title: 'Merchant Approved',
+        description: 'Merchant account has been activated.',
       });
     },
   });
@@ -93,8 +94,8 @@ export default function AdminSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-merchants'] });
       toast({
-        title: "Merchant Rejected",
-        description: "Merchant application has been rejected.",
+        title: 'Merchant Rejected',
+        description: 'Merchant application has been rejected.',
       });
     },
   });
@@ -123,7 +124,9 @@ export default function AdminSettingsPage() {
             <Settings className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold">Platform Settings</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">Configure platform parameters and manage system settings</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Configure platform parameters and manage system settings
+          </p>
         </motion.div>
 
         <Tabs defaultValue="general" className="space-y-4">
@@ -152,19 +155,25 @@ export default function AdminSettingsPage() {
                         type="number"
                         step="0.1"
                         value={settings.merchantFeeRate}
-                        onChange={(e) => setSettings({...settings, merchantFeeRate: parseFloat(e.target.value)})}
+                        onChange={(e) =>
+                          setSettings({ ...settings, merchantFeeRate: parseFloat(e.target.value) })
+                        }
                         className="flex-1"
                       />
                       <Percent className="w-4 h-4 text-gray-400" />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Current: {settings.merchantFeeRate}% per transaction</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current: {settings.merchantFeeRate}% per transaction
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Late Payment Fee ($)</label>
                     <Input
                       type="number"
                       value={settings.latePaymentFee}
-                      onChange={(e) => setSettings({...settings, latePaymentFee: parseInt(e.target.value)})}
+                      onChange={(e) =>
+                        setSettings({ ...settings, latePaymentFee: parseInt(e.target.value) })
+                      }
                     />
                     <p className="text-xs text-gray-500 mt-1">Applied after 7 days past due</p>
                   </div>
@@ -181,20 +190,28 @@ export default function AdminSettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Default Credit Limit ($)</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Default Credit Limit ($)
+                    </label>
                     <Input
                       type="number"
                       value={settings.defaultCreditLimit}
-                      onChange={(e) => setSettings({...settings, defaultCreditLimit: parseInt(e.target.value)})}
+                      onChange={(e) =>
+                        setSettings({ ...settings, defaultCreditLimit: parseInt(e.target.value) })
+                      }
                     />
                     <p className="text-xs text-gray-500 mt-1">For new customer accounts</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Max Transaction Amount ($)</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Max Transaction Amount ($)
+                    </label>
                     <Input
                       type="number"
                       value={settings.maxTransactionAmount}
-                      onChange={(e) => setSettings({...settings, maxTransactionAmount: parseInt(e.target.value)})}
+                      onChange={(e) =>
+                        setSettings({ ...settings, maxTransactionAmount: parseInt(e.target.value) })
+                      }
                     />
                     <p className="text-xs text-gray-500 mt-1">Maximum single transaction limit</p>
                   </div>
@@ -216,11 +233,20 @@ export default function AdminSettingsPage() {
                         <p className="text-sm text-gray-600">Enable automated fraud screening</p>
                       </div>
                       <Button
-                        variant={settings.enableFraudDetection ? "default" : "outline"}
+                        variant={settings.enableFraudDetection ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setSettings({...settings, enableFraudDetection: !settings.enableFraudDetection})}
+                        onClick={() =>
+                          setSettings({
+                            ...settings,
+                            enableFraudDetection: !settings.enableFraudDetection,
+                          })
+                        }
                       >
-                        {settings.enableFraudDetection ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                        {settings.enableFraudDetection ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          <Unlock className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -229,11 +255,20 @@ export default function AdminSettingsPage() {
                         <p className="text-sm text-gray-600">New merchants need admin approval</p>
                       </div>
                       <Button
-                        variant={settings.requireMerchantApproval ? "default" : "outline"}
+                        variant={settings.requireMerchantApproval ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setSettings({...settings, requireMerchantApproval: !settings.requireMerchantApproval})}
+                        onClick={() =>
+                          setSettings({
+                            ...settings,
+                            requireMerchantApproval: !settings.requireMerchantApproval,
+                          })
+                        }
                       >
-                        {settings.requireMerchantApproval ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                        {settings.requireMerchantApproval ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          <Unlock className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -244,11 +279,20 @@ export default function AdminSettingsPage() {
                         <p className="text-sm text-gray-600">Send system notifications via email</p>
                       </div>
                       <Button
-                        variant={settings.enableEmailNotifications ? "default" : "outline"}
+                        variant={settings.enableEmailNotifications ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setSettings({...settings, enableEmailNotifications: !settings.enableEmailNotifications})}
+                        onClick={() =>
+                          setSettings({
+                            ...settings,
+                            enableEmailNotifications: !settings.enableEmailNotifications,
+                          })
+                        }
                       >
-                        {settings.enableEmailNotifications ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                        {settings.enableEmailNotifications ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <XCircle className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -257,11 +301,17 @@ export default function AdminSettingsPage() {
                         <p className="text-sm text-gray-600">Disable new transactions</p>
                       </div>
                       <Button
-                        variant={settings.maintenanceMode ? "destructive" : "outline"}
+                        variant={settings.maintenanceMode ? 'destructive' : 'outline'}
                         size="sm"
-                        onClick={() => setSettings({...settings, maintenanceMode: !settings.maintenanceMode})}
+                        onClick={() =>
+                          setSettings({ ...settings, maintenanceMode: !settings.maintenanceMode })
+                        }
                       >
-                        {settings.maintenanceMode ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                        {settings.maintenanceMode ? (
+                          <AlertTriangle className="w-4 h-4" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -289,9 +339,7 @@ export default function AdminSettingsPage() {
                     <Clock className="w-5 h-5" />
                     Pending Merchant Approvals
                   </div>
-                  <Badge variant="secondary">
-                    {pendingMerchants?.length || 0} pending
-                  </Badge>
+                  <Badge variant="secondary">{pendingMerchants?.length || 0} pending</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -440,15 +488,21 @@ export default function AdminSettingsPage() {
               <CardContent>
                 <div className="grid md:grid-cols-4 gap-4">
                   <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">{systemStats?.totalTransactions || 0}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {systemStats?.totalTransactions || 0}
+                    </p>
                     <p className="text-sm text-gray-600">Total Transactions</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">{systemStats?.totalUsers || 0}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {systemStats?.totalUsers || 0}
+                    </p>
                     <p className="text-sm text-gray-600">Registered Users</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
-                    <p className="text-2xl font-bold text-purple-600">{systemStats?.merchantCount || 0}</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {systemStats?.merchantCount || 0}
+                    </p>
                     <p className="text-sm text-gray-600">Active Merchants</p>
                   </div>
                   <div className="text-center p-4 border rounded-lg">

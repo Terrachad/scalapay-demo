@@ -12,7 +12,6 @@ import { formatDate } from '@/lib/utils';
 import {
   Users,
   Search,
-  Filter,
   Edit,
   Shield,
   UserCheck,
@@ -20,7 +19,6 @@ import {
   CreditCard,
   Mail,
   Calendar,
-  AlertCircle
 } from 'lucide-react';
 
 export default function AdminUsersPage() {
@@ -42,16 +40,18 @@ export default function AdminUsersPage() {
     },
   });
 
-  const filteredUsers = users?.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (roleFilter === 'inactive') {
-      return matchesSearch && !user.isActive;
-    }
-    
-    return matchesSearch;
-  }) || [];
+  const filteredUsers =
+    users?.filter((user) => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (roleFilter === 'inactive') {
+        return matchesSearch && !user.isActive;
+      }
+
+      return matchesSearch;
+    }) || [];
 
   const getUserStatusColor = (user: any) => {
     if (!user.isActive) return 'bg-red-100 text-red-800';
@@ -60,10 +60,14 @@ export default function AdminUsersPage() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'admin': return 'destructive';
-      case 'merchant': return 'secondary';
-      case 'customer': return 'default';
-      default: return 'outline';
+      case 'admin':
+        return 'destructive';
+      case 'merchant':
+        return 'secondary';
+      case 'customer':
+        return 'default';
+      default:
+        return 'outline';
     }
   };
 
@@ -71,7 +75,7 @@ export default function AdminUsersPage() {
     if (editingUser) {
       updateUserMutation.mutate({
         id: editingUser.id,
-        data: updates
+        data: updates,
       });
     }
   };
@@ -100,7 +104,9 @@ export default function AdminUsersPage() {
             <Users className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold">User Management</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">Manage platform users and their settings</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage platform users and their settings
+          </p>
         </motion.div>
 
         {/* Stats Cards */}
@@ -121,7 +127,9 @@ export default function AdminUsersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Customers</p>
-                  <p className="text-2xl font-bold">{users?.filter(u => u.role === 'customer').length || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {users?.filter((u) => u.role === 'customer').length || 0}
+                  </p>
                 </div>
                 <UserCheck className="w-8 h-8 text-green-600 opacity-20" />
               </div>
@@ -132,7 +140,9 @@ export default function AdminUsersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Merchants</p>
-                  <p className="text-2xl font-bold">{users?.filter(u => u.role === 'merchant').length || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {users?.filter((u) => u.role === 'merchant').length || 0}
+                  </p>
                 </div>
                 <Shield className="w-8 h-8 text-purple-600 opacity-20" />
               </div>
@@ -143,7 +153,9 @@ export default function AdminUsersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Active Users</p>
-                  <p className="text-2xl font-bold">{users?.filter(u => u.isActive).length || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {users?.filter((u) => u.isActive).length || 0}
+                  </p>
                 </div>
                 <UserCheck className="w-8 h-8 text-orange-600 opacity-20" />
               </div>
@@ -231,9 +243,7 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role}
-                        </Badge>
+                        <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
                         <Badge className={getUserStatusColor(user)}>
                           {user.isActive ? 'Active' : 'Inactive'}
                         </Badge>
@@ -243,7 +253,7 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       {user.role === 'customer' && (
                         <div className="text-sm">
@@ -251,16 +261,14 @@ export default function AdminUsersPage() {
                             <CreditCard className="w-4 h-4 text-gray-400" />
                             <span className="text-gray-600">Credit:</span>
                           </div>
-                          <div className="font-medium">${user.availableCredit} / ${user.creditLimit}</div>
+                          <div className="font-medium">
+                            ${user.availableCredit} / ${user.creditLimit}
+                          </div>
                         </div>
                       )}
-                      
+
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingUser(user)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => setEditingUser(user)}>
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
@@ -317,14 +325,14 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium mb-1">Name</label>
                   <Input
                     defaultValue={editingUser.name}
-                    onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                    onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Email</label>
                   <Input
                     defaultValue={editingUser.email}
-                    onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                    onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
                   />
                 </div>
                 {editingUser.role === 'customer' && (
@@ -334,7 +342,12 @@ export default function AdminUsersPage() {
                       <Input
                         type="number"
                         defaultValue={editingUser.creditLimit}
-                        onChange={(e) => setEditingUser({...editingUser, creditLimit: parseFloat(e.target.value)})}
+                        onChange={(e) =>
+                          setEditingUser({
+                            ...editingUser,
+                            creditLimit: parseFloat(e.target.value),
+                          })
+                        }
                       />
                     </div>
                     <div>
@@ -342,31 +355,34 @@ export default function AdminUsersPage() {
                       <Input
                         type="number"
                         defaultValue={editingUser.availableCredit}
-                        onChange={(e) => setEditingUser({...editingUser, availableCredit: parseFloat(e.target.value)})}
+                        onChange={(e) =>
+                          setEditingUser({
+                            ...editingUser,
+                            availableCredit: parseFloat(e.target.value),
+                          })
+                        }
                       />
                     </div>
                   </>
                 )}
                 <div className="flex gap-2 pt-4">
                   <Button
-                    onClick={() => handleUpdateUser({
-                      name: editingUser.name,
-                      email: editingUser.email,
-                      ...(editingUser.role === 'customer' && {
-                        creditLimit: editingUser.creditLimit,
-                        availableCredit: editingUser.availableCredit
+                    onClick={() =>
+                      handleUpdateUser({
+                        name: editingUser.name,
+                        email: editingUser.email,
+                        ...(editingUser.role === 'customer' && {
+                          creditLimit: editingUser.creditLimit,
+                          availableCredit: editingUser.availableCredit,
+                        }),
                       })
-                    })}
+                    }
                     disabled={updateUserMutation.isPending}
                     className="flex-1"
                   >
                     Save Changes
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditingUser(null)}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1">
                     Cancel
                   </Button>
                 </div>

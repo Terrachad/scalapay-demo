@@ -18,7 +18,11 @@ export default function CustomerDashboard() {
   const { user } = useAuthStore();
   const [creditUsage, setCreditUsage] = useState(0);
 
-  const { data: transactions, isLoading, error } = useQuery({
+  const {
+    data: transactions,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['customer-transactions'],
     queryFn: transactionService.getMyTransactions,
   });
@@ -137,7 +141,7 @@ export default function CustomerDashboard() {
             <CardDescription>Your next scheduled payments</CardDescription>
           </CardHeader>
           <CardContent>
-{isLoading ? (
+            {isLoading ? (
               <p className="text-center text-gray-500 py-8">Loading...</p>
             ) : upcomingPayments && upcomingPayments.length > 0 ? (
               <div className="space-y-4">
@@ -151,7 +155,9 @@ export default function CustomerDashboard() {
                         <Clock className="w-5 h-5 text-purple-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{formatCurrency(parseFloat(payment.amount.toString()))}</p>
+                        <p className="font-medium">
+                          {formatCurrency(parseFloat(payment.amount.toString()))}
+                        </p>
                         <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
                       </div>
                     </div>
@@ -194,11 +200,15 @@ export default function CustomerDashboard() {
                       className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div>
-                        <p className="font-medium">{transaction.merchant?.businessName || 'Unknown Merchant'}</p>
+                        <p className="font-medium">
+                          {transaction.merchant?.businessName || 'Unknown Merchant'}
+                        </p>
                         <p className="text-sm text-gray-600">{formatDate(transaction.createdAt)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{formatCurrency(parseFloat(transaction.amount.toString()))}</p>
+                        <p className="font-bold">
+                          {formatCurrency(parseFloat(transaction.amount.toString()))}
+                        </p>
                         <Badge
                           variant={
                             transaction.status === 'completed'

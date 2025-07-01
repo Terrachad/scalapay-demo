@@ -61,6 +61,12 @@ export class Transaction {
   @Column({ type: 'integer', default: 0 })
   riskScore!: number;
 
+  @Column({ nullable: true })
+  stripePaymentIntentId?: string;
+
+  @Column({ type: 'varchar', default: 'credit' })
+  paymentMethod!: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

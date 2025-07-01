@@ -7,15 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { transactionService, Transaction } from '@/services/transaction-service';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  ShoppingBag, 
+import {
+  ShoppingBag,
   Calendar,
   CreditCard,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -64,7 +64,7 @@ export default function CustomerTransactionsPage() {
   };
 
   const getNextPaymentDate = (transaction: Transaction) => {
-    const nextPayment = transaction.payments?.find(p => p.status === 'scheduled');
+    const nextPayment = transaction.payments?.find((p) => p.status === 'scheduled');
     return nextPayment ? new Date(nextPayment.dueDate).toLocaleDateString() : 'N/A';
   };
 
@@ -102,16 +102,10 @@ export default function CustomerTransactionsPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <ShoppingBag className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              My Transactions
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Transactions</h1>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
             Track your purchases and payment schedules
@@ -129,7 +123,9 @@ export default function CustomerTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Orders</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Orders
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {Array.isArray(transactions) ? transactions.length : 0}
                     </p>
@@ -149,9 +145,18 @@ export default function CustomerTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Spent</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Spent
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(Array.isArray(transactions) ? transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) : 0)}
+                      {formatCurrency(
+                        Array.isArray(transactions)
+                          ? transactions.reduce(
+                              (sum, t) => sum + parseFloat(t.amount.toString()),
+                              0,
+                            )
+                          : 0,
+                      )}
                     </p>
                   </div>
                   <CreditCard className="w-8 h-8 text-green-500" />
@@ -169,9 +174,13 @@ export default function CustomerTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Completed</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Completed
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {Array.isArray(transactions) ? transactions.filter(t => t.status === 'completed').length : 0}
+                      {Array.isArray(transactions)
+                        ? transactions.filter((t) => t.status === 'completed').length
+                        : 0}
                     </p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-green-500" />
@@ -191,7 +200,10 @@ export default function CustomerTransactionsPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Active</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {Array.isArray(transactions) ? transactions.filter(t => ['pending', 'approved'].includes(t.status)).length : 0}
+                      {Array.isArray(transactions)
+                        ? transactions.filter((t) => ['pending', 'approved'].includes(t.status))
+                            .length
+                        : 0}
                     </p>
                   </div>
                   <Clock className="w-8 h-8 text-yellow-500" />
@@ -226,91 +238,107 @@ export default function CustomerTransactionsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {Array.isArray(transactions) && transactions.map((transaction) => (
-                    <motion.div
-                      key={transaction.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <ShoppingBag className="w-5 h-5 text-primary" />
+                  {Array.isArray(transactions) &&
+                    transactions.map((transaction) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                              <ShoppingBag className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">
+                                Order #{transaction.id.slice(0, 8)}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {transaction.merchant.businessName}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">
+                              {formatCurrency(parseFloat(transaction.amount.toString()))}
+                            </p>
+                            <Badge
+                              className={
+                                statusColors[transaction.status as keyof typeof statusColors]
+                              }
+                            >
+                              <span className="flex items-center gap-1">
+                                {getStatusIcon(transaction.status)}
+                                {transaction.status.charAt(0).toUpperCase() +
+                                  transaction.status.slice(1)}
+                              </span>
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                              Payment Plan
+                            </p>
+                            <p className="text-sm text-gray-900 dark:text-white">
+                              {transaction.paymentPlan.replace('_', ' ').toUpperCase()}
+                            </p>
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
-                              Order #{transaction.id.slice(0, 8)}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {transaction.merchant.businessName}
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                              Order Date
+                            </p>
+                            <p className="text-sm text-gray-900 dark:text-white">
+                              {new Date(transaction.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                              Next Payment
+                            </p>
+                            <p className="text-sm text-gray-900 dark:text-white">
+                              {getNextPaymentDate(transaction)}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">
-                            {formatCurrency(parseFloat(transaction.amount.toString()))}
+
+                        <div className="mb-4">
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                            Items
                           </p>
-                          <Badge className={statusColors[transaction.status as keyof typeof statusColors]}>
-                            <span className="flex items-center gap-1">
-                              {getStatusIcon(transaction.status)}
-                              {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                          <div className="space-y-1">
+                            {transaction.items.map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-900 dark:text-white">
+                                  {item.quantity}x {item.name}
+                                </span>
+                                <span className="text-gray-600 dark:text-gray-300">
+                                  {formatCurrency(item.price * item.quantity)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              Updated {new Date(transaction.updatedAt).toLocaleDateString()}
                             </span>
-                          </Badge>
+                          </div>
+                          <Link href={`/dashboard/customer/transactions/${transaction.id}`}>
+                            <Button variant="outline" size="sm">
+                              View Details
+                              <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
+                          </Link>
                         </div>
-                      </div>
-
-                      <div className="grid md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Payment Plan</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {transaction.paymentPlan.replace('_', ' ').toUpperCase()}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Order Date</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {new Date(transaction.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Next Payment</p>
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {getNextPaymentDate(transaction)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Items</p>
-                        <div className="space-y-1">
-                          {transaction.items.map((item, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span className="text-gray-900 dark:text-white">
-                                {item.quantity}x {item.name}
-                              </span>
-                              <span className="text-gray-600 dark:text-gray-300">
-                                {formatCurrency(item.price * item.quantity)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Calendar className="w-4 h-4" />
-                          <span>Updated {new Date(transaction.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                        <Link href={`/dashboard/customer/transactions/${transaction.id}`}>
-                          <Button variant="outline" size="sm">
-                            View Details
-                            <ChevronRight className="w-4 h-4 ml-1" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
                 </div>
               )}
             </CardContent>

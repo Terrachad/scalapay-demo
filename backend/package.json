@@ -30,7 +30,8 @@
     "seed": "ts-node -r tsconfig-paths/register src/seed-demo-users.ts",
     "seed:simple": "ts-node -r tsconfig-paths/register src/seed-demo-simple.ts",
     "seed:demo": "node create-demo-users-direct.js && node create-proper-hash.js",
-    "fix:demo": "node create-proper-hash.js"
+    "fix:demo": "node create-proper-hash.js",
+    "fix:lint": "eslint src --fix"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",

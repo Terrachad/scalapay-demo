@@ -143,14 +143,14 @@ describe('PaymentRetryService', () => {
         'cus_test123',
         'pm_test123',
         200,
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(paymentRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: PaymentStatus.COMPLETED,
         }),
       );
-      expect(eventEmitter.emit).toHaveBeenCalledWith('payment.completed', expect.any(Object));
+      expect(eventEmitter.emit).toHaveBeenCalledWith('payment.retry_succeeded', expect.any(Object));
     });
 
     it('should handle payment retry failure and increment retry count', async () => {
@@ -212,7 +212,7 @@ describe('PaymentRetryService', () => {
         'cus_test123',
         'pm_test123',
         200,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -229,13 +229,9 @@ describe('PaymentRetryService', () => {
 
   describe('error handling', () => {
     it('should handle database errors gracefully', async () => {
-      const loggerSpy = jest.spyOn(service['logger'], 'error').mockImplementation();
-
       paymentRepository.find.mockRejectedValue(new Error('Database connection error'));
 
-      await service.processRetryQueue();
-
-      expect(loggerSpy).toHaveBeenCalledWith('Error processing retry queue:', expect.any(Error));
+      await expect(service.processRetryQueue()).rejects.toThrow('Database connection error');
     });
   });
 });

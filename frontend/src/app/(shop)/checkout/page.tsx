@@ -77,9 +77,111 @@ export default function CheckoutPage() {
     cvv: '',
   });
 
+  const [paymentErrors, setPaymentErrors] = useState({
+    cardNumber: '',
+    cardName: '',
+    expiryDate: '',
+    cvv: '',
+  });
+
+  // Card validation functions
+  const validateCardNumber = (number: string): boolean => {
+    const cleaned = number.replace(/\s/g, '');
+    if (!/^\d{13,19}$/.test(cleaned)) return false;
+    
+    // Luhn algorithm
+    let sum = 0;
+    let isEven = false;
+    for (let i = cleaned.length - 1; i >= 0; i--) {
+      let digit = parseInt(cleaned[i]);
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      isEven = !isEven;
+    }
+    return sum % 10 === 0;
+  };
+
+  const validateExpiryDate = (expiry: string): boolean => {
+    const match = expiry.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+    if (!match) return false;
+    
+    const month = parseInt(match[1]);
+    const year = parseInt(match[2]) + 2000;
+    const now = new Date();
+    const expDate = new Date(year, month - 1);
+    
+    return expDate > now;
+  };
+
+  const validateCVV = (cvv: string): boolean => {
+    return /^\d{3,4}$/.test(cvv);
+  };
+
+  const formatCardNumber = (value: string): string => {
+    const cleaned = value.replace(/\s/g, '');
+    const groups = cleaned.match(/.{1,4}/g);
+    return groups ? groups.join(' ') : cleaned;
+  };
+
+  const formatExpiryDate = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length >= 2) {
+      return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
+    }
+    return cleaned;
+  };
+
+  const validatePaymentForm = (): boolean => {
+    const errors = {
+      cardNumber: '',
+      cardName: '',
+      expiryDate: '',
+      cvv: '',
+    };
+
+    if (!paymentDetails.cardNumber) {
+      errors.cardNumber = 'Card number is required';
+    } else if (!validateCardNumber(paymentDetails.cardNumber)) {
+      errors.cardNumber = 'Invalid card number';
+    }
+
+    if (!paymentDetails.cardName.trim()) {
+      errors.cardName = 'Cardholder name is required';
+    } else if (paymentDetails.cardName.trim().length < 2) {
+      errors.cardName = 'Name must be at least 2 characters';
+    }
+
+    if (!paymentDetails.expiryDate) {
+      errors.expiryDate = 'Expiry date is required';
+    } else if (!validateExpiryDate(paymentDetails.expiryDate)) {
+      errors.expiryDate = 'Invalid or expired date';
+    }
+
+    if (!paymentDetails.cvv) {
+      errors.cvv = 'CVV is required';
+    } else if (!validateCVV(paymentDetails.cvv)) {
+      errors.cvv = 'Invalid CVV';
+    }
+
+    setPaymentErrors(errors);
+    return !Object.values(errors).some(error => error !== '');
+  };
+
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   const handleNext = () => {
+    if (currentStep === 2 && !validatePaymentForm()) {
+      toast({
+        title: 'Invalid Payment Details',
+        description: 'Please correct the payment form errors before continuing.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -117,7 +219,7 @@ export default function CheckoutPage() {
       } catch (error) {
         console.warn('Failed to fetch demo merchant, using fallback:', error);
       }
-      
+
       const transactionData = {
         amount: totalAmount,
         merchantId: merchantId,
@@ -128,9 +230,9 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
       };
-      
+
       console.log('Transaction data being sent:', transactionData);
-      
+
       const transaction = await transactionService.create(transactionData);
 
       // Invalidate and refetch transaction queries
@@ -201,7 +303,11 @@ export default function CheckoutPage() {
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         {/* Progress */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 sm:mb-8"
+        >
           <Progress value={progress} className="h-2 sm:h-3 mb-3 sm:mb-4" />
           <div className="flex justify-between">
             {steps.map((step, index) => (
@@ -360,14 +466,22 @@ export default function CheckoutPage() {
                             id="cardNumber"
                             placeholder="1234 5678 9012 3456"
                             value={paymentDetails.cardNumber}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const formatted = formatCardNumber(e.target.value.slice(0, 19));
                               setPaymentDetails({
                                 ...paymentDetails,
-                                cardNumber: e.target.value,
-                              })
-                            }
-                            className="h-12"
+                                cardNumber: formatted,
+                              });
+                              if (paymentErrors.cardNumber) {
+                                setPaymentErrors({ ...paymentErrors, cardNumber: '' });
+                              }
+                            }}
+                            className={`h-12 ${paymentErrors.cardNumber ? 'border-red-500 focus:border-red-500' : ''}`}
+                            maxLength={19}
                           />
+                          {paymentErrors.cardNumber && (
+                            <p className="text-sm text-red-500">{paymentErrors.cardNumber}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="cardName" className="text-sm font-medium">
@@ -377,14 +491,20 @@ export default function CheckoutPage() {
                             id="cardName"
                             placeholder="John Doe"
                             value={paymentDetails.cardName}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setPaymentDetails({
                                 ...paymentDetails,
                                 cardName: e.target.value,
-                              })
-                            }
-                            className="h-12"
+                              });
+                              if (paymentErrors.cardName) {
+                                setPaymentErrors({ ...paymentErrors, cardName: '' });
+                              }
+                            }}
+                            className={`h-12 ${paymentErrors.cardName ? 'border-red-500 focus:border-red-500' : ''}`}
                           />
+                          {paymentErrors.cardName && (
+                            <p className="text-sm text-red-500">{paymentErrors.cardName}</p>
+                          )}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -395,14 +515,22 @@ export default function CheckoutPage() {
                               id="expiryDate"
                               placeholder="MM/YY"
                               value={paymentDetails.expiryDate}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const formatted = formatExpiryDate(e.target.value);
                                 setPaymentDetails({
                                   ...paymentDetails,
-                                  expiryDate: e.target.value,
-                                })
-                              }
-                              className="h-12"
+                                  expiryDate: formatted,
+                                });
+                                if (paymentErrors.expiryDate) {
+                                  setPaymentErrors({ ...paymentErrors, expiryDate: '' });
+                                }
+                              }}
+                              className={`h-12 ${paymentErrors.expiryDate ? 'border-red-500 focus:border-red-500' : ''}`}
+                              maxLength={5}
                             />
+                            {paymentErrors.expiryDate && (
+                              <p className="text-sm text-red-500">{paymentErrors.expiryDate}</p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="cvv" className="text-sm font-medium">
@@ -411,15 +539,24 @@ export default function CheckoutPage() {
                             <Input
                               id="cvv"
                               placeholder="123"
+                              type="password"
                               value={paymentDetails.cvv}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                                 setPaymentDetails({
                                   ...paymentDetails,
-                                  cvv: e.target.value,
-                                })
-                              }
-                              className="h-12"
+                                  cvv: value,
+                                });
+                                if (paymentErrors.cvv) {
+                                  setPaymentErrors({ ...paymentErrors, cvv: '' });
+                                }
+                              }}
+                              className={`h-12 ${paymentErrors.cvv ? 'border-red-500 focus:border-red-500' : ''}`}
+                              maxLength={4}
                             />
+                            {paymentErrors.cvv && (
+                              <p className="text-sm text-red-500">{paymentErrors.cvv}</p>
+                            )}
                           </div>
                         </div>
                       </form>

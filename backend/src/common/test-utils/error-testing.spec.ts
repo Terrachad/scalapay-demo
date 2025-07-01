@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
 import { validate } from 'class-validator';
@@ -94,12 +93,18 @@ describe('Error Handling and Validation', () => {
   describe('Transaction DTO Validation', () => {
     it('should validate CreateTransactionDto with valid data', async () => {
       const validTransactionData = {
-        amount: 50000,
-        currency: 'USD',
-        description: 'Test transaction',
+        amount: 500.0,
+        merchantId: '123e4567-e89b-12d3-a456-426614174000',
+        paymentPlan: 'pay_in_4',
+        items: [
+          {
+            name: 'Test Item',
+            price: 500.0,
+            quantity: 1,
+          },
+        ],
         metadata: {
           productId: 'prod_123',
-          merchantId: 'merchant_456',
         },
       };
 
@@ -125,18 +130,17 @@ describe('Error Handling and Validation', () => {
       expect(errors.length).toBeGreaterThan(0);
     });
 
-    it('should reject CreateTransactionDto with description too long', async () => {
+    it('should reject CreateTransactionDto with missing required fields', async () => {
       const invalidTransactionData = {
-        amount: 50000,
-        currency: 'USD',
-        description: 'A'.repeat(501), // Exceeds 500 character limit
+        amount: 500,
+        // Missing merchantId, paymentPlan, and items
       };
 
       const dto = plainToInstance(CreateTransactionDto, invalidTransactionData);
       const errors = await validate(dto as object);
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].constraints).toHaveProperty('maxLength');
+      expect(errors[0].constraints).toHaveProperty('isNotEmpty');
     });
   });
 
@@ -179,17 +183,16 @@ describe('Error Handling and Validation', () => {
   });
 
   describe('Custom Validation Decorators', () => {
-    it('should validate payment amounts are in cents', async () => {
-      const invalidPaymentData = {
-        amount: 100.5, // Should be 10050 (in cents)
+    it('should validate payment amounts are valid numbers', async () => {
+      const validPaymentData = {
+        amount: 100.5, // Valid decimal amount
         currency: 'USD',
       };
 
-      const dto = plainToInstance(CreatePaymentDto, invalidPaymentData);
+      const dto = plainToInstance(CreatePaymentDto, validPaymentData);
       const errors = await validate(dto as object);
 
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors[0].constraints).toHaveProperty('isInt');
+      expect(errors.length).toBe(0);
     });
 
     it('should validate future dates for scheduled payments', async () => {

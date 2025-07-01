@@ -1,19 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { transactionService } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { 
+import {
   ArrowLeft,
-  ShoppingBag, 
-  Calendar,
+  ShoppingBag,
   CreditCard,
   Clock,
   CheckCircle,
@@ -21,9 +19,7 @@ import {
   AlertCircle,
   Download,
   Receipt,
-  MapPin,
-  Phone,
-  Mail
+  Mail,
 } from 'lucide-react';
 
 const statusIcons = {
@@ -54,7 +50,11 @@ export default function TransactionDetailPage() {
   const router = useRouter();
   const transactionId = params.id as string;
 
-  const { data: transaction, isLoading, error } = useQuery({
+  const {
+    data: transaction,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['transaction', transactionId],
     queryFn: () => transactionService.getById(transactionId),
     enabled: !!transactionId,
@@ -67,21 +67,21 @@ export default function TransactionDetailPage() {
 
   const getPaymentProgress = () => {
     if (!transaction?.payments) return 0;
-    const completed = transaction.payments.filter(p => p.status === 'completed').length;
+    const completed = transaction.payments.filter((p) => p.status === 'completed').length;
     return (completed / transaction.payments.length) * 100;
   };
 
   const getTotalPaid = () => {
     if (!transaction?.payments) return 0;
     return transaction.payments
-      .filter(p => p.status === 'completed')
+      .filter((p) => p.status === 'completed')
       .reduce((sum, p) => sum + parseFloat(p.amount.toString()), 0);
   };
 
   const getNextPayment = () => {
     if (!transaction?.payments) return null;
     return transaction.payments
-      .filter(p => p.status === 'scheduled')
+      .filter((p) => p.status === 'scheduled')
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
   };
 
@@ -123,11 +123,7 @@ export default function TransactionDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-4 mb-6">
             <Button variant="outline" size="sm" onClick={() => router.back()}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -162,15 +158,22 @@ export default function TransactionDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
-                    <Badge className={statusColors[transaction.status as keyof typeof statusColors]} size="lg">
+                    <Badge
+                      className={statusColors[transaction.status as keyof typeof statusColors]}
+                      size="lg"
+                    >
                       <span className="flex items-center gap-2">
                         {getStatusIcon(transaction.status)}
                         {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                       </span>
                     </Badge>
                     <div className="text-right">
-                      <p className="text-2xl font-bold">{formatCurrency(parseFloat(transaction.amount.toString()))}</p>
-                      <p className="text-sm text-gray-600">{transaction.paymentPlan.replace('_', ' ').toUpperCase()}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(parseFloat(transaction.amount.toString()))}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {transaction.paymentPlan.replace('_', ' ').toUpperCase()}
+                      </p>
                     </div>
                   </div>
 
@@ -183,7 +186,10 @@ export default function TransactionDetailPage() {
                     <Progress value={paymentProgress} className="h-3" />
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>Paid: {formatCurrency(totalPaid)}</span>
-                      <span>Remaining: {formatCurrency(parseFloat(transaction.amount.toString()) - totalPaid)}</span>
+                      <span>
+                        Remaining:{' '}
+                        {formatCurrency(parseFloat(transaction.amount.toString()) - totalPaid)}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -203,7 +209,10 @@ export default function TransactionDetailPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {transaction.items.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                             <ShoppingBag className="w-6 h-6 text-gray-500" />
@@ -240,7 +249,10 @@ export default function TransactionDetailPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {transaction.payments?.map((payment, index) => (
-                      <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={payment.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col items-center">
                             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -249,14 +261,20 @@ export default function TransactionDetailPage() {
                           </div>
                           <div>
                             <p className="font-medium">Payment {index + 1}</p>
-                            <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
+                            <p className="text-sm text-gray-600">
+                              Due {formatDate(payment.dueDate)}
+                            </p>
                             {payment.paymentDate && (
-                              <p className="text-sm text-green-600">Paid {formatDate(payment.paymentDate)}</p>
+                              <p className="text-sm text-green-600">
+                                Paid {formatDate(payment.paymentDate)}
+                              </p>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold">{formatCurrency(parseFloat(payment.amount.toString()))}</p>
+                          <p className="font-bold">
+                            {formatCurrency(parseFloat(payment.amount.toString()))}
+                          </p>
                           <Badge className={paymentStatusColors[payment.status]} size="sm">
                             {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                           </Badge>
@@ -381,7 +399,9 @@ export default function TransactionDetailPage() {
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <div>
                           <p className="font-medium">Order Approved</p>
-                          <p className="text-sm text-gray-600">{formatDate(transaction.updatedAt)}</p>
+                          <p className="text-sm text-gray-600">
+                            {formatDate(transaction.updatedAt)}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -390,7 +410,9 @@ export default function TransactionDetailPage() {
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                         <div>
                           <p className="font-medium">Order Completed</p>
-                          <p className="text-sm text-gray-600">{formatDate(transaction.updatedAt)}</p>
+                          <p className="text-sm text-gray-600">
+                            {formatDate(transaction.updatedAt)}
+                          </p>
                         </div>
                       </div>
                     )}

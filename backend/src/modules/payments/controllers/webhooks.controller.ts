@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { StripeService } from '../services/stripe.service';
@@ -27,7 +28,7 @@ export class WebhooksController {
   @HttpCode(HttpStatus.OK)
   @ApiExcludeEndpoint() // Hide from Swagger docs for security
   async handleStripeWebhook(
-    @Body() body: any,
+    @Req() req: any,
     @Headers('stripe-signature') signature: string,
   ): Promise<{ received: boolean }> {
     if (!signature) {
@@ -35,7 +36,8 @@ export class WebhooksController {
     }
 
     try {
-      const event = await this.stripeService.constructWebhookEvent(body, signature);
+      const rawBody = req.rawBody || req.body;
+      const event = await this.stripeService.constructWebhookEvent(rawBody, signature);
       this.logger.log(`Received Stripe webhook: ${event.type} - ${event.id}`);
 
       await this.webhookService.handleStripeEvent(event);

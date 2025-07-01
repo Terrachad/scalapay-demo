@@ -9,7 +9,16 @@ import { useQuery } from '@tanstack/react-query';
 import { transactionService } from '@/services/transaction-service';
 import { merchantService } from '@/services/merchant-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { DollarSign, ShoppingCart, TrendingUp, Users, Download, Filter, Store, Clock, CheckCircle } from 'lucide-react';
+import {
+  DollarSign,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  Download,
+  Store,
+  Clock,
+  CheckCircle,
+} from 'lucide-react';
 
 export default function MerchantDashboard() {
   const { data: transactions } = useQuery({
@@ -28,19 +37,24 @@ export default function MerchantDashboard() {
   });
 
   // Use real analytics data when available, fallback to calculated data
-  const todaysRevenue = analytics?.todayRevenue ?? (transactions && Array.isArray(transactions) ? 
-    transactions
-      .filter((t) => {
-        const today = new Date().toDateString();
-        return new Date(t.createdAt).toDateString() === today;
-      })
-      .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) : 0);
+  const todaysRevenue =
+    analytics?.todayRevenue ??
+    (transactions && Array.isArray(transactions)
+      ? transactions
+          .filter((t) => {
+            const today = new Date().toDateString();
+            return new Date(t.createdAt).toDateString() === today;
+          })
+          .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0)
+      : 0);
 
-  const pendingSettlements = analytics?.completedRevenue ? analytics.completedRevenue * 0.975 : 
-    (transactions && Array.isArray(transactions) ?
-      transactions
-        .filter((t) => t.status === 'completed')
-        .reduce((sum, t) => sum + parseFloat(t.amount.toString()) * 0.975, 0) : 0); // 2.5% fee
+  const pendingSettlements = analytics?.completedRevenue
+    ? analytics.completedRevenue * 0.975
+    : transactions && Array.isArray(transactions)
+      ? transactions
+          .filter((t) => t.status === 'completed')
+          .reduce((sum, t) => sum + parseFloat(t.amount.toString()) * 0.975, 0)
+      : 0; // 2.5% fee
 
   const conversionRate = analytics?.conversionRate ?? 68.5;
 
@@ -62,17 +76,13 @@ export default function MerchantDashboard() {
             </div>
             <p className="text-gray-600 dark:text-gray-400">Monitor your sales and analytics</p>
             {profile && (
-              <Badge 
-                variant={profile.isActive ? "default" : "secondary"} 
-                className="mt-2"
-              >
-                {profile.isActive ? "Active Store" : "Inactive Store"}
+              <Badge variant={profile.isActive ? 'default' : 'secondary'} className="mt-2">
+                {profile.isActive ? 'Active Store' : 'Inactive Store'}
               </Badge>
             )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
             <Button size="sm">
@@ -93,12 +103,17 @@ export default function MerchantDashboard() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs lg:text-sm text-gray-600 truncate">Today's Revenue</p>
-                    <p className="text-lg lg:text-2xl font-bold truncate">{formatCurrency(todaysRevenue)}</p>
+                    <p className="text-xs lg:text-sm text-gray-600 truncate">Today&apos;s Revenue</p>
+                    <p className="text-lg lg:text-2xl font-bold truncate">
+                      {formatCurrency(todaysRevenue)}
+                    </p>
                     <p className="text-xs lg:text-sm text-green-600 mt-1 flex items-center">
                       <TrendingUp className="w-3 h-3 mr-1 flex-shrink-0" />
                       <span className="truncate">
-                        {analytics ? `+${((todaysRevenue / (analytics.weekRevenue / 7 || 1) - 1) * 100).toFixed(1)}%` : '+23%'} from avg
+                        {analytics
+                          ? `+${((todaysRevenue / (analytics.weekRevenue / 7 || 1) - 1) * 100).toFixed(1)}%`
+                          : '+23%'}{' '}
+                        from avg
                       </span>
                     </p>
                   </div>
@@ -118,8 +133,12 @@ export default function MerchantDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs lg:text-sm text-gray-600 truncate">Pending Settlements</p>
-                    <p className="text-lg lg:text-2xl font-bold truncate">{formatCurrency(pendingSettlements)}</p>
-                    <p className="text-xs lg:text-sm text-gray-500 mt-1 truncate">Next payout in 2 days</p>
+                    <p className="text-lg lg:text-2xl font-bold truncate">
+                      {formatCurrency(pendingSettlements)}
+                    </p>
+                    <p className="text-xs lg:text-sm text-gray-500 mt-1 truncate">
+                      Next payout in 2 days
+                    </p>
                   </div>
                   <Clock className="w-6 h-6 lg:w-8 lg:h-8 text-purple-600 opacity-20 flex-shrink-0" />
                 </div>
@@ -143,7 +162,9 @@ export default function MerchantDashboard() {
                     <p className="text-xs lg:text-sm text-blue-600 mt-1 flex items-center">
                       <TrendingUp className="w-3 h-3 mr-1 flex-shrink-0" />
                       <span className="truncate">
-                        {analytics ? `${analytics.completedTransactions} completed` : '+15% this month'}
+                        {analytics
+                          ? `${analytics.completedTransactions} completed`
+                          : '+15% this month'}
                       </span>
                     </p>
                   </div>
@@ -163,11 +184,15 @@ export default function MerchantDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs lg:text-sm text-gray-600 truncate">Conversion Rate</p>
-                    <p className="text-lg lg:text-2xl font-bold truncate">{conversionRate.toFixed(1)}%</p>
+                    <p className="text-lg lg:text-2xl font-bold truncate">
+                      {conversionRate.toFixed(1)}%
+                    </p>
                     <p className="text-xs lg:text-sm text-green-600 mt-1 flex items-center">
                       <TrendingUp className="w-3 h-3 mr-1 flex-shrink-0" />
                       <span className="truncate">
-                        {analytics ? `${analytics.pendingTransactions} pending` : '+2.3% improvement'}
+                        {analytics
+                          ? `${analytics.pendingTransactions} pending`
+                          : '+2.3% improvement'}
                       </span>
                     </p>
                   </div>
@@ -218,11 +243,15 @@ export default function MerchantDashboard() {
                       <p className="font-bold text-lg sm:text-base">
                         {formatCurrency(parseFloat(transaction.amount.toString()))}
                       </p>
-                      <Badge 
+                      <Badge
                         variant={
-                          transaction.status === 'completed' ? 'default' : 
-                          transaction.status === 'pending' ? 'secondary' : 
-                          transaction.status === 'approved' ? 'outline' : 'destructive'
+                          transaction.status === 'completed'
+                            ? 'default'
+                            : transaction.status === 'pending'
+                              ? 'secondary'
+                              : transaction.status === 'approved'
+                                ? 'outline'
+                                : 'destructive'
                         }
                         className="text-xs"
                       >

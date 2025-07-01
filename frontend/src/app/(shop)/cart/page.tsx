@@ -42,7 +42,7 @@ export default function CartPage() {
       clearCart();
       setShowClearConfirm(false);
       toast({
-        title: "Cart cleared",
+        title: 'Cart cleared',
         description: `All ${totalItems} items have been removed from your cart.`,
       });
     } else {
@@ -80,12 +80,10 @@ export default function CartPage() {
                     <span className="text-sm">Shop</span>
                   </Button>
                 </Link>
-                
                 <div className="flex items-center space-x-2 flex-1 justify-center">
                   <ShoppingCart className="w-5 h-5 text-primary" />
                   <h1 className="text-lg font-bold gradient-text">Cart</h1>
                 </div>
-                
                 <div className="flex-shrink-0 w-16"></div> {/* Spacer for balance */}
               </div>
             </div>
@@ -150,7 +148,7 @@ export default function CartPage() {
                   <span className="text-sm">Shop</span>
                 </Button>
               </Link>
-              
+
               <div className="flex items-center space-x-2 flex-1 justify-center">
                 <ShoppingCart className="w-5 h-5 text-primary" />
                 <h1 className="text-lg font-bold gradient-text">Cart</h1>
@@ -158,15 +156,15 @@ export default function CartPage() {
                   {totalItems}
                 </Badge>
               </div>
-              
+
               <Button
-                variant={showClearConfirm ? "destructive" : "outline"}
+                variant={showClearConfirm ? 'destructive' : 'outline'}
                 size="sm"
                 onClick={handleClearCart}
-                className={`${showClearConfirm ? "animate-pulse" : "text-red-600 hover:text-red-700 hover:bg-red-50"} transition-all duration-200 flex-shrink-0`}
+                className={`${showClearConfirm ? 'animate-pulse' : 'text-red-600 hover:text-red-700 hover:bg-red-50'} transition-all duration-200 flex-shrink-0`}
               >
                 <Trash2 className="w-4 h-4" />
-                <span className="ml-1 text-xs">{showClearConfirm ? "Confirm" : "Clear"}</span>
+                <span className="ml-1 text-xs">{showClearConfirm ? 'Confirm' : 'Clear'}</span>
               </Button>
             </div>
           </div>
@@ -190,12 +188,12 @@ export default function CartPage() {
             </div>
 
             <Button
-              variant={showClearConfirm ? "destructive" : "outline"}
+              variant={showClearConfirm ? 'destructive' : 'outline'}
               onClick={handleClearCart}
-              className={`${showClearConfirm ? "animate-pulse" : "text-red-600 hover:text-red-700 hover:bg-red-50"} transition-all duration-200`}
+              className={`${showClearConfirm ? 'animate-pulse' : 'text-red-600 hover:text-red-700 hover:bg-red-50'} transition-all duration-200`}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              {showClearConfirm ? "Click to Confirm" : "Clear Cart"}
+              {showClearConfirm ? 'Click to Confirm' : 'Clear Cart'}
             </Button>
           </div>
         </div>

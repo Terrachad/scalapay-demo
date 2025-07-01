@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
   Options,

@@ -42,7 +42,10 @@ export class MerchantsController {
   @Roles(UserRole.MERCHANT, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update merchant profile' })
   @ApiResponse({ status: 200, description: 'Updated merchant profile' })
-  async updateProfile(@Request() req: any, @Body() updateData: Partial<Merchant>): Promise<Merchant> {
+  async updateProfile(
+    @Request() req: any,
+    @Body() updateData: Partial<Merchant>,
+  ): Promise<Merchant> {
     const merchantId = req.user.role === UserRole.MERCHANT ? req.user.merchantId : req.params.id;
     return this.merchantsService.updateProfile(merchantId, updateData);
   }

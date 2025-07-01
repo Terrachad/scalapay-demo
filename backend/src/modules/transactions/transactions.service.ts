@@ -12,6 +12,7 @@ import { TransactionRepository } from './repositories/transaction.repository';
 import { BusinessRulesService } from './services/business-rules.service';
 import { PaymentSchedulerService } from './services/payment-scheduler.service';
 import { TransactionStateMachineService } from './services/transaction-state-machine.service';
+import { StripeService } from '../payments/services/stripe.service';
 
 @Injectable()
 export class TransactionsService {
@@ -27,6 +28,7 @@ export class TransactionsService {
     private paymentSchedulerService: PaymentSchedulerService,
     private stateMachineService: TransactionStateMachineService,
     private wsGateway: ScalaPayWebSocketGateway,
+    private stripeService: StripeService,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
@@ -38,31 +40,77 @@ export class TransactionsService {
       throw new NotFoundException('Merchant not found');
     }
 
-    // Validate business rules
+    // Get user to check credit availability
+    const user = await this.userRepository.findOne({
+      where: { id: createTransactionDto.userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Validate business rules (this now allows insufficient credit)
     await this.businessRulesService.validateTransactionCreation(
       createTransactionDto,
       createTransactionDto.userId!,
     );
 
+    // Check if user has sufficient credit
+    const hasInsufficientCredit = user.availableCredit < createTransactionDto.amount;
+
     // Calculate risk score for automatic approval decision
     const riskScore = await this.calculateRiskScore(createTransactionDto);
-    
+
     // Determine initial status based on risk assessment
     const initialStatus = riskScore <= 30 ? TransactionStatus.APPROVED : TransactionStatus.PENDING;
-    
+
+    let stripePaymentIntentId: string | undefined;
+
+    // If credit is insufficient, create Stripe Payment Intent
+    if (hasInsufficientCredit) {
+      // Create Stripe customer if doesn't exist
+      if (!user.stripeCustomerId) {
+        const customer = await this.stripeService.createCustomer(user.email, user.name);
+        user.stripeCustomerId = customer.id;
+        await this.userRepository.save(user);
+      }
+
+      // Create payment intent for the full amount
+      const paymentIntent = await this.stripeService.createPaymentIntent({
+        amount: createTransactionDto.amount,
+        currency: 'usd',
+        customerId: user.stripeCustomerId,
+        metadata: {
+          userId: createTransactionDto.userId,
+          merchantId: createTransactionDto.merchantId,
+          paymentPlan: createTransactionDto.paymentPlan,
+        },
+      });
+
+      stripePaymentIntentId = paymentIntent.paymentIntentId;
+    }
+
     // Create transaction
     const transaction = this.transactionRepository.create({
       ...createTransactionDto,
       status: initialStatus,
       riskScore, // Store risk score for admin review
+      stripePaymentIntentId, // Store Stripe payment intent if created
+      paymentMethod: hasInsufficientCredit ? 'stripe' : 'credit', // Track payment method
     });
 
     const saved = await this.transactionRepository.save(transaction);
 
-    // Only create payment schedule and deduct credit if automatically approved
+    // Only create payment schedule and deduct credit if using credit and automatically approved
     if (initialStatus === TransactionStatus.APPROVED) {
       await this.paymentSchedulerService.createPaymentSchedule(saved);
-      await this.updateUserCredit(createTransactionDto.userId!, -Number(createTransactionDto.amount));
+      
+      if (!hasInsufficientCredit) {
+        // Only deduct credit if user has sufficient credit
+        await this.updateUserCredit(
+          createTransactionDto.userId!,
+          -Number(createTransactionDto.amount),
+        );
+      }
     }
 
     // Load complete transaction with relations
@@ -257,29 +305,29 @@ export class TransactionsService {
 
   private async calculateRiskScore(createTransactionDto: CreateTransactionDto): Promise<number> {
     let riskScore = 0;
-    
+
     try {
       // Get user's transaction history
-      const user = await this.userRepository.findOne({ 
-        where: { id: createTransactionDto.userId } 
+      const user = await this.userRepository.findOne({
+        where: { id: createTransactionDto.userId },
       });
-      
+
       if (!user) {
         return 80; // High risk for unknown user
       }
 
       const userTransactions = await this.transactionRepository.find({
         where: { user: { id: createTransactionDto.userId } },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
 
       // Risk factors:
-      
+
       // 1. New user (no transaction history)
       if (userTransactions.length === 0) {
         riskScore += 25;
       }
-      
+
       // 2. High transaction amount relative to credit limit
       const amountRatio = Number(createTransactionDto.amount) / Number(user.creditLimit);
       if (amountRatio > 0.8) {
@@ -287,42 +335,43 @@ export class TransactionsService {
       } else if (amountRatio > 0.5) {
         riskScore += 15;
       }
-      
+
       // 3. Recent failed transactions
       const recentFailedTransactions = userTransactions
-        .filter(t => t.status === TransactionStatus.FAILED)
-        .filter(t => {
-          const daysDiff = (new Date().getTime() - new Date(t.createdAt).getTime()) / (1000 * 3600 * 24);
+        .filter((t) => t.status === TransactionStatus.FAILED)
+        .filter((t) => {
+          const daysDiff =
+            (new Date().getTime() - new Date(t.createdAt).getTime()) / (1000 * 3600 * 24);
           return daysDiff <= 30; // Last 30 days
         });
-      
+
       riskScore += recentFailedTransactions.length * 10;
-      
+
       // 4. Insufficient available credit
       if (Number(user.availableCredit) < Number(createTransactionDto.amount)) {
         riskScore += 40;
       }
-      
+
       // 5. Multiple transactions in short period
-      const todayTransactions = userTransactions.filter(t => {
-        const daysDiff = (new Date().getTime() - new Date(t.createdAt).getTime()) / (1000 * 3600 * 24);
+      const todayTransactions = userTransactions.filter((t) => {
+        const daysDiff =
+          (new Date().getTime() - new Date(t.createdAt).getTime()) / (1000 * 3600 * 24);
         return daysDiff < 1;
       });
-      
+
       if (todayTransactions.length >= 3) {
         riskScore += 20;
       }
-      
+
       // 6. Large payment plan (higher risk for longer terms)
       if (createTransactionDto.paymentPlan === 'pay_in_4') {
         riskScore += 5;
       } else if (createTransactionDto.paymentPlan === 'pay_in_3') {
         riskScore += 3;
       }
-      
+
       // Cap at 100
       return Math.min(riskScore, 100);
-      
     } catch (error) {
       // If risk calculation fails, default to medium-high risk
       return 70;

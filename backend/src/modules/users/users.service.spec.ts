@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User, UserRole } from './entities/user.entity';
+import { Transaction } from '../transactions/entities/transaction.entity';
+import { Merchant } from '../merchants/entities/merchant.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -30,6 +32,20 @@ describe('UsersService', () => {
     save: jest.fn(),
   };
 
+  const mockTransactionRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockMerchantRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -37,6 +53,14 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(User),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Transaction),
+          useValue: mockTransactionRepository,
+        },
+        {
+          provide: getRepositoryToken(Merchant),
+          useValue: mockMerchantRepository,
         },
       ],
     }).compile();

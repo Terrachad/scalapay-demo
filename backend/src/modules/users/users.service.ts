@@ -48,12 +48,19 @@ export class UsersService {
 
   async updateUser(id: string, updateData: Partial<User>): Promise<User> {
     const user = await this.findById(id);
-    
+
     // Only allow updating certain fields
-    const allowedFields: (keyof User)[] = ['name', 'email', 'isActive', 'creditLimit', 'availableCredit'];
+    const allowedFields: (keyof User)[] = [
+      'name',
+      'email',
+      'isActive',
+      'creditLimit',
+      'availableCredit',
+      'stripeCustomerId',
+    ];
     const filteredData: Partial<User> = {};
-    
-    allowedFields.forEach(field => {
+
+    allowedFields.forEach((field) => {
       if (updateData[field] !== undefined) {
         (filteredData as any)[field] = updateData[field];
       }
@@ -68,19 +75,22 @@ export class UsersService {
     const users = await this.usersRepository.find();
     const transactions = await this.transactionRepository.find({
       relations: ['payments'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
     const merchants = await this.merchantRepository.find();
 
     // Calculate platform metrics
     const totalUsers = users.length;
-    const customerCount = users.filter(u => u.role === UserRole.CUSTOMER).length;
-    const merchantCount = users.filter(u => u.role === UserRole.MERCHANT).length;
-    const adminCount = users.filter(u => u.role === UserRole.ADMIN).length;
+    const customerCount = users.filter((u) => u.role === UserRole.CUSTOMER).length;
+    const merchantCount = users.filter((u) => u.role === UserRole.MERCHANT).length;
+    const adminCount = users.filter((u) => u.role === UserRole.ADMIN).length;
 
     const totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-    const completedTransactions = transactions.filter(t => t.status === 'completed');
-    const completedRevenue = completedTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+    const completedTransactions = transactions.filter((t) => t.status === 'completed');
+    const completedRevenue = completedTransactions.reduce(
+      (sum, t) => sum + parseFloat(t.amount.toString()),
+      0,
+    );
 
     // Platform commission (2.5% of completed revenue)
     const platformRevenue = completedRevenue * 0.025;
@@ -88,9 +98,12 @@ export class UsersService {
     // Monthly metrics
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthlyTransactions = transactions.filter(t => new Date(t.createdAt) >= startOfMonth);
-    const monthlyRevenue = monthlyTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
-    const monthlyUsers = users.filter(u => new Date(u.createdAt) >= startOfMonth).length;
+    const monthlyTransactions = transactions.filter((t) => new Date(t.createdAt) >= startOfMonth);
+    const monthlyRevenue = monthlyTransactions.reduce(
+      (sum, t) => sum + parseFloat(t.amount.toString()),
+      0,
+    );
+    const monthlyUsers = users.filter((u) => new Date(u.createdAt) >= startOfMonth).length;
 
     // Daily data for last 30 days
     const last30Days = Array.from({ length: 30 }, (_, i) => {
@@ -99,35 +112,36 @@ export class UsersService {
       return date.toISOString().split('T')[0];
     }).reverse();
 
-    const dailyData = last30Days.map(date => {
-      const dayTransactions = transactions.filter(t => 
-        t.createdAt.toISOString().split('T')[0] === date
+    const dailyData = last30Days.map((date) => {
+      const dayTransactions = transactions.filter(
+        (t) => t.createdAt.toISOString().split('T')[0] === date,
       );
-      const dayUsers = users.filter(u => 
-        u.createdAt.toISOString().split('T')[0] === date
-      );
-      
+      const dayUsers = users.filter((u) => u.createdAt.toISOString().split('T')[0] === date);
+
       return {
         date,
         transactions: dayTransactions.length,
         revenue: dayTransactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0),
-        newUsers: dayUsers.length
+        newUsers: dayUsers.length,
       };
     });
 
     // Top merchants by revenue
-    const merchantRevenue = transactions.reduce((acc, t) => {
-      if (!acc[t.merchantId]) {
-        acc[t.merchantId] = { revenue: 0, transactions: 0 };
-      }
-      acc[t.merchantId].revenue += parseFloat(t.amount.toString());
-      acc[t.merchantId].transactions += 1;
-      return acc;
-    }, {} as Record<string, { revenue: number; transactions: number }>);
+    const merchantRevenue = transactions.reduce(
+      (acc, t) => {
+        if (!acc[t.merchantId]) {
+          acc[t.merchantId] = { revenue: 0, transactions: 0 };
+        }
+        acc[t.merchantId].revenue += parseFloat(t.amount.toString());
+        acc[t.merchantId].transactions += 1;
+        return acc;
+      },
+      {} as Record<string, { revenue: number; transactions: number }>,
+    );
 
     const topMerchants = await Promise.all(
       Object.entries(merchantRevenue)
-        .sort(([,a], [,b]) => b.revenue - a.revenue)
+        .sort(([, a], [, b]) => b.revenue - a.revenue)
         .slice(0, 5)
         .map(async ([merchantId, stats]) => {
           const merchant = await this.merchantRepository.findOne({ where: { id: merchantId } });
@@ -135,16 +149,19 @@ export class UsersService {
             id: merchantId,
             name: merchant?.businessName || 'Unknown',
             revenue: stats.revenue,
-            transactions: stats.transactions
+            transactions: stats.transactions,
           };
-        })
+        }),
     );
 
     // Payment plan distribution
-    const paymentPlanStats = transactions.reduce((acc, t) => {
-      acc[t.paymentPlan] = (acc[t.paymentPlan] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const paymentPlanStats = transactions.reduce(
+      (acc, t) => {
+        acc[t.paymentPlan] = (acc[t.paymentPlan] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     // Recent activity
     const recentTransactions = transactions.slice(0, 10);
@@ -163,32 +180,32 @@ export class UsersService {
       platformRevenue,
       totalTransactions: transactions.length,
       completedTransactions: completedTransactions.length,
-      
+
       // Monthly growth
       monthlyRevenue,
       monthlyTransactions: monthlyTransactions.length,
       monthlyUsers,
-      
+
       // Charts data
       dailyData,
       paymentPlanStats,
       topMerchants,
-      
+
       // Recent activity
       recentTransactions,
-      recentUsers
+      recentUsers,
     };
   }
 
   async getUsersByRole(role?: UserRole): Promise<User[]> {
     if (role) {
-      return this.usersRepository.find({ 
+      return this.usersRepository.find({
         where: { role },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
     }
-    return this.usersRepository.find({ 
-      order: { createdAt: 'DESC' }
+    return this.usersRepository.find({
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -207,7 +224,7 @@ export class UsersService {
   async getPendingApprovals(): Promise<User[]> {
     return this.usersRepository.find({
       where: { isActive: false },
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 }

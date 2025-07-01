@@ -118,7 +118,7 @@ const products = [
       Material: 'Genuine Leather',
       Dimensions: '12" x 8" x 4"',
       'Strap Drop': '22 inches',
-      'Interior': 'Fabric lined',
+      Interior: 'Fabric lined',
       Closure: 'Magnetic snap',
       Origin: 'Made in Italy',
     },
@@ -460,21 +460,27 @@ export default function ProductPage() {
               <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm sm:text-base font-medium text-green-700 dark:text-green-300">Free Shipping</p>
+                  <p className="text-sm sm:text-base font-medium text-green-700 dark:text-green-300">
+                    Free Shipping
+                  </p>
                   <p className="text-xs text-green-600 dark:text-green-400">On orders over $50</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm sm:text-base font-medium text-blue-700 dark:text-blue-300">Warranty</p>
+                  <p className="text-sm sm:text-base font-medium text-blue-700 dark:text-blue-300">
+                    Warranty
+                  </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400">2 year coverage</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm sm:text-base font-medium text-purple-700 dark:text-purple-300">Returns</p>
+                  <p className="text-sm sm:text-base font-medium text-purple-700 dark:text-purple-300">
+                    Returns
+                  </p>
                   <p className="text-xs text-purple-600 dark:text-purple-400">30 day policy</p>
                 </div>
               </div>

@@ -11,12 +11,12 @@ export interface AdminAnalytics {
   platformRevenue: number;
   totalTransactions: number;
   completedTransactions: number;
-  
+
   // Monthly growth
   monthlyRevenue: number;
   monthlyTransactions: number;
   monthlyUsers: number;
-  
+
   // Charts data
   dailyData: Array<{
     date: string;
@@ -31,7 +31,7 @@ export interface AdminAnalytics {
     revenue: number;
     transactions: number;
   }>;
-  
+
   // Recent activity
   recentTransactions: any[];
   recentUsers: any[];
@@ -59,41 +59,41 @@ export interface UpdateUserDto {
 
 export const adminService = {
   async getAnalytics(): Promise<AdminAnalytics> {
-    const response = await apiClient.get<{data: AdminAnalytics}>('/users/analytics');
+    const response = await apiClient.get<{ data: AdminAnalytics }>('/users/analytics');
     return response.data.data || response.data;
   },
 
   async getAllUsers(role?: string): Promise<User[]> {
     const params = role ? { role } : {};
-    const response = await apiClient.get<{data: User[]}>('/users', { params });
+    const response = await apiClient.get<{ data: User[] }>('/users', { params });
     return response.data.data || response.data;
   },
 
   async getUserById(id: string): Promise<User> {
-    const response = await apiClient.get<{data: User}>(`/users/${id}`);
+    const response = await apiClient.get<{ data: User }>(`/users/${id}`);
     return response.data.data || response.data;
   },
 
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
-    const response = await apiClient.put<{data: User}>(`/users/${id}`, data);
+    const response = await apiClient.put<{ data: User }>(`/users/${id}`, data);
     return response.data.data || response.data;
   },
 
   async getAllMerchants(): Promise<any[]> {
-    const response = await apiClient.get<{data: any[]}>('/merchants');
+    const response = await apiClient.get<{ data: any[] }>('/merchants');
     return response.data.data || response.data;
   },
 
   async getAllTransactions(): Promise<any[]> {
     try {
-      const response = await apiClient.get<{data: any[]}>('/transactions', {
+      const response = await apiClient.get<{transactions: any[]}>('/transactions', {
         params: {
-          page: 1,
-          limit: 100
-        }
+          page: '1',
+          limit: '100',
+        },
       });
       console.log('Admin getAllTransactions response:', response.data);
-      return response.data.data?.transactions || response.data.transactions || [];
+      return response.data.transactions || [];
     } catch (error) {
       console.error('Error fetching admin transactions:', error);
       return [];
@@ -101,27 +101,27 @@ export const adminService = {
   },
 
   async getPendingApprovals(): Promise<User[]> {
-    const response = await apiClient.get<{data: User[]}>('/users/pending-approvals');
+    const response = await apiClient.get<{ data: User[] }>('/users/pending-approvals');
     return response.data.data || response.data;
   },
 
   async approveUser(id: string): Promise<User> {
-    const response = await apiClient.put<{data: User}>(`/users/${id}/approve`);
+    const response = await apiClient.put<{ data: User }>(`/users/${id}/approve`);
     return response.data.data || response.data;
   },
 
   async rejectUser(id: string): Promise<User> {
-    const response = await apiClient.put<{data: User}>(`/users/${id}/reject`);
+    const response = await apiClient.put<{ data: User }>(`/users/${id}/reject`);
     return response.data.data || response.data;
   },
 
   async approveTransaction(id: string): Promise<any> {
-    const response = await apiClient.put<{data: any}>(`/transactions/${id}/approve`);
+    const response = await apiClient.put<{ data: any }>(`/transactions/${id}/approve`);
     return response.data.data || response.data;
   },
 
   async rejectTransaction(id: string): Promise<any> {
-    const response = await apiClient.put<{data: any}>(`/transactions/${id}/reject`);
+    const response = await apiClient.put<{ data: any }>(`/transactions/${id}/reject`);
     return response.data.data || response.data;
-  }
+  },
 };

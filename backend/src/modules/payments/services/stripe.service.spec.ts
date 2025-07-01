@@ -102,12 +102,6 @@ describe('StripeService', () => {
     customer: null,
     payment_method_configuration_details: null,
     source: null,
-    charges: {
-      object: 'list',
-      data: [],
-      has_more: false,
-      url: '/v1/charges',
-    },
   };
 
   beforeEach(async () => {
@@ -117,9 +111,7 @@ describe('StripeService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest
-              .fn()
-              .mockReturnValue('sk_test_mock_key_for_testing'),
+            get: jest.fn().mockReturnValue('sk_test_51Rf1hcP1x4I62TtzPrlCtiRHmO9hIZVy6e2mKjeQ1W612fII0HFu042gN2JT9GWkUw2iEsZ8MiqeTWk2EyjK9NtV000Tz4wWsM'),
           },
         },
       ],
@@ -184,7 +176,7 @@ describe('StripeService', () => {
         amount: 200000,
         currency: 'usd',
         customer: 'cus_test123',
-        metadata: { 
+        metadata: {
           orderId: 'order_123',
           service: 'scalapay_bnpl',
         },
@@ -243,7 +235,7 @@ describe('StripeService', () => {
       mockStripe.paymentIntents.retrieve.mockRejectedValue(new Error('Payment intent not found'));
 
       await expect(service.retrievePaymentIntent('pi_invalid')).rejects.toThrow(
-        'Failed to retrieve payment intent',
+        'Failed to retrieve payment information',
       );
     });
   });

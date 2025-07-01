@@ -3,13 +3,16 @@ import { INestApplication } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { PaymentsModule } from './payments.module';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { Payment, PaymentStatus } from './entities/payment.entity';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
+import { Merchant } from '../merchants/entities/merchant.entity';
+import configuration from '../../config/configuration';
 
 describe('PaymentsController (Integration)', () => {
   let app: INestApplication;
@@ -24,16 +27,16 @@ describe('PaymentsController (Integration)', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: '.env.test',
+          load: [configuration],
         }),
         TypeOrmModule.forRoot({
           type: 'mysql',
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '3306'),
-          username: process.env.DB_USERNAME || 'root',
-          password: process.env.DB_PASSWORD || 'password',
-          database: process.env.DB_NAME || 'scalapay_demo',
-          entities: [User, Payment, Transaction],
+          host: process.env.MYSQL_HOST || 'localhost',
+          port: parseInt(process.env.MYSQL_PORT || '3306', 10),
+          username: process.env.MYSQL_USERNAME || 'scalapay_user',
+          password: process.env.MYSQL_PASSWORD || 'scalapay_pass',
+          database: process.env.MYSQL_DATABASE || 'scalapay_db',
+          entities: [User, Payment, Transaction, Merchant],
           synchronize: false, // Don't modify schema
           logging: false,
         }),
@@ -58,6 +61,7 @@ describe('PaymentsController (Integration)', () => {
         email: testEmail,
         password: 'password123',
         name: 'Test User',
+        role: UserRole.CUSTOMER,
       })
       .expect(201);
 
@@ -82,37 +86,45 @@ describe('PaymentsController (Integration)', () => {
 
   afterAll(async () => {
     // Clean up test data in reverse dependency order
-    const dataSource = app.get('DataSource');
-    
-    try {
-      // Clean up payments first (they reference transactions)
-      if (testPaymentIds.length > 0) {
-        await dataSource.query(
-          `DELETE FROM payments WHERE id IN (${testPaymentIds.map(() => '?').join(',')})`,
-          testPaymentIds
-        );
+    if (app) {
+      try {
+        const dataSource = app.get(DataSource);
+        
+        if (dataSource) {
+          // Clean up payments first (they reference transactions)
+          if (testPaymentIds.length > 0) {
+            await dataSource.query(
+              `DELETE FROM payments WHERE id IN (${testPaymentIds.map(() => '?').join(',')})`,
+              testPaymentIds,
+            );
+          }
+
+          // Clean up transactions (they reference users)
+          if (testTransactionIds.length > 0) {
+            await dataSource.query(
+              `DELETE FROM transactions WHERE id IN (${testTransactionIds.map(() => '?').join(',')})`,
+              testTransactionIds,
+            );
+          }
+
+          // Clean up users last
+          if (testUserIds.length > 0) {
+            await dataSource.query(
+              `DELETE FROM users WHERE id IN (${testUserIds.map(() => '?').join(',')})`,
+              testUserIds,
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Error cleaning up test data:', error);
       }
 
-      // Clean up transactions (they reference users)
-      if (testTransactionIds.length > 0) {
-        await dataSource.query(
-          `DELETE FROM transactions WHERE id IN (${testTransactionIds.map(() => '?').join(',')})`,
-          testTransactionIds
-        );
+      try {
+        await app.close();
+      } catch (error) {
+        console.error('Error closing app:', error);
       }
-
-      // Clean up users last
-      if (testUserIds.length > 0) {
-        await dataSource.query(
-          `DELETE FROM users WHERE id IN (${testUserIds.map(() => '?').join(',')})`,
-          testUserIds
-        );
-      }
-    } catch (error) {
-      console.error('Error cleaning up test data:', error);
     }
-
-    await app.close();
   });
 
   describe('POST /payments/intent', () => {
@@ -315,6 +327,7 @@ describe('PaymentsController (Integration)', () => {
         email: 'other@example.com',
         password: 'password123',
         name: 'Other User',
+        role: UserRole.CUSTOMER,
       });
 
       const otherLoginResponse = await request(app.getHttpServer()).post('/auth/login').send({

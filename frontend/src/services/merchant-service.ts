@@ -60,46 +60,48 @@ export const merchantService = {
 
   async getAllMerchants(): Promise<Merchant[]> {
     const response = await apiClient.get('/merchants');
-    // Handle wrapped API response format  
+    // Handle wrapped API response format
     return response.data.data || response.data;
   },
 
   async getProfile(): Promise<MerchantProfile> {
-    const response = await apiClient.get<{data: MerchantProfile}>('/merchants/profile');
+    const response = await apiClient.get<{ data: MerchantProfile }>('/merchants/profile');
     return response.data.data || response.data;
   },
 
   async updateProfile(data: UpdateMerchantProfileDto): Promise<MerchantProfile> {
-    const response = await apiClient.put<{data: MerchantProfile}>('/merchants/profile', data);
+    const response = await apiClient.put<{ data: MerchantProfile }>('/merchants/profile', data);
     return response.data.data || response.data;
   },
 
   async getAnalytics(): Promise<MerchantAnalytics> {
-    const response = await apiClient.get<{data: MerchantAnalytics}>('/merchants/analytics');
+    const response = await apiClient.get<{ data: MerchantAnalytics }>('/merchants/analytics');
     return response.data.data || response.data;
   },
 
   async regenerateApiKey(): Promise<{ apiKey: string }> {
-    const response = await apiClient.post<{data: { apiKey: string }}>('/merchants/api-key/regenerate');
+    const response = await apiClient.post<{ data: { apiKey: string } }>(
+      '/merchants/api-key/regenerate',
+    );
     return response.data.data || response.data;
   },
 
   // Mock settings endpoints (these would be real backend endpoints in production)
   async updatePaymentSettings(settings: any): Promise<void> {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log('Payment settings updated:', settings);
   },
 
   async updateNotificationSettings(settings: any): Promise<void> {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log('Notification settings updated:', settings);
   },
 
   async updateSecuritySettings(settings: any): Promise<void> {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log('Security settings updated:', settings);
-  }
+  },
 };

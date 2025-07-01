@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { transactionService, Transaction } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { 
-  ShoppingBag, 
+import {
+  ShoppingBag,
   Calendar,
   CreditCard,
   Clock,
@@ -19,7 +19,7 @@ import {
   Download,
   Filter,
   DollarSign,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 
 const statusIcons = {
@@ -66,21 +66,19 @@ export default function MerchantTransactionsPage() {
     return <Icon className="w-4 h-4" />;
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
+  const filteredTransactions = transactions.filter((transaction) => {
     if (filter === 'all') return true;
     return transaction.status === filter;
   });
 
-  const totalRevenue = transactions.reduce((sum, t) => 
-    sum + parseFloat(t.amount.toString()), 0
-  );
+  const totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
   const completedRevenue = transactions
-    .filter(t => t.status === 'completed')
+    .filter((t) => t.status === 'completed')
     .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
   const pendingRevenue = transactions
-    .filter(t => ['pending', 'approved'].includes(t.status))
+    .filter((t) => ['pending', 'approved'].includes(t.status))
     .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
 
   if (loading) {
@@ -117,11 +115,7 @@ export default function MerchantTransactionsPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -158,7 +152,9 @@ export default function MerchantTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Revenue</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Revenue
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {formatCurrency(totalRevenue)}
                     </p>
@@ -178,7 +174,9 @@ export default function MerchantTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Completed</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Completed
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {formatCurrency(completedRevenue)}
                     </p>
@@ -218,7 +216,9 @@ export default function MerchantTransactionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Orders</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      Total Orders
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {transactions.length}
                     </p>
@@ -239,18 +239,30 @@ export default function MerchantTransactionsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Order History</CardTitle>
-              <CardDescription>Complete overview of all orders processed through Scalapay</CardDescription>
+              <CardDescription>
+                Complete overview of all orders processed through Scalapay
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="all" className="w-full">
                 <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="all" onClick={() => setFilter('all')}>All</TabsTrigger>
-                  <TabsTrigger value="pending" onClick={() => setFilter('pending')}>Pending</TabsTrigger>
-                  <TabsTrigger value="approved" onClick={() => setFilter('approved')}>Approved</TabsTrigger>
-                  <TabsTrigger value="completed" onClick={() => setFilter('completed')}>Completed</TabsTrigger>
-                  <TabsTrigger value="rejected" onClick={() => setFilter('rejected')}>Rejected</TabsTrigger>
+                  <TabsTrigger value="all" onClick={() => setFilter('all')}>
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" onClick={() => setFilter('pending')}>
+                    Pending
+                  </TabsTrigger>
+                  <TabsTrigger value="approved" onClick={() => setFilter('approved')}>
+                    Approved
+                  </TabsTrigger>
+                  <TabsTrigger value="completed" onClick={() => setFilter('completed')}>
+                    Completed
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" onClick={() => setFilter('rejected')}>
+                    Rejected
+                  </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value={filter} className="mt-6">
                   {filteredTransactions.length === 0 ? (
                     <div className="text-center py-12">
@@ -258,7 +270,9 @@ export default function MerchantTransactionsPage() {
                       <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">
                         No transactions found
                       </h3>
-                      <p className="text-gray-500">No {filter === 'all' ? '' : filter} transactions to display</p>
+                      <p className="text-gray-500">
+                        No {filter === 'all' ? '' : filter} transactions to display
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -287,10 +301,15 @@ export default function MerchantTransactionsPage() {
                               <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 {formatCurrency(parseFloat(transaction.amount.toString()))}
                               </p>
-                              <Badge className={statusColors[transaction.status as keyof typeof statusColors]}>
+                              <Badge
+                                className={
+                                  statusColors[transaction.status as keyof typeof statusColors]
+                                }
+                              >
                                 <span className="flex items-center gap-1">
                                   {getStatusIcon(transaction.status)}
-                                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                                  {transaction.status.charAt(0).toUpperCase() +
+                                    transaction.status.slice(1)}
                                 </span>
                               </Badge>
                             </div>
@@ -298,19 +317,25 @@ export default function MerchantTransactionsPage() {
 
                           <div className="grid md:grid-cols-3 gap-4 mb-4">
                             <div>
-                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Payment Plan</p>
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Payment Plan
+                              </p>
                               <p className="text-sm text-gray-900 dark:text-white">
                                 {transaction.paymentPlan.replace('_', ' ').toUpperCase()}
                               </p>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Order Date</p>
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Order Date
+                              </p>
                               <p className="text-sm text-gray-900 dark:text-white">
                                 {formatDate(transaction.createdAt)}
                               </p>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Commission</p>
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Commission
+                              </p>
                               <p className="text-sm text-gray-900 dark:text-white">
                                 {formatCurrency(parseFloat(transaction.amount.toString()) * 0.025)}
                               </p>
@@ -318,7 +343,9 @@ export default function MerchantTransactionsPage() {
                           </div>
 
                           <div className="mb-4">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Items</p>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                              Items
+                            </p>
                             <div className="space-y-1">
                               {transaction.items.map((item, index) => (
                                 <div key={index} className="flex justify-between text-sm">

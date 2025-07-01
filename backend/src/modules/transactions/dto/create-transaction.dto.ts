@@ -80,9 +80,9 @@ export class CreateTransactionDto {
   @IsOptional()
   metadata?: object;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'User ID - will be set from authenticated user if not provided',
-    example: '500a126c-b32a-4888-8301-9f61ca950c98' 
+    example: '500a126c-b32a-4888-8301-9f61ca950c98',
   })
   @IsOptional()
   @IsUUID()

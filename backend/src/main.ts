@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
+import { json, raw } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -14,6 +14,9 @@ async function bootstrap() {
 
   // Security - helmet disabled temporarily
   // app.use(helmet());
+
+  // Raw body parsing for Stripe webhooks only
+  app.use('/payments/webhook/stripe', raw({ type: 'application/json' }));
 
   // CORS
   app.enableCors({

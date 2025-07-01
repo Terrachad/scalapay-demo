@@ -95,7 +95,7 @@ export default function ShopPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   const cartCount = getTotalItems();
 
   const addToCart = (product: (typeof products)[0]) => {
