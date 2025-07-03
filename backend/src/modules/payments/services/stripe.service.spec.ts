@@ -111,7 +111,7 @@ describe('StripeService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('sk_test_51Rf1hcP1x4I62TtzPrlCtiRHmO9hIZVy6e2mKjeQ1W612fII0HFu042gN2JT9GWkUw2iEsZ8MiqeTWk2EyjK9NtV000Tz4wWsM'),
+            get: jest.fn().mockReturnValue('sk_test_fake_key_for_testing'),
           },
         },
       ],

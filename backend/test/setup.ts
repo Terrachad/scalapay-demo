@@ -4,8 +4,8 @@ import { ConfigService } from '@nestjs/config';
 beforeAll(async () => {
   // Set test environment variables
   process.env.NODE_ENV = 'test';
-  process.env.STRIPE_SECRET_KEY = 'sk_test_51Rf1hcP1x4I62TtzPrlCtiRHmO9hIZVy6e2mKjeQ1W612fII0HFu042gN2JT9GWkUw2iEsZ8MiqeTWk2EyjK9NtV000Tz4wWsM';
-  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_971f8d8db7eb8378330c0aa262d97f7baaecec70c9517929211ac3b252d305db';
+  process.env.STRIPE_SECRET_KEY = 'sk_test_fake_key_for_testing';
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_fake_webhook_secret_for_testing';
   process.env.JWT_SECRET = 'test_jwt_secret';
   process.env.REDIS_URL = 'redis://localhost:6379/1';
   // Use existing database but with test prefix for isolation
