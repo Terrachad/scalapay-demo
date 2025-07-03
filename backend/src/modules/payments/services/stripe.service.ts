@@ -9,6 +9,10 @@ export interface CreatePaymentIntentDto {
   currency: string;
   customerId?: string;
   metadata?: Record<string, any>;
+  description?: string;
+  statementDescriptor?: string;
+  receiptEmail?: string;
+  setupFutureUsage?: 'on_session' | 'off_session';
 }
 
 export interface StripePaymentResult {
@@ -52,18 +56,32 @@ export class StripeService {
 
   async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<StripePaymentResult> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
+      const paymentIntentData: Stripe.PaymentIntentCreateParams = {
         amount: Math.round(dto.amount * 100), // Convert to cents
         currency: dto.currency.toLowerCase(),
         customer: dto.customerId,
+        description: dto.description || 'ScalaPay BNPL Payment',
+        receipt_email: dto.receiptEmail,
+        statement_descriptor_suffix: dto.statementDescriptor || 'BNPL', // Top-level for API version 2025-05-28.basil
         metadata: {
           ...dto.metadata,
           service: 'scalapay_bnpl',
+          created_at: new Date().toISOString(),
         },
-        automatic_payment_methods: {
-          enabled: true,
+        payment_method_types: ['card'], // Explicitly specify card payments only
+        // Enable proper billing details collection
+        payment_method_options: {
+          card: {
+            request_three_d_secure: 'automatic', // Use 3D Secure when required
+          },
         },
-      });
+        // Set up for future payments if needed
+        setup_future_usage: dto.setupFutureUsage || 'off_session',
+      } as any; // Type assertion for newer API properties
+
+      console.log('💳 Creating Stripe PaymentIntent with data:', JSON.stringify(paymentIntentData, null, 2));
+      
+      const paymentIntent = await this.stripe.paymentIntents.create(paymentIntentData);
 
       this.logger.log(`Created payment intent: ${paymentIntent.id} for $${dto.amount}`);
 
@@ -118,6 +136,9 @@ export class StripeService {
   async processInstallmentPayment(payment: Payment): Promise<StripePaymentResult> {
     try {
       const transaction = payment.transaction;
+      if (!transaction) {
+        throw new Error('Transaction not found for payment');
+      }
       const user = transaction.user;
 
       // Create customer if not exists
@@ -206,6 +227,51 @@ export class StripeService {
         return PaymentStatus.FAILED;
       default:
         return PaymentStatus.SCHEDULED;
+    }
+  }
+
+  async createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
+    try {
+      const setupIntent = await this.stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        usage: 'off_session',
+      });
+
+      this.logger.log(`Created setup intent: ${setupIntent.id} for customer: ${customerId}`);
+      return setupIntent;
+    } catch (error) {
+      this.logger.error(`Failed to create setup intent for customer: ${customerId}`, error);
+      throw new Error('Failed to create setup intent');
+    }
+  }
+
+  async retrieveSetupIntent(setupIntentId: string): Promise<Stripe.SetupIntent> {
+    try {
+      return await this.stripe.setupIntents.retrieve(setupIntentId);
+    } catch (error) {
+      this.logger.error(`Failed to retrieve setup intent: ${setupIntentId}`, error);
+      throw new Error('Failed to retrieve setup intent');
+    }
+  }
+
+  async retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
+    try {
+      return await this.stripe.paymentMethods.retrieve(paymentMethodId);
+    } catch (error) {
+      this.logger.error(`Failed to retrieve payment method: ${paymentMethodId}`, error);
+      throw new Error('Failed to retrieve payment method');
+    }
+  }
+
+  async detachPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
+      this.logger.log(`Detached payment method: ${paymentMethodId}`);
+      return paymentMethod;
+    } catch (error) {
+      this.logger.error(`Failed to detach payment method: ${paymentMethodId}`, error);
+      throw new Error('Failed to detach payment method');
     }
   }
 

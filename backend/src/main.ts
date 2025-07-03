@@ -24,6 +24,7 @@ async function bootstrap() {
       configService.get('frontend.url') || 'http://localhost:3000',
       'https://affects-plc-processing-stars.trycloudflare.com',
       'https://scala.vlady.website',
+      /\.vlady\.website$/,
       /\.trycloudflare\.com$/, // Allow all Cloudflare tunnel URLs
     ],
     credentials: true,

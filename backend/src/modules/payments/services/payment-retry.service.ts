@@ -42,9 +42,15 @@ export class PaymentRetryService {
         throw new Error('Payment transaction not found');
       }
 
-      const config = await this.paymentConfigService.getConfigForMerchant(
-        payment.transaction.merchantId,
-      );
+      // Use default config if no merchantId provided
+      const config = payment.transaction.merchantId 
+        ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
+        : {
+            paymentInterval: 'biweekly',
+            gracePeriodDays: 3,
+            lateFeeAmount: 25,
+            maxRetries: 3,
+          };
 
       // Check if we've exceeded max retries
       if (payment.retryCount >= config.maxRetries) {
@@ -179,9 +185,15 @@ export class PaymentRetryService {
       throw new Error('Payment transaction not found');
     }
 
-    const config = await this.paymentConfigService.getConfigForMerchant(
-      payment.transaction.merchantId,
-    );
+    // Use default config if no merchantId provided
+    const config = payment.transaction.merchantId 
+      ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
+      : {
+          paymentInterval: 'biweekly',
+          gracePeriodDays: 3,
+          lateFeeAmount: 25,
+          maxRetries: 3,
+        };
 
     const retriesRemaining = Math.max(0, config.maxRetries - payment.retryCount);
     const canRetry = retriesRemaining > 0 && payment.status === PaymentStatus.FAILED;

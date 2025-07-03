@@ -27,7 +27,15 @@ export class PaymentSchedulerService {
     merchantId?: string,
     startDate: Date = new Date(),
   ): Promise<PaymentSchedule[]> {
-    const config = await this.paymentConfigService.getConfigForMerchant(merchantId);
+    // Use default config if no merchantId provided
+    const config = merchantId 
+      ? await this.paymentConfigService.getConfigForMerchant(merchantId)
+      : {
+          paymentInterval: 'biweekly',
+          gracePeriodDays: 3,
+          lateFeeAmount: 25,
+          maxRetries: 3,
+        };
     const installments = this.getInstallmentCount(paymentPlan);
     const installmentAmount = this.calculateInstallmentAmount(amount, installments);
     const schedule: PaymentSchedule[] = [];
@@ -35,9 +43,9 @@ export class PaymentSchedulerService {
     // Create payments with temporary numbering first
     for (let i = 0; i < installments; i++) {
       const dueDate = this.paymentConfigService.calculateDueDate(
+        i,
         startDate,
-        i + 1,
-        config,
+        config.paymentInterval,
       );
 
       // Adjust the last payment to account for rounding
@@ -198,7 +206,16 @@ export class PaymentSchedulerService {
   }
 
   async getPaymentPlanInfo(paymentPlan: PaymentPlan, merchantId?: string) {
-    const config = await this.paymentConfigService.getConfigForMerchant(merchantId);
+    // Use default config if no merchantId provided
+    const config = merchantId 
+      ? await this.paymentConfigService.getConfigForMerchant(merchantId)
+      : {
+          paymentInterval: 'biweekly',
+          gracePeriodDays: 3,
+          lateFeeAmount: 25,
+          maxRetries: 3,
+          firstPaymentDelayHours: 0,
+        };
     const installments = this.getInstallmentCount(paymentPlan);
     const intervalDescription = this.paymentConfigService.getIntervalDescription(config);
 

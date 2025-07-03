@@ -54,6 +54,17 @@ export class PaymentResponseDto {
   paidAt?: Date;
 }
 
+export class PaymentBreakdownDto {
+  @Expose()
+  creditAmount!: number;
+
+  @Expose()
+  cardAmount!: number;
+
+  @Expose()
+  totalAmount!: number;
+}
+
 export class TransactionResponseDto {
   @Expose()
   id!: string;
@@ -91,6 +102,20 @@ export class TransactionResponseDto {
 
   @Expose()
   metadata?: object;
+
+  // Payment processing fields (for BNPL checkout)
+  @Expose()
+  requiresPayment?: boolean;
+
+  @Expose()
+  clientSecret?: string;
+
+  @Expose()
+  firstInstallmentCardAmount?: number;
+
+  @Expose()
+  @Type(() => PaymentBreakdownDto)
+  paymentBreakdown?: PaymentBreakdownDto;
 }
 
 export class TransactionListResponseDto {

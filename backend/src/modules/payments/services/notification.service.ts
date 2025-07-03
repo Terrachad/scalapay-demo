@@ -433,6 +433,30 @@ export class NotificationService {
     return this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
   }
 
+  async sendEarlyPaymentConfirmation(user: User, transaction: Transaction, amount: number): Promise<void> {
+    try {
+      const template = this.getEarlyPaymentConfirmationTemplate(transaction, amount);
+      await this.sendEmail(user.email, template);
+      this.logger.log(`Early payment confirmation sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error('Failed to send early payment confirmation', error);
+    }
+  }
+
+  private getEarlyPaymentConfirmationTemplate(transaction: Transaction, amount: number): EmailTemplate {
+    return {
+      subject: 'Early Payment Processed - Scalapay',
+      htmlContent: `
+        <h2>Early Payment Processed Successfully!</h2>
+        <p>Your early payment of $${amount} has been processed successfully.</p>
+        <p>Transaction ID: ${transaction.id}</p>
+        <p>All remaining installments have been paid off.</p>
+        <p>Thank you for using Scalapay!</p>
+      `,
+      textContent: `Early Payment Processed! Your early payment of $${amount} has been processed successfully. Transaction ID: ${transaction.id}`,
+    };
+  }
+
   private generatePaymentActionUrl(clientSecret: string): string {
     const frontendUrl = this.getFrontendUrl();
     return `${frontendUrl}/payment/confirm?payment_intent_client_secret=${clientSecret}`;

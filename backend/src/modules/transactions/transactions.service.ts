@@ -54,8 +54,40 @@ export class TransactionsService {
       createTransactionDto.userId!,
     );
 
-    // Check if user has sufficient credit
-    const hasInsufficientCredit = user.availableCredit < createTransactionDto.amount;
+    // Determine payment method from user preference or default logic
+    const paymentPreference = createTransactionDto.paymentMethodPreference;
+    let creditAmount = 0;
+    let cardAmount = 0;
+    let paymentMethod = 'credit';
+
+    if (paymentPreference) {
+      // User explicitly chose payment method
+      creditAmount = paymentPreference.creditAmount || 0;
+      cardAmount = paymentPreference.cardAmount || 0;
+      paymentMethod = paymentPreference.type === 'split' ? 'hybrid' : paymentPreference.type;
+    } else {
+      // Default logic: use credit if available, otherwise card
+      if (user.availableCredit >= createTransactionDto.amount) {
+        creditAmount = createTransactionDto.amount;
+        cardAmount = 0;
+        paymentMethod = 'credit';
+      } else {
+        creditAmount = user.availableCredit;
+        cardAmount = createTransactionDto.amount - user.availableCredit;
+        paymentMethod = creditAmount > 0 ? 'hybrid' : 'stripe';
+      }
+    }
+
+    // Validate amounts
+    creditAmount = Math.min(creditAmount, user.availableCredit, createTransactionDto.amount);
+    cardAmount = createTransactionDto.amount - creditAmount;
+
+    console.log('💰 Payment calculation debug:');
+    console.log('  User available credit:', user.availableCredit);
+    console.log('  Transaction amount:', createTransactionDto.amount);
+    console.log('  Credit amount:', creditAmount);
+    console.log('  Card amount:', cardAmount);
+    console.log('  Payment method:', paymentMethod);
 
     // Calculate risk score for automatic approval decision
     const riskScore = await this.calculateRiskScore(createTransactionDto);
@@ -64,9 +96,10 @@ export class TransactionsService {
     const initialStatus = riskScore <= 30 ? TransactionStatus.APPROVED : TransactionStatus.PENDING;
 
     let stripePaymentIntentId: string | undefined;
+    let stripeClientSecret: string | undefined;
 
-    // If credit is insufficient, create Stripe Payment Intent
-    if (hasInsufficientCredit) {
+    // Create Stripe payment intent if card payment is required
+    if (cardAmount > 0) {
       // Create Stripe customer if doesn't exist
       if (!user.stripeCustomerId) {
         const customer = await this.stripeService.createCustomer(user.email, user.name);
@@ -76,27 +109,43 @@ export class TransactionsService {
 
       // Calculate first installment amount for BNPL
       const installments = this.getInstallmentCount(createTransactionDto.paymentPlan);
-      const firstInstallmentAmount = installments > 1 
-        ? Math.round((createTransactionDto.amount / installments) * 100) / 100
-        : createTransactionDto.amount;
+      const firstInstallmentCardAmount = installments > 1 
+        ? Math.round((cardAmount / installments) * 100) / 100
+        : cardAmount;
 
-      // Create payment intent for FIRST INSTALLMENT ONLY
+      console.log('📊 Installment calculation debug:');
+      console.log('  Payment plan:', createTransactionDto.paymentPlan);
+      console.log('  Total installments:', installments);
+      console.log('  Card amount:', cardAmount);
+      console.log('  First installment card amount:', firstInstallmentCardAmount);
+
+      // Create payment intent for FIRST INSTALLMENT CARD AMOUNT ONLY
       const paymentIntent = await this.stripeService.createPaymentIntent({
-        amount: firstInstallmentAmount,
+        amount: firstInstallmentCardAmount,
         currency: 'usd',
         customerId: user.stripeCustomerId,
+        description: `ScalaPay BNPL Payment - Installment 1/${installments}`,
+        statementDescriptor: 'BNPL', // Max 10 chars for statement_descriptor_suffix
+        receiptEmail: user.email,
+        setupFutureUsage: installments > 1 ? 'off_session' : undefined, // Save payment method for future installments
         metadata: {
           userId: createTransactionDto.userId,
           merchantId: createTransactionDto.merchantId,
           paymentPlan: createTransactionDto.paymentPlan,
           totalAmount: createTransactionDto.amount.toString(),
+          cardAmount: cardAmount.toString(),
+          creditAmount: creditAmount.toString(),
           installmentNumber: '1',
           totalInstallments: installments.toString(),
-          firstInstallmentAmount: firstInstallmentAmount.toString(),
+          firstInstallmentCardAmount: firstInstallmentCardAmount.toString(),
+          paymentMethod: paymentMethod,
+          transactionType: 'bnpl_first_installment',
+          businessName: 'ScalaPay Demo Store',
         },
       });
 
       stripePaymentIntentId = paymentIntent.paymentIntentId;
+      stripeClientSecret = paymentIntent.clientSecret;
     }
 
     // Create transaction
@@ -105,31 +154,77 @@ export class TransactionsService {
       status: initialStatus,
       riskScore, // Store risk score for admin review
       stripePaymentIntentId, // Store Stripe payment intent if created
-      paymentMethod: hasInsufficientCredit ? 'stripe' : 'credit', // Track payment method
+      paymentMethod, // Track payment method (credit/stripe/hybrid)
+      creditAmount, // Store credit amount used
+      cardAmount, // Store card amount used
     });
 
     const saved = await this.transactionRepository.save(transaction);
 
-    // Only create payment schedule and deduct credit if using credit and automatically approved
+    // Handle approved transactions
     if (initialStatus === TransactionStatus.APPROVED) {
-      await this.paymentSchedulerService.createPaymentSchedule(saved);
-      
-      if (!hasInsufficientCredit) {
-        // Only deduct credit if user has sufficient credit
+      // Deduct credit amount immediately if any credit is used
+      if (creditAmount > 0) {
         await this.updateUserCredit(
           createTransactionDto.userId!,
-          -Number(createTransactionDto.amount),
+          -Number(creditAmount),
         );
+      }
+
+      // Create payment schedule only for pure credit transactions
+      // Stripe-involved transactions will handle scheduling in webhook after first payment
+      if (cardAmount === 0) {
+        // Pure credit transaction - create full payment schedule
+        await this.paymentSchedulerService.createPaymentSchedule(saved);
       }
     }
 
-    // Load complete transaction with relations
+    // Load complete transaction with relations but keep dynamic fields
     const completeTransaction = await this.findOne(saved.id);
 
     // Emit real-time update
     this.wsGateway.emitTransactionUpdate(completeTransaction.user.id, completeTransaction);
 
-    return completeTransaction;
+    console.log('🔧 Final transaction return debug:');
+    console.log('  - stripeClientSecret:', stripeClientSecret ? 'Present' : 'Missing');
+    console.log('  - cardAmount:', cardAmount);
+    console.log('  - Will include payment fields:', !!stripeClientSecret);
+
+    // Return transaction with clientSecret if card payment is required
+    // IMPORTANT: Build response directly with payment fields to avoid losing them
+    const responseData = {
+      ...completeTransaction,
+      // Always include payment fields when card payment is required
+      requiresPayment: !!stripeClientSecret,
+      clientSecret: stripeClientSecret,
+      firstInstallmentCardAmount: stripeClientSecret ? Math.round((cardAmount / this.getInstallmentCount(createTransactionDto.paymentPlan)) * 100) / 100 : undefined,
+      paymentBreakdown: stripeClientSecret ? {
+        creditAmount,
+        cardAmount,
+        totalAmount: createTransactionDto.amount
+      } : undefined
+    };
+
+    console.log('🚀 Returning transaction data:', {
+      hasRequiresPayment: 'requiresPayment' in responseData,
+      hasClientSecret: 'clientSecret' in responseData,
+      hasFirstInstallment: 'firstInstallmentCardAmount' in responseData,
+      requiresPaymentValue: responseData.requiresPayment,
+      clientSecretExists: !!responseData.clientSecret,
+      firstInstallmentValue: responseData.firstInstallmentCardAmount
+    });
+
+    // Additional debug: log the exact response structure being returned
+    console.log('📤 Full response object being returned:', JSON.stringify({
+      id: responseData.id,
+      amount: responseData.amount,
+      requiresPayment: responseData.requiresPayment,
+      clientSecret: responseData.clientSecret ? '[CLIENT_SECRET_PRESENT]' : undefined,
+      firstInstallmentCardAmount: responseData.firstInstallmentCardAmount,
+      paymentBreakdown: responseData.paymentBreakdown
+    }, null, 2));
+
+    return responseData;
   }
 
   async findByUser(userId: string): Promise<Transaction[]> {

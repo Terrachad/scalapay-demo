@@ -15,6 +15,8 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Req,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -247,20 +249,17 @@ export class PaymentsController {
 
   @Post('webhook/stripe')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Handle Stripe webhook events' })
-  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid webhook signature' })
-  async handleStripeWebhook(@Body() body: any, @Request() req: any) {
-    const signature = req.headers['stripe-signature'];
-    
+  @ApiOperation({ summary: 'Stripe webhook handler (alternative endpoint)' })
+  async handleStripeWebhookAlt(
+    @Req() req: any,
+    @Headers('stripe-signature') signature: string,
+  ): Promise<{ received: boolean }> {
     if (!signature) {
-      this.logger.error('Missing stripe-signature header');
       throw new BadRequestException('Missing stripe-signature header');
     }
 
     try {
-      // Use raw body for signature verification
-      const rawBody = req.body;
+      const rawBody = req.rawBody || req.body;
       const event = await this.stripeService.constructWebhookEvent(rawBody, signature);
       this.logger.log(`Received Stripe webhook: ${event.type} - ${event.id}`);
 
@@ -272,4 +271,5 @@ export class PaymentsController {
       throw new BadRequestException('Webhook processing failed');
     }
   }
+
 }
