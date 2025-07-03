@@ -22,6 +22,48 @@ export interface AuthResponse {
   };
 }
 
+export interface UpdateUserProfileDto {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  emergencyContact?: string;
+}
+
+export interface NotificationPreferences {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  paymentReminders: boolean;
+  transactionUpdates: boolean;
+  promotional: boolean;
+}
+
+export interface SecurityPreferences {
+  twoFactorEnabled: boolean;
+  sessionTimeout: number;
+  loginNotifications: boolean;
+  deviceVerification: boolean;
+}
+
+export interface UserProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  emergencyContact?: string;
+  creditLimit?: number;
+  isActive?: boolean;
+  notificationPreferences?: NotificationPreferences;
+  securityPreferences?: SecurityPreferences;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
     console.log('🔐 Attempting login with:', { email: data.email });
@@ -53,6 +95,37 @@ export const authService = {
 
   async getProfile() {
     const response = await apiClient.get('/users/profile');
+    return response.data;
+  },
+
+  // Extended Profile Management - NO MORE MOCKING
+  async getExtendedProfile(): Promise<UserProfileResponse> {
+    const response = await apiClient.get('/users/profile/extended');
+    return response.data;
+  },
+
+  async updateProfile(updateData: UpdateUserProfileDto): Promise<UserProfileResponse> {
+    const response = await apiClient.put('/users/profile/update', updateData);
+    return response.data;
+  },
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const response = await apiClient.get('/users/notification-preferences');
+    return response.data;
+  },
+
+  async updateNotificationPreferences(preferences: NotificationPreferences): Promise<NotificationPreferences> {
+    const response = await apiClient.put('/users/notification-preferences', { preferences });
+    return response.data;
+  },
+
+  async getSecurityPreferences(): Promise<SecurityPreferences> {
+    const response = await apiClient.get('/users/security-preferences');
+    return response.data;
+  },
+
+  async updateSecurityPreferences(preferences: SecurityPreferences): Promise<SecurityPreferences> {
+    const response = await apiClient.put('/users/security-preferences', { preferences });
     return response.data;
   },
 };

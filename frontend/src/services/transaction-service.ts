@@ -18,6 +18,15 @@ export interface Transaction {
   payments: Payment[];
   createdAt: string;
   updatedAt: string;
+  // Payment processing fields (optional - only present when payment is required)
+  requiresPayment?: boolean;
+  clientSecret?: string;
+  firstInstallmentCardAmount?: number;
+  paymentBreakdown?: {
+    creditAmount: number;
+    cardAmount: number;
+    totalAmount: number;
+  };
 }
 
 export interface Payment {
@@ -40,8 +49,8 @@ export interface CreateTransactionDto {
 }
 
 export const transactionService = {
-  async create(data: CreateTransactionDto): Promise<Transaction> {
-    const response = await apiClient.post<Transaction>('/transactions', data);
+  async create(data: CreateTransactionDto): Promise<{ data: Transaction; statusCode: number; message: string; timestamp: string }> {
+    const response = await apiClient.post<{ data: Transaction; statusCode: number; message: string; timestamp: string }>('/transactions', data);
     return response.data;
   },
 

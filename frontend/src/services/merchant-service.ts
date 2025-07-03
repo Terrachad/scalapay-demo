@@ -51,6 +51,89 @@ export interface UpdateMerchantProfileDto {
   businessName?: string;
 }
 
+// Settings interfaces - matching backend DTOs
+export interface PaymentSettings {
+  enablePayIn2: boolean;
+  enablePayIn3: boolean;
+  enablePayIn4: boolean;
+  minimumAmount: number;
+  maximumAmount: number;
+  autoApprove: boolean;
+  requireManualReview: boolean;
+}
+
+export interface UpdatePaymentSettingsDto {
+  enablePayIn2?: boolean;
+  enablePayIn3?: boolean;
+  enablePayIn4?: boolean;
+  minimumAmount?: number;
+  maximumAmount?: number;
+  autoApprove?: boolean;
+  requireManualReview?: boolean;
+}
+
+export interface NotificationSettings {
+  newOrders: boolean;
+  paymentReceived: boolean;
+  paymentFailed: boolean;
+  dailySummary: boolean;
+  weeklyReport: boolean;
+  monthlyReport: boolean;
+  email: boolean;
+  sms: boolean;
+  inApp: boolean;
+}
+
+export interface UpdateNotificationSettingsDto {
+  newOrders?: boolean;
+  paymentReceived?: boolean;
+  paymentFailed?: boolean;
+  dailySummary?: boolean;
+  weeklyReport?: boolean;
+  monthlyReport?: boolean;
+  email?: boolean;
+  sms?: boolean;
+  inApp?: boolean;
+}
+
+export interface SecuritySettings {
+  twoFactorEnabled: boolean;
+  sessionTimeout: number;
+  ipWhitelist: string[];
+  webhookUrl: string;
+  apiKey: string;
+}
+
+export interface UpdateSecuritySettingsDto {
+  twoFactorEnabled?: boolean;
+  sessionTimeout?: number;
+  ipWhitelist?: string[];
+  webhookUrl?: string;
+  apiKey?: string;
+}
+
+export interface StoreSettings {
+  businessName: string;
+  email: string;
+  phone: string;
+  address: string;
+  website: string;
+  description: string;
+  feePercentage: number;
+  isActive: boolean;
+}
+
+export interface UpdateStoreSettingsDto {
+  businessName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+  description?: string;
+  feePercentage?: number;
+  isActive?: boolean;
+}
+
 export const merchantService = {
   async getDemoMerchant(): Promise<Merchant> {
     const response = await apiClient.get('/merchants/demo');
@@ -86,22 +169,44 @@ export const merchantService = {
     return response.data.data || response.data;
   },
 
-  // Mock settings endpoints (these would be real backend endpoints in production)
-  async updatePaymentSettings(settings: any): Promise<void> {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Payment settings updated:', settings);
+  // Real settings endpoints - NO MORE MOCKING
+  async getPaymentSettings(): Promise<PaymentSettings> {
+    const response = await apiClient.get('/merchants/payment-settings');
+    return response.data;
   },
 
-  async updateNotificationSettings(settings: any): Promise<void> {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Notification settings updated:', settings);
+  async updatePaymentSettings(settings: UpdatePaymentSettingsDto): Promise<PaymentSettings> {
+    const response = await apiClient.put('/merchants/payment-settings', settings);
+    return response.data;
   },
 
-  async updateSecuritySettings(settings: any): Promise<void> {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Security settings updated:', settings);
+  async getNotificationSettings(): Promise<NotificationSettings> {
+    const response = await apiClient.get('/merchants/notification-settings');
+    return response.data;
+  },
+
+  async updateNotificationSettings(settings: UpdateNotificationSettingsDto): Promise<NotificationSettings> {
+    const response = await apiClient.put('/merchants/notification-settings', settings);
+    return response.data;
+  },
+
+  async getSecuritySettings(): Promise<SecuritySettings> {
+    const response = await apiClient.get('/merchants/security-settings');
+    return response.data;
+  },
+
+  async updateSecuritySettings(settings: UpdateSecuritySettingsDto): Promise<SecuritySettings> {
+    const response = await apiClient.put('/merchants/security-settings', settings);
+    return response.data;
+  },
+
+  async getStoreSettings(): Promise<StoreSettings> {
+    const response = await apiClient.get('/merchants/store-settings');
+    return response.data;
+  },
+
+  async updateStoreSettings(settings: UpdateStoreSettingsDto): Promise<StoreSettings> {
+    const response = await apiClient.put('/merchants/store-settings', settings);
+    return response.data;
   },
 };
