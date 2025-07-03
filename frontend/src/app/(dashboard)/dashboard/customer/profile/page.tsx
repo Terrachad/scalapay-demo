@@ -101,15 +101,22 @@ export default function CustomerProfilePage() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // Simulate API call to update profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Real API call to update profile - NO MORE MOCKING
+      const updatedProfile = await authService.updateProfile({
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        address: profileData.address,
+        dateOfBirth: profileData.dateOfBirth,
+        emergencyContact: profileData.emergencyContact,
+      });
 
-      // Update local user state
+      // Update local user state with real response
       if (user) {
         setUser({
           ...user,
-          name: profileData.name,
-          email: profileData.email,
+          name: updatedProfile.name,
+          email: updatedProfile.email,
         });
       }
 
@@ -117,10 +124,10 @@ export default function CustomerProfilePage() {
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        description: error.message || 'Failed to update profile. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -131,15 +138,16 @@ export default function CustomerProfilePage() {
   const handleSaveNotifications = async () => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Real API call to update notification preferences - NO MORE MOCKING
+      await authService.updateNotificationPreferences(notificationData);
       toast({
         title: 'Notification settings saved',
         description: 'Your notification preferences have been updated.',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to save notification settings.',
+        description: error.message || 'Failed to save notification settings.',
         variant: 'destructive',
       });
     } finally {
@@ -150,15 +158,16 @@ export default function CustomerProfilePage() {
   const handleSaveSecurity = async () => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Real API call to update security preferences - NO MORE MOCKING
+      await authService.updateSecurityPreferences(securityData);
       toast({
         title: 'Security settings saved',
         description: 'Your security settings have been updated.',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to save security settings.',
+        description: error.message || 'Failed to save security settings.',
         variant: 'destructive',
       });
     } finally {

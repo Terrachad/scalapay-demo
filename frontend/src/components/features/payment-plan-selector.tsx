@@ -42,11 +42,11 @@ const plans: PaymentPlan[] = [
 ];
 
 export function PaymentPlanSelector({ amount, onSelect }: PaymentPlanSelectorProps) {
-  const [selected, setSelected] = useState(plans[1].id);
+  const [selected, setSelected] = useState(plans[0].id);
 
   // Initialize with default plan on mount
   useEffect(() => {
-    onSelect(plans[1]);
+    onSelect(plans[0]); // Default to pay_in_2
   }, [onSelect]);
 
   const handleSelect = (value: string) => {

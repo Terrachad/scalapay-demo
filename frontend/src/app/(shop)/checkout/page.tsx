@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,8 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { PaymentPlanSelector } from '@/components/features/payment-plan-selector';
-import { PaymentMethodSelector, PaymentMethod } from '@/components/checkout/payment-method-selector';
-import { StripePaymentForm } from '@/components/checkout/stripe-payment-form';
+import { PaymentMethodSelector, PaymentMethodSelection } from '@/components/checkout/payment-method-selector';
+import { IntegratedStripeForm } from '@/components/checkout/integrated-stripe-form';
+import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useToast } from '@/components/ui/use-toast';
 import { transactionService } from '@/services/transaction-service';
 import { merchantService } from '@/services/merchant-service';
@@ -25,6 +27,7 @@ import {
   ArrowRight,
   Shield,
   Lock,
+  Wallet,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useCartStore } from '@/store/cart-store';
@@ -37,7 +40,7 @@ interface PaymentPlan {
   description: string;
 }
 
-const steps = ['Cart Review', 'Payment Plan', 'Payment Details', 'Confirmation'];
+const steps = ['Cart Review', 'Payment Method', 'Payment Plan', 'Payment Details', 'Confirmation'];
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -46,6 +49,7 @@ export default function CheckoutPage() {
   const { items: cartItems, getTotalPrice, clearCart } = useCartStore();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodSelection | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -56,133 +60,149 @@ export default function CheckoutPage() {
 
   const totalAmount = getTotalPrice();
 
-  const handlePlanSelect = (plan: PaymentPlan) => {
+  const handlePaymentMethodSelect = useCallback((selection: PaymentMethodSelection) => {
+    setSelectedPaymentMethod(selection);
+  }, []);
+
+  const handlePlanSelect = useCallback((plan: PaymentPlan) => {
     setSelectedPlan(plan);
-  };
+  }, []);
 
-  // Initialize with default plan when component mounts
+  const [postalCode, setPostalCode] = useState('');
+  const [postalCodeError, setPostalCodeError] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
+  const [cardholderNameError, setCardholderNameError] = useState('');
+  const [stripePromise, setStripePromise] = useState(null);
+  const [paymentClientSecret, setPaymentClientSecret] = useState('');
+  const [paymentReady, setPaymentReady] = useState(false);
+  
+  // Stripe Elements state
+  const [stripeElements, setStripeElements] = useState({
+    cardNumber: false,
+    cardExpiry: false,
+    cardCvc: false,
+  });
+  
+  const [stripeErrors, setStripeErrors] = useState({
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvc: '',
+  });
+
+  // Initialize Stripe when component mounts
   useEffect(() => {
-    if (mounted && !selectedPlan) {
-      const defaultPlan = {
-        id: 'pay_in_3',
-        name: 'Pay in 3',
-        installments: 3,
-        description: 'Split into 3 interest-free payments',
-      };
-      setSelectedPlan(defaultPlan);
-    }
-  }, [mounted, selectedPlan]);
-
-  const [paymentDetails, setPaymentDetails] = useState({
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
-  });
-
-  const [paymentErrors, setPaymentErrors] = useState({
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
-  });
-
-  // Card validation functions
-  const validateCardNumber = (number: string): boolean => {
-    const cleaned = number.replace(/\s/g, '');
-    if (!/^\d{13,19}$/.test(cleaned)) return false;
-    
-    // Luhn algorithm
-    let sum = 0;
-    let isEven = false;
-    for (let i = cleaned.length - 1; i >= 0; i--) {
-      let digit = parseInt(cleaned[i]);
-      if (isEven) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
+    const initializeStripe = async () => {
+      try {
+        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+        setStripePromise(stripe);
+      } catch (error) {
+        console.error('Failed to initialize Stripe:', error);
       }
-      sum += digit;
-      isEven = !isEven;
+    };
+
+    initializeStripe();
+  }, []);
+
+  // Auto-create payment intent when reaching step 3 with card payment
+  useEffect(() => {
+    const shouldCreatePaymentIntent = 
+      currentStep === 3 && 
+      selectedPaymentMethod?.cardAmount > 0 && 
+      !paymentClientSecret && 
+      selectedPlan;
+
+    if (shouldCreatePaymentIntent) {
+      createPaymentIntent();
     }
-    return sum % 10 === 0;
-  };
+  }, [currentStep, selectedPaymentMethod, selectedPlan, paymentClientSecret]);
 
-  const validateExpiryDate = (expiry: string): boolean => {
-    const match = expiry.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
-    if (!match) return false;
+  // Postal code validation
+  const validatePostalCode = (code: string): boolean => {
+    // Basic validation - adjust regex based on supported countries
+    const usZipRegex = /^\d{5}(-\d{4})?$/; // US ZIP
+    const canadaPostalRegex = /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/; // Canada
+    const ukPostalRegex = /^[A-Za-z]{1,2}\d[A-Za-z\d]?\s?\d[A-Za-z]{2}$/; // UK
     
-    const month = parseInt(match[1]);
-    const year = parseInt(match[2]) + 2000;
-    const now = new Date();
-    const expDate = new Date(year, month - 1);
+    return usZipRegex.test(code) || canadaPostalRegex.test(code) || ukPostalRegex.test(code);
+  };
+
+  const handleStripeElementChange = (element: string, error: string | null, complete: boolean) => {
+    setStripeElements(prev => ({
+      ...prev,
+      [element]: complete
+    }));
     
-    return expDate > now;
-  };
-
-  const validateCVV = (cvv: string): boolean => {
-    return /^\d{3,4}$/.test(cvv);
-  };
-
-  const formatCardNumber = (value: string): string => {
-    const cleaned = value.replace(/\s/g, '');
-    const groups = cleaned.match(/.{1,4}/g);
-    return groups ? groups.join(' ') : cleaned;
-  };
-
-  const formatExpiryDate = (value: string): string => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
-    }
-    return cleaned;
+    setStripeErrors(prev => ({
+      ...prev,
+      [element]: error || ''
+    }));
   };
 
   const validatePaymentForm = (): boolean => {
-    const errors = {
-      cardNumber: '',
-      cardName: '',
-      expiryDate: '',
-      cvv: '',
-    };
-
-    if (!paymentDetails.cardNumber) {
-      errors.cardNumber = 'Card number is required';
-    } else if (!validateCardNumber(paymentDetails.cardNumber)) {
-      errors.cardNumber = 'Invalid card number';
+    let isValid = true;
+    
+    // Validate cardholder name
+    if (!cardholderName.trim()) {
+      setCardholderNameError('Cardholder name is required');
+      isValid = false;
+    } else if (cardholderName.trim().length < 2) {
+      setCardholderNameError('Name must be at least 2 characters');
+      isValid = false;
+    } else {
+      setCardholderNameError('');
     }
-
-    if (!paymentDetails.cardName.trim()) {
-      errors.cardName = 'Cardholder name is required';
-    } else if (paymentDetails.cardName.trim().length < 2) {
-      errors.cardName = 'Name must be at least 2 characters';
+    
+    // Validate postal code
+    if (!postalCode.trim()) {
+      setPostalCodeError('Postal code is required');
+      isValid = false;
+    } else if (!validatePostalCode(postalCode)) {
+      setPostalCodeError('Invalid postal code format');
+      isValid = false;
+    } else {
+      setPostalCodeError('');
     }
-
-    if (!paymentDetails.expiryDate) {
-      errors.expiryDate = 'Expiry date is required';
-    } else if (!validateExpiryDate(paymentDetails.expiryDate)) {
-      errors.expiryDate = 'Invalid or expired date';
-    }
-
-    if (!paymentDetails.cvv) {
-      errors.cvv = 'CVV is required';
-    } else if (!validateCVV(paymentDetails.cvv)) {
-      errors.cvv = 'Invalid CVV';
-    }
-
-    setPaymentErrors(errors);
-    return !Object.values(errors).some(error => error !== '');
+    
+    // Check if all Stripe elements are complete
+    const allElementsReady = Object.values(stripeElements).every(ready => ready);
+    const noStripeErrors = Object.values(stripeErrors).every(error => error === '');
+    
+    return isValid && allElementsReady && noStripeErrors;
   };
 
   const progress = ((currentStep + 1) / steps.length) * 100;
 
-  const handleNext = () => {
-    if (currentStep === 2 && !validatePaymentForm()) {
-      toast({
-        title: 'Invalid Payment Details',
-        description: 'Please correct the payment form errors before continuing.',
-        variant: 'destructive',
-      });
-      return;
+  const handleNext = async () => {
+    if (currentStep === 0) {
+      // Cart review step - no validation needed
+    } else if (currentStep === 1) {
+      // Payment method step
+      console.log('Payment method validation:', selectedPaymentMethod);
+      if (!selectedPaymentMethod) {
+        toast({
+          title: 'Payment Method Required',
+          description: 'Please select a payment method.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else if (currentStep === 2) {
+      // Payment plan step
+      if (!selectedPlan) {
+        toast({
+          title: 'Payment Plan Required',
+          description: 'Please select a payment plan.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    } else if (currentStep === 3) {
+      // Payment details step
+      if (selectedPaymentMethod?.cardAmount && selectedPaymentMethod.cardAmount > 0) {
+        // Card payment - processing happens via IntegratedStripeForm, no manual navigation needed
+        return;
+      }
+      // Credit-only payment - allow navigation to confirmation step
     }
     
     if (currentStep < steps.length - 1) {
@@ -196,16 +216,85 @@ export default function CheckoutPage() {
     }
   };
 
+  const createPaymentIntent = async () => {
+    if (!selectedPlan || !selectedPaymentMethod) return;
+    
+    setIsProcessing(true);
+    try {
+      // Get demo merchant ID from backend, with fallback
+      let merchantId = '123e4567-e89b-12d3-a456-426614174000';
+      try {
+        const demoMerchant = await merchantService.getDemoMerchant();
+        merchantId = demoMerchant.id;
+      } catch (error) {
+        console.warn('Failed to fetch demo merchant, using fallback:', error);
+      }
+
+      const transactionData = {
+        amount: totalAmount,
+        merchantId: merchantId,
+        paymentPlan: selectedPlan.id,
+        items: cartItems.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        paymentMethodPreference: {
+          type: selectedPaymentMethod.method.id === 'hybrid' ? 'split' : selectedPaymentMethod.method.id,
+          creditAmount: selectedPaymentMethod.creditAmount,
+          cardAmount: selectedPaymentMethod.cardAmount,
+        },
+      };
+
+      const transactionResponse = await transactionService.create(transactionData);
+      const transaction = transactionResponse.data || transactionResponse;
+      
+      if (transaction.requiresPayment && transaction.clientSecret) {
+        setPaymentClientSecret(transaction.clientSecret);
+        setPaymentReady(true);
+        
+        // Stay on current step - payment will be processed via IntegratedStripeForm
+      } else {
+        // No payment required, complete directly
+        await completeTransaction(transaction);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to prepare payment. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const completeTransaction = async (transaction?: any) => {
+    // Invalidate and refetch transaction queries
+    await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
+    await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+    toast({
+      title: 'Success!',
+      description: 'Your order has been placed successfully.',
+    });
+
+    // Clear cart after successful purchase
+    clearCart();
+    
+    router.push(`/checkout/success?id=${transaction?.id}`);
+  };
+
   const handleComplete = async () => {
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    if (!selectedPlan) {
+    if (!selectedPlan || !selectedPaymentMethod) {
       toast({
         title: 'Error',
-        description: 'Please select a payment plan.',
+        description: 'Please select payment method and plan.',
         variant: 'destructive',
       });
       return;
@@ -232,25 +321,28 @@ export default function CheckoutPage() {
           price: item.price,
           quantity: item.quantity,
         })),
+        paymentMethodPreference: {
+          type: selectedPaymentMethod.method.id === 'hybrid' ? 'split' : selectedPaymentMethod.method.id,
+          creditAmount: selectedPaymentMethod.creditAmount,
+          cardAmount: selectedPaymentMethod.cardAmount,
+        },
       };
 
       console.log('Transaction data being sent:', transactionData);
 
-      const transaction = await transactionService.create(transactionData);
+      const transactionResponse = await transactionService.create(transactionData);
+      console.log('✅ Transaction created:', transactionResponse);
+      
+      // Extract the actual transaction data from the response wrapper
+      const transaction = transactionResponse.data || transactionResponse;
+      
+      console.log('🔍 Checking payment requirements:');
+      console.log('  - requiresPayment:', transaction.requiresPayment);
+      console.log('  - clientSecret:', transaction.clientSecret ? 'Present' : 'Missing');
+      console.log('  - firstInstallmentCardAmount:', transaction.firstInstallmentCardAmount);
 
-      // Invalidate and refetch transaction queries
-      await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-
-      toast({
-        title: 'Success!',
-        description: 'Your order has been placed successfully.',
-      });
-
-      // Clear cart after successful purchase
-      clearCart();
-
-      router.push(`/checkout/success?id=${transaction.id}`);
+      // This should only be reached for credit-only transactions
+      await completeTransaction(transaction);
     } catch (error) {
       toast({
         title: 'Error',
@@ -409,6 +501,35 @@ export default function CheckoutPage() {
 
               {currentStep === 1 && (
                 <motion.div
+                  key="payment-method"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="shadow-elegant border-0">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Wallet className="w-5 h-5 text-primary" />
+                        Select Payment Method
+                      </CardTitle>
+                      <CardDescription>
+                        Choose how you'd like to pay - use credit, card, or a combination
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <PaymentMethodSelector 
+                        totalAmount={totalAmount} 
+                        availableCredit={user?.availableCredit || 0}
+                        onSelect={handlePaymentMethodSelect} 
+                      />
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {currentStep === 2 && (
+                <motion.div
                   key="payment-plan"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -441,7 +562,7 @@ export default function CheckoutPage() {
                 </motion.div>
               )}
 
-              {currentStep === 2 && (
+              {currentStep === 3 && (
                 <motion.div
                   key="payment"
                   initial={{ opacity: 0, x: 20 }}
@@ -460,109 +581,108 @@ export default function CheckoutPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <form className="space-y-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber" className="text-sm font-medium">
-                            Card Number
-                          </Label>
-                          <Input
-                            id="cardNumber"
-                            placeholder="1234 5678 9012 3456"
-                            value={paymentDetails.cardNumber}
-                            onChange={(e) => {
-                              const formatted = formatCardNumber(e.target.value.slice(0, 19));
-                              setPaymentDetails({
-                                ...paymentDetails,
-                                cardNumber: formatted,
-                              });
-                              if (paymentErrors.cardNumber) {
-                                setPaymentErrors({ ...paymentErrors, cardNumber: '' });
-                              }
+                      {selectedPaymentMethod?.cardAmount && selectedPaymentMethod.cardAmount > 0 ? (
+                        stripePromise && paymentReady && paymentClientSecret ? (
+                          <Elements 
+                            stripe={stripePromise}
+                            options={{
+                              clientSecret: paymentClientSecret,
+                              appearance: {
+                                theme: 'stripe',
+                                variables: {
+                                  colorPrimary: '#8B5CF6',
+                                  fontFamily: 'system-ui, sans-serif',
+                                },
+                              },
                             }}
-                            className={`h-12 ${paymentErrors.cardNumber ? 'border-red-500 focus:border-red-500' : ''}`}
-                            maxLength={19}
-                          />
-                          {paymentErrors.cardNumber && (
-                            <p className="text-sm text-red-500">{paymentErrors.cardNumber}</p>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="cardName" className="text-sm font-medium">
-                            Cardholder Name
-                          </Label>
-                          <Input
-                            id="cardName"
-                            placeholder="John Doe"
-                            value={paymentDetails.cardName}
-                            onChange={(e) => {
-                              setPaymentDetails({
-                                ...paymentDetails,
-                                cardName: e.target.value,
-                              });
-                              if (paymentErrors.cardName) {
-                                setPaymentErrors({ ...paymentErrors, cardName: '' });
-                              }
-                            }}
-                            className={`h-12 ${paymentErrors.cardName ? 'border-red-500 focus:border-red-500' : ''}`}
-                          />
-                          {paymentErrors.cardName && (
-                            <p className="text-sm text-red-500">{paymentErrors.cardName}</p>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiryDate" className="text-sm font-medium">
-                              Expiry Date
-                            </Label>
-                            <Input
-                              id="expiryDate"
-                              placeholder="MM/YY"
-                              value={paymentDetails.expiryDate}
-                              onChange={(e) => {
-                                const formatted = formatExpiryDate(e.target.value);
-                                setPaymentDetails({
-                                  ...paymentDetails,
-                                  expiryDate: formatted,
-                                });
-                                if (paymentErrors.expiryDate) {
-                                  setPaymentErrors({ ...paymentErrors, expiryDate: '' });
-                                }
-                              }}
-                              className={`h-12 ${paymentErrors.expiryDate ? 'border-red-500 focus:border-red-500' : ''}`}
-                              maxLength={5}
-                            />
-                            {paymentErrors.expiryDate && (
-                              <p className="text-sm text-red-500">{paymentErrors.expiryDate}</p>
-                            )}
+                          >
+                            <div className="space-y-6">
+                              {/* Cardholder Name */}
+                              <div className="space-y-2">
+                                <Label htmlFor="cardholderName" className="text-sm font-medium">
+                                  Cardholder Name
+                                </Label>
+                                <Input
+                                  id="cardholderName"
+                                  placeholder="John Doe"
+                                  value={cardholderName}
+                                  onChange={(e) => {
+                                    setCardholderName(e.target.value);
+                                    if (cardholderNameError) {
+                                      setCardholderNameError('');
+                                    }
+                                  }}
+                                  className={`h-12 ${cardholderNameError ? 'border-red-500 focus:border-red-500' : ''}`}
+                                />
+                                {cardholderNameError && (
+                                  <p className="text-sm text-red-500">{cardholderNameError}</p>
+                                )}
+                              </div>
+
+                              {/* Postal Code */}
+                              <div className="space-y-2">
+                                <Label htmlFor="postalCode" className="text-sm font-medium">
+                                  Billing ZIP/Postal Code
+                                </Label>
+                                <Input
+                                  id="postalCode"
+                                  placeholder="12345 or A1B 2C3"
+                                  value={postalCode}
+                                  onChange={(e) => {
+                                    setPostalCode(e.target.value.toUpperCase());
+                                    if (postalCodeError) {
+                                      setPostalCodeError('');
+                                    }
+                                  }}
+                                  className={`h-12 ${postalCodeError ? 'border-red-500 focus:border-red-500' : ''}`}
+                                  maxLength={10}
+                                />
+                                {postalCodeError && (
+                                  <p className="text-sm text-red-500">{postalCodeError}</p>
+                                )}
+                                <p className="text-xs text-gray-500">
+                                  We'll use your account name and email. Only postal code is needed for billing verification.
+                                </p>
+                              </div>
+
+                              {/* Integrated Stripe Form with Payment Processing */}
+                              <IntegratedStripeForm 
+                                clientSecret={paymentClientSecret}
+                                cardholderName={cardholderName}
+                                postalCode={postalCode}
+                                userEmail={user?.email || ''}
+                                cardAmount={selectedPaymentMethod?.cardAmount || 0}
+                                creditAmount={selectedPaymentMethod?.creditAmount || 0}
+                                totalAmount={totalAmount}
+                                onSuccess={completeTransaction}
+                                onElementChange={handleStripeElementChange}
+                                stripeErrors={stripeErrors}
+                                allElementsReady={Object.values(stripeElements).every(ready => ready)}
+                              />
+                            </div>
+                          </Elements>
+                        ) : (
+                          <div className="text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-gray-600">
+                              {!stripePromise ? 'Loading Stripe...' : 'Preparing payment...'}
+                            </p>
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvv" className="text-sm font-medium">
-                              CVV
-                            </Label>
-                            <Input
-                              id="cvv"
-                              placeholder="123"
-                              type="password"
-                              value={paymentDetails.cvv}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                                setPaymentDetails({
-                                  ...paymentDetails,
-                                  cvv: value,
-                                });
-                                if (paymentErrors.cvv) {
-                                  setPaymentErrors({ ...paymentErrors, cvv: '' });
-                                }
-                              }}
-                              className={`h-12 ${paymentErrors.cvv ? 'border-red-500 focus:border-red-500' : ''}`}
-                              maxLength={4}
-                            />
-                            {paymentErrors.cvv && (
-                              <p className="text-sm text-red-500">{paymentErrors.cvv}</p>
-                            )}
+                        )
+                      ) : (
+                        <div className="text-center py-8">
+                          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                          <h3 className="text-xl font-semibold mb-2">Payment via Credit</h3>
+                          <p className="text-gray-600">
+                            This transaction will be paid using your available credit balance.
+                          </p>
+                          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Credit Amount: {formatCurrency(selectedPaymentMethod?.creditAmount || 0)}
+                            </p>
                           </div>
                         </div>
-                      </form>
+                      )}
                       <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                         <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                           <Lock className="w-4 h-4" />
@@ -577,7 +697,7 @@ export default function CheckoutPage() {
                 </motion.div>
               )}
 
-              {currentStep === 3 && (
+              {currentStep === 4 && (
                 <motion.div
                   key="confirmation"
                   initial={{ opacity: 0, x: 20 }}
@@ -648,33 +768,39 @@ export default function CheckoutPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              {currentStep < steps.length - 1 ? (
+              {currentStep < steps.length - 1 && !(currentStep === 3 && selectedPaymentMethod?.cardAmount > 0) ? (
                 <Button
                   onClick={handleNext}
-                  disabled={currentStep === 1 && !selectedPlan}
+                  disabled={
+                    (currentStep === 1 && !selectedPaymentMethod) ||
+                    (currentStep === 2 && !selectedPlan) ||
+                    (currentStep === 3 && selectedPaymentMethod?.cardAmount > 0 && (!postalCode || !cardholderName || !Object.values(stripeElements).every(ready => ready)))
+                  }
                   className="button-gradient h-10 sm:h-12 px-4 sm:px-6"
                 >
                   Continue
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
-                <Button
-                  onClick={handleComplete}
-                  disabled={isProcessing}
-                  className="button-gradient h-10 sm:h-12 px-6 sm:px-8"
-                >
-                  {isProcessing ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="text-sm sm:text-base">Processing...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      <CreditCard className="w-4 h-4" />
-                      <span className="text-sm sm:text-base">Complete Purchase</span>
-                    </div>
-                  )}
-                </Button>
+                currentStep === steps.length - 1 && selectedPaymentMethod?.cardAmount === 0 && (
+                  <Button
+                    onClick={handleComplete}
+                    disabled={isProcessing}
+                    className="button-gradient h-10 sm:h-12 px-6 sm:px-8"
+                  >
+                    {isProcessing ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-sm sm:text-base">Processing...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <CreditCard className="w-4 h-4" />
+                        <span className="text-sm sm:text-base">Complete Purchase</span>
+                      </div>
+                    )}
+                  </Button>
+                )
               )}
             </motion.div>
           </div>
