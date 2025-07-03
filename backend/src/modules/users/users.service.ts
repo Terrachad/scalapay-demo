@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
+import { UpdateUserProfileDto, NotificationPreferences, SecurityPreferences, UpdateNotificationPreferencesDto, UpdateSecurityPreferencesDto, UserProfileResponseDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -253,5 +254,101 @@ export class UsersService {
       where: { isActive: false },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  // User Profile Management Methods
+
+  async updateUserProfile(userId: string, updateData: UpdateUserProfileDto): Promise<User> {
+    const user = await this.findById(userId);
+
+    // Update profile fields
+    if (updateData.name !== undefined) user.name = updateData.name;
+    if (updateData.email !== undefined) {
+      // Check if email is already taken by another user
+      const existingUser = await this.usersRepository.findOne({
+        where: { email: updateData.email }
+      });
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Email is already in use');
+      }
+      user.email = updateData.email;
+    }
+    if (updateData.phone !== undefined) user.phone = updateData.phone;
+    if (updateData.address !== undefined) user.address = updateData.address;
+    if (updateData.dateOfBirth !== undefined) {
+      user.dateOfBirth = new Date(updateData.dateOfBirth);
+    }
+    if (updateData.emergencyContact !== undefined) {
+      user.emergencyContact = updateData.emergencyContact;
+    }
+
+    return this.usersRepository.save(user);
+  }
+
+  async updateNotificationPreferences(userId: string, updateData: UpdateNotificationPreferencesDto): Promise<User> {
+    const user = await this.findById(userId);
+
+    // Initialize preferences if they don't exist
+    if (!user.notificationPreferences) {
+      user.notificationPreferences = {
+        email: true,
+        sms: false,
+        push: true,
+        paymentReminders: true,
+        transactionUpdates: true,
+        promotional: false,
+      };
+    }
+
+    // Update preferences
+    Object.assign(user.notificationPreferences, updateData.preferences);
+
+    return this.usersRepository.save(user);
+  }
+
+  async updateSecurityPreferences(userId: string, updateData: UpdateSecurityPreferencesDto): Promise<User> {
+    const user = await this.findById(userId);
+
+    // Initialize preferences if they don't exist
+    if (!user.securityPreferences) {
+      user.securityPreferences = {
+        twoFactorEnabled: false,
+        sessionTimeout: 30,
+        loginNotifications: true,
+        deviceVerification: false,
+      };
+    }
+
+    // Update preferences
+    Object.assign(user.securityPreferences, updateData.preferences);
+
+    return this.usersRepository.save(user);
+  }
+
+  async getUserProfile(userId: string): Promise<UserProfileResponseDto> {
+    const user = await this.findById(userId);
+    return new UserProfileResponseDto(user);
+  }
+
+  async getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
+    const user = await this.findById(userId);
+    return user.notificationPreferences || {
+      email: true,
+      sms: false,
+      push: true,
+      paymentReminders: true,
+      transactionUpdates: true,
+      promotional: false,
+    };
+  }
+
+  async getSecurityPreferences(userId: string): Promise<SecurityPreferences> {
+    const user = await this.findById(userId);
+    return user.securityPreferences || {
+      twoFactorEnabled: false,
+      sessionTimeout: 30,
+      loginNotifications: true,
+      deviceVerification: false,
+    };
   }
 }

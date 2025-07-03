@@ -84,6 +84,38 @@ export class User {
   @Column({ nullable: true })
   rejectionReason?: string;
 
+  // Customer profile fields
+  @Column({ nullable: true })
+  phone?: string;
+
+  @Column({ nullable: true })
+  address?: string;
+
+  @Column({ type: 'date', nullable: true })
+  dateOfBirth?: Date;
+
+  @Column({ nullable: true })
+  emergencyContact?: string;
+
+  // User preferences stored as JSON
+  @Column({ type: 'json', nullable: true })
+  notificationPreferences?: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+    paymentReminders: boolean;
+    transactionUpdates: boolean;
+    promotional: boolean;
+  };
+
+  @Column({ type: 'json', nullable: true })
+  securityPreferences?: {
+    twoFactorEnabled: boolean;
+    sessionTimeout: number;
+    loginNotifications: boolean;
+    deviceVerification: boolean;
+  };
+
   @CreateDateColumn()
   createdAt!: Date;
 
