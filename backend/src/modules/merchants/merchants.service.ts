@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Merchant } from './entities/merchant.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
+import { MerchantSettings, SettingType, PaymentSettings, NotificationSettings, SecuritySettings, StoreSettings } from './entities/merchant-settings.entity';
+import { UpdatePaymentSettingsDto, UpdateNotificationSettingsDto, UpdateSecuritySettingsDto, UpdateStoreSettingsDto } from './dto/merchant-settings.dto';
 
 @Injectable()
 export class MerchantsService {
@@ -11,6 +13,8 @@ export class MerchantsService {
     private merchantRepository: Repository<Merchant>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @InjectRepository(MerchantSettings)
+    private merchantSettingsRepository: Repository<MerchantSettings>,
   ) {}
 
   async findAll(): Promise<Merchant[]> {
@@ -192,8 +196,188 @@ export class MerchantsService {
     // Generate a new API key (in real implementation, this would be cryptographically secure)
     const apiKey = `sk_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
-    // In a real implementation, you'd store this securely in the database
-    // For now, we'll just return the generated key
+    // Store the API key in security settings
+    await this.updateSecuritySetting(merchantId, 'apiKey', apiKey);
+
     return apiKey;
+  }
+
+  // Merchant Settings Methods
+
+  async getPaymentSettings(merchantId: string): Promise<PaymentSettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const settings = await this.merchantSettingsRepository.find({
+      where: { merchantId, settingType: SettingType.PAYMENT, isActive: true },
+    });
+
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.settingKey] = setting.settingValue;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      enablePayIn2: settingsMap.enablePayIn2 === 'true',
+      enablePayIn3: settingsMap.enablePayIn3 === 'true',
+      enablePayIn4: settingsMap.enablePayIn4 === 'true',
+      minimumAmount: parseFloat(settingsMap.minimumAmount || '50'),
+      maximumAmount: parseFloat(settingsMap.maximumAmount || '5000'),
+      autoApprove: settingsMap.autoApprove === 'true',
+      requireManualReview: settingsMap.requireManualReview === 'true',
+    };
+  }
+
+  async updatePaymentSettings(merchantId: string, updateData: UpdatePaymentSettingsDto): Promise<PaymentSettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const updatePromises = Object.entries(updateData).map(([key, value]) =>
+      this.updatePaymentSetting(merchantId, key, String(value))
+    );
+
+    await Promise.all(updatePromises);
+    return this.getPaymentSettings(merchantId);
+  }
+
+  async getNotificationSettings(merchantId: string): Promise<NotificationSettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const settings = await this.merchantSettingsRepository.find({
+      where: { merchantId, settingType: SettingType.NOTIFICATION, isActive: true },
+    });
+
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.settingKey] = setting.settingValue;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      newOrders: settingsMap.newOrders === 'true',
+      paymentReceived: settingsMap.paymentReceived === 'true',
+      paymentFailed: settingsMap.paymentFailed === 'true',
+      dailySummary: settingsMap.dailySummary === 'true',
+      weeklyReport: settingsMap.weeklyReport === 'true',
+      monthlyReport: settingsMap.monthlyReport === 'true',
+      email: settingsMap.email === 'true',
+      sms: settingsMap.sms === 'false', // Default false for SMS
+      inApp: settingsMap.inApp === 'true',
+    };
+  }
+
+  async updateNotificationSettings(merchantId: string, updateData: UpdateNotificationSettingsDto): Promise<NotificationSettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const updatePromises = Object.entries(updateData).map(([key, value]) =>
+      this.updateNotificationSetting(merchantId, key, String(value))
+    );
+
+    await Promise.all(updatePromises);
+    return this.getNotificationSettings(merchantId);
+  }
+
+  async getSecuritySettings(merchantId: string): Promise<SecuritySettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const settings = await this.merchantSettingsRepository.find({
+      where: { merchantId, settingType: SettingType.SECURITY, isActive: true },
+    });
+
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.settingKey] = setting.settingValue;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      twoFactorEnabled: settingsMap.twoFactorEnabled === 'true',
+      sessionTimeout: parseInt(settingsMap.sessionTimeout || '30'),
+      ipWhitelist: settingsMap.ipWhitelist ? JSON.parse(settingsMap.ipWhitelist) : [],
+      webhookUrl: settingsMap.webhookUrl || '',
+      apiKey: settingsMap.apiKey || '',
+    };
+  }
+
+  async updateSecuritySettings(merchantId: string, updateData: UpdateSecuritySettingsDto): Promise<SecuritySettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const updatePromises = Object.entries(updateData).map(([key, value]) => {
+      const stringValue = Array.isArray(value) ? JSON.stringify(value) : String(value);
+      return this.updateSecuritySetting(merchantId, key, stringValue);
+    });
+
+    await Promise.all(updatePromises);
+    return this.getSecuritySettings(merchantId);
+  }
+
+  async getStoreSettings(merchantId: string): Promise<StoreSettings> {
+    const merchant = await this.findOne(merchantId);
+
+    const settings = await this.merchantSettingsRepository.find({
+      where: { merchantId, settingType: SettingType.STORE, isActive: true },
+    });
+
+    const settingsMap = settings.reduce((acc, setting) => {
+      acc[setting.settingKey] = setting.settingValue;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      businessName: settingsMap.businessName || merchant.businessName,
+      email: settingsMap.email || merchant.email,
+      phone: settingsMap.phone || '',
+      address: settingsMap.address || '',
+      website: settingsMap.website || '',
+      description: settingsMap.description || '',
+      feePercentage: parseFloat(settingsMap.feePercentage || merchant.feePercentage.toString()),
+      isActive: settingsMap.isActive === 'true' || merchant.isActive,
+    };
+  }
+
+  async updateStoreSettings(merchantId: string, updateData: UpdateStoreSettingsDto): Promise<StoreSettings> {
+    await this.findOne(merchantId); // Verify merchant exists
+
+    const updatePromises = Object.entries(updateData).map(([key, value]) =>
+      this.updateStoreSetting(merchantId, key, String(value))
+    );
+
+    await Promise.all(updatePromises);
+    return this.getStoreSettings(merchantId);
+  }
+
+  // Private helper methods for updating individual settings
+
+  private async updatePaymentSetting(merchantId: string, key: string, value: string): Promise<void> {
+    await this.updateSetting(merchantId, SettingType.PAYMENT, key, value);
+  }
+
+  private async updateNotificationSetting(merchantId: string, key: string, value: string): Promise<void> {
+    await this.updateSetting(merchantId, SettingType.NOTIFICATION, key, value);
+  }
+
+  private async updateSecuritySetting(merchantId: string, key: string, value: string): Promise<void> {
+    await this.updateSetting(merchantId, SettingType.SECURITY, key, value);
+  }
+
+  private async updateStoreSetting(merchantId: string, key: string, value: string): Promise<void> {
+    await this.updateSetting(merchantId, SettingType.STORE, key, value);
+  }
+
+  private async updateSetting(merchantId: string, settingType: SettingType, key: string, value: string): Promise<void> {
+    let setting = await this.merchantSettingsRepository.findOne({
+      where: { merchantId, settingType, settingKey: key },
+    });
+
+    if (setting) {
+      setting.settingValue = value;
+      setting.isActive = true;
+      await this.merchantSettingsRepository.save(setting);
+    } else {
+      setting = this.merchantSettingsRepository.create({
+        merchantId,
+        settingType,
+        settingKey: key,
+        settingValue: value,
+        isActive: true,
+      });
+      await this.merchantSettingsRepository.save(setting);
+    }
   }
 }
