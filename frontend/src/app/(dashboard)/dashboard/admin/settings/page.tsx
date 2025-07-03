@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin-service';
 import { useToast } from '@/components/ui/use-toast';
+import PaymentSettings from '@/components/admin/payment-settings';
+import { 
+  platformSettingsService, 
+  PlatformSettings,
+  UpdatePlatformSettingsDto,
+  PendingMerchant 
+} from '@/services/platform-settings-service';
 import {
   Settings,
   DollarSign,
@@ -26,38 +34,47 @@ import {
   Percent,
 } from 'lucide-react';
 
-interface PlatformSettings {
-  merchantFeeRate: number;
-  latePaymentFee: number;
-  defaultCreditLimit: number;
-  maxTransactionAmount: number;
-  enableFraudDetection: boolean;
-  requireMerchantApproval: boolean;
-  enableEmailNotifications: boolean;
-  maintenanceMode: boolean;
-}
 
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState('general');
+  const [settings, setSettings] = useState<UpdatePlatformSettingsDto>({});
 
-  const [settings, setSettings] = useState<PlatformSettings>({
-    merchantFeeRate: 2.5,
-    latePaymentFee: 25,
-    defaultCreditLimit: 5000,
-    maxTransactionAmount: 2000,
-    enableFraudDetection: true,
-    requireMerchantApproval: true,
-    enableEmailNotifications: true,
-    maintenanceMode: false,
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['general', 'payments', 'approvals', 'security', 'system'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  // Queries for real platform settings
+  const { data: platformSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['platform-settings'],
+    queryFn: platformSettingsService.getSettings,
   });
+
+  // Initialize settings when platform settings are loaded
+  useEffect(() => {
+    if (platformSettings) {
+      setSettings({
+        merchantFeeRate: platformSettings.merchantFeeRate,
+        latePaymentFee: platformSettings.latePaymentFee,
+        defaultCreditLimit: platformSettings.defaultCreditLimit,
+        maxTransactionAmount: platformSettings.maxTransactionAmount,
+        enableFraudDetection: platformSettings.enableFraudDetection,
+        requireMerchantApproval: platformSettings.requireMerchantApproval,
+        enableEmailNotifications: platformSettings.enableEmailNotifications,
+        maintenanceMode: platformSettings.maintenanceMode,
+      });
+    }
+  }, [platformSettings]);
 
   const { data: pendingMerchants } = useQuery({
     queryKey: ['pending-merchants'],
-    queryFn: () =>
-      adminService
-        .getAllUsers('merchant')
-        .then((merchants) => merchants.filter((m) => !m.isActive)),
+    queryFn: platformSettingsService.getPendingMerchants,
   });
 
   const { data: systemStats } = useQuery({
@@ -66,51 +83,96 @@ export default function AdminSettingsPage() {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (_newSettings: PlatformSettings) => {
-      // Simulate API call - in real implementation, this would call adminService.updateSettings
-      return new Promise((resolve) => setTimeout(resolve, 1000));
-    },
+    mutationFn: (newSettings: UpdatePlatformSettingsDto) => 
+      platformSettingsService.updateSettings(newSettings),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
       toast({
         title: 'Settings Updated',
         description: 'Platform configuration has been saved successfully.',
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message || 'Failed to update platform settings',
+        variant: 'destructive',
+      });
+    },
   });
 
   const approveMerchantMutation = useMutation({
-    mutationFn: (merchantId: string) => adminService.updateUser(merchantId, { isActive: true }),
-    onSuccess: () => {
+    mutationFn: ({ merchantId, notes }: { merchantId: string; notes?: string }) => 
+      platformSettingsService.approveMerchant(merchantId, notes),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['pending-merchants'] });
-      toast({
-        title: 'Merchant Approved',
-        description: 'Merchant account has been activated.',
-      });
+      if (result.success) {
+        toast({
+          title: 'Merchant Approved',
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: 'Approval Failed',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
     },
   });
 
   const rejectMerchantMutation = useMutation({
-    mutationFn: (merchantId: string) => adminService.updateUser(merchantId, { isActive: false }),
-    onSuccess: () => {
+    mutationFn: ({ merchantId, reason }: { merchantId: string; reason?: string }) => 
+      platformSettingsService.rejectMerchant(merchantId, reason),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['pending-merchants'] });
-      toast({
-        title: 'Merchant Rejected',
-        description: 'Merchant application has been rejected.',
-      });
+      if (result.success) {
+        toast({
+          title: 'Merchant Rejected',
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: 'Rejection Failed',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
     },
   });
 
   const handleSaveSettings = () => {
+    const errors = platformSettingsService.validateSettings(settings);
+    if (errors.length > 0) {
+      toast({
+        title: 'Validation Error',
+        description: errors.join(', '),
+        variant: 'destructive',
+      });
+      return;
+    }
     updateSettingsMutation.mutate(settings);
   };
 
   const handleApproveMerchant = (merchantId: string) => {
-    approveMerchantMutation.mutate(merchantId);
+    approveMerchantMutation.mutate({ merchantId });
   };
 
   const handleRejectMerchant = (merchantId: string) => {
-    rejectMerchantMutation.mutate(merchantId);
+    rejectMerchantMutation.mutate({ merchantId });
   };
+
+  if (settingsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+        <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
@@ -129,9 +191,10 @@ export default function AdminSettingsPage() {
           </p>
         </motion.div>
 
-        <Tabs defaultValue="general" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="payments">Payment Settings</TabsTrigger>
             <TabsTrigger value="approvals">Approvals</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -154,16 +217,16 @@ export default function AdminSettingsPage() {
                       <Input
                         type="number"
                         step="0.1"
-                        value={settings.merchantFeeRate}
+                        value={settings.merchantFeeRate || 0}
                         onChange={(e) =>
-                          setSettings({ ...settings, merchantFeeRate: parseFloat(e.target.value) })
+                          setSettings({ ...settings, merchantFeeRate: parseFloat(e.target.value) || 0 })
                         }
                         className="flex-1"
                       />
                       <Percent className="w-4 h-4 text-gray-400" />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {settings.merchantFeeRate}% per transaction
+                      Current: {(settings.merchantFeeRate || 0)}% per transaction
                     </p>
                   </div>
                   <div>
@@ -331,6 +394,10 @@ export default function AdminSettingsPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="payments">
+            <PaymentSettings />
+          </TabsContent>
+
           <TabsContent value="approvals" className="space-y-6">
             <Card>
               <CardHeader>
@@ -343,14 +410,14 @@ export default function AdminSettingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingMerchants?.length === 0 ? (
+                {!Array.isArray(pendingMerchants) || pendingMerchants.length === 0 ? (
                   <div className="text-center py-8">
                     <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
                     <p className="text-gray-500">No pending merchant applications</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {pendingMerchants?.map((merchant) => (
+                    {Array.isArray(pendingMerchants) && pendingMerchants.map((merchant) => (
                       <div key={merchant.id} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">

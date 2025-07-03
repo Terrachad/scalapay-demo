@@ -40,9 +40,36 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updateCreditLimit(userId: string, amount: number): Promise<User> {
+  async deductUserCredit(userId: string, amount: number): Promise<User> {
     const user = await this.findById(userId);
-    user.availableCredit = user.availableCredit - amount;
+    
+    // CRITICAL: Validate amount is positive
+    if (amount <= 0) {
+      throw new Error('Deduction amount must be positive');
+    }
+    
+    // CRITICAL: Prevent negative balance
+    const newBalance = Number(user.availableCredit) - amount;
+    if (newBalance < 0) {
+      throw new Error(`Insufficient credit. Available: ${user.availableCredit}, Required: ${amount}`);
+    }
+    
+    user.availableCredit = newBalance;
+    return this.usersRepository.save(user);
+  }
+
+  async updateCreditLimit(userId: string, newLimit: number): Promise<User> {
+    const user = await this.findById(userId);
+    
+    // CRITICAL: Actually update the credit limit (not deduct credit)
+    if (newLimit <= 0) {
+      throw new Error('Credit limit must be positive');
+    }
+    
+    const currentUsed = Number(user.creditLimit) - Number(user.availableCredit);
+    user.creditLimit = newLimit;
+    user.availableCredit = Math.max(0, newLimit - currentUsed);
+    
     return this.usersRepository.save(user);
   }
 

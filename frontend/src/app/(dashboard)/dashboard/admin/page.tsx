@@ -397,9 +397,11 @@ export default function AdminDashboard() {
                   </div>
                   <Button
                     className="w-full mt-4"
-                    onClick={() => (window.location.href = '/dashboard/admin/settings')}
+                    onClick={() =>
+                      (window.location.href = '/dashboard/admin/settings?tab=payments')
+                    }
                   >
-                    View Settings
+                    Configure Settings
                   </Button>
                 </CardContent>
               </Card>

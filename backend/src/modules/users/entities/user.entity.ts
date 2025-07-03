@@ -8,6 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { Transaction } from '../../transactions/entities/transaction.entity';
+import { PaymentMethod } from '../../payments/entities/payment-method.entity';
 
 export enum UserRole {
   CUSTOMER = 'customer',
@@ -48,6 +49,41 @@ export class User {
   @Column({ nullable: true })
   stripeCustomerId?: string;
 
+  // Merchant-specific fields
+  @Column({ nullable: true })
+  businessName?: string;
+
+  @Column({ nullable: true })
+  businessAddress?: string;
+
+  @Column({ nullable: true })
+  businessPhone?: string;
+
+  @Column({ type: 'json', nullable: true })
+  businessDocuments?: any;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  riskScore?: number;
+
+  // Approval tracking
+  @Column({ nullable: true })
+  approvedAt?: Date;
+
+  @Column({ nullable: true })
+  approvedBy?: string;
+
+  @Column({ nullable: true })
+  approvalNotes?: string;
+
+  @Column({ nullable: true })
+  rejectedAt?: Date;
+
+  @Column({ nullable: true })
+  rejectedBy?: string;
+
+  @Column({ nullable: true })
+  rejectionReason?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
@@ -56,4 +92,7 @@ export class User {
 
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions!: Transaction[];
+
+  @OneToMany(() => PaymentMethod, (paymentMethod) => paymentMethod.user)
+  paymentMethods!: PaymentMethod[];
 }

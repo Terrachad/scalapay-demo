@@ -3,6 +3,8 @@ import { INestApplication } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { PaymentsModule } from './payments.module';
@@ -29,24 +31,27 @@ describe('PaymentsController (Integration)', () => {
           isGlobal: true,
           load: [configuration],
         }),
+        EventEmitterModule.forRoot(),
+        ThrottlerModule.forRoot([
+          {
+            ttl: 60000,
+            limit: 1000, // Higher limit for testing
+          },
+        ]),
         TypeOrmModule.forRoot({
           type: 'mysql',
           host: process.env.MYSQL_HOST || 'localhost',
           port: parseInt(process.env.MYSQL_PORT || '3306', 10),
           username: process.env.MYSQL_USERNAME || 'scalapay_user',
           password: process.env.MYSQL_PASSWORD || 'scalapay_pass',
-          database: process.env.MYSQL_DATABASE || 'scalapay_db',
-          entities: [User, Payment, Transaction, Merchant],
+          database: process.env.MYSQL_DATABASE || 'scalapay_demodb',
+          entities: [__dirname + '/../**/*.entity{.ts,.js}'],
           synchronize: false, // Don't modify schema
           logging: false,
         }),
         AuthModule,
         UsersModule,
         PaymentsModule,
-        JwtModule.register({
-          secret: 'test-secret',
-          signOptions: { expiresIn: '1h' },
-        }),
       ],
     }).compile();
 
@@ -76,7 +81,7 @@ describe('PaymentsController (Integration)', () => {
       })
       .expect(200);
 
-    authToken = loginResponse.body.access_token;
+    authToken = loginResponse.body.accessToken;
   });
 
   afterEach(async () => {
@@ -335,7 +340,7 @@ describe('PaymentsController (Integration)', () => {
         password: 'password123',
       });
 
-      const otherToken = otherLoginResponse.body.access_token;
+      const otherToken = otherLoginResponse.body.accessToken;
 
       await request(app.getHttpServer())
         .get(`/payments/${paymentId}`)

@@ -86,14 +86,25 @@ export const adminService = {
 
   async getAllTransactions(): Promise<any[]> {
     try {
-      const response = await apiClient.get<{transactions: any[]}>('/transactions', {
+      const response = await apiClient.get('/transactions', {
         params: {
           page: '1',
           limit: '100',
         },
       });
       console.log('Admin getAllTransactions response:', response.data);
-      return response.data.transactions || [];
+      
+      // The API returns: {data: {transactions: Array, total, page, limit}, statusCode, message}
+      if (response.data?.data?.transactions) {
+        return response.data.data.transactions;
+      }
+      
+      // Fallback for direct transactions array
+      if (response.data?.transactions) {
+        return response.data.transactions;
+      }
+      
+      return [];
     } catch (error) {
       console.error('Error fetching admin transactions:', error);
       return [];

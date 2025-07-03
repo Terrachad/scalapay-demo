@@ -65,94 +65,80 @@ export class PaymentWebhookService {
   }
 
   private async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const paymentId = paymentIntent.metadata?.paymentId;
-    if (!paymentId) {
-      this.logger.warn(`Payment intent ${paymentIntent.id} missing paymentId in metadata`);
+    const transactionId = paymentIntent.metadata?.transactionId;
+    if (!transactionId) {
+      this.logger.warn(`Payment intent ${paymentIntent.id} missing transactionId in metadata`);
       return;
     }
 
-    const payment = await this.paymentRepository.findOne({
-      where: { id: paymentId },
-      relations: ['transaction', 'transaction.user'],
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+      relations: ['user', 'merchant'],
     });
 
-    if (!payment) {
-      this.logger.warn(`Payment not found: ${paymentId}`);
+    if (!transaction) {
+      this.logger.warn(`Transaction not found: ${transactionId}`);
       return;
     }
 
-    // Update payment status
-    payment.status = PaymentStatus.COMPLETED;
-    payment.paymentDate = new Date();
-    payment.stripePaymentIntentId = paymentIntent.id;
-    await this.paymentRepository.save(payment);
+    // Update transaction status to approved since Stripe payment succeeded
+    transaction.status = TransactionStatus.APPROVED;
+    await this.transactionRepository.save(transaction);
 
-    this.logger.log(`Payment completed: ${paymentId} for $${payment.amount}`);
-
-    // Check if all payments for the transaction are completed
-    await this.checkTransactionCompletion(payment.transaction);
+    this.logger.log(`Stripe payment succeeded for transaction: ${transactionId}, amount: $${paymentIntent.amount_received / 100}`);
 
     // Send success notification
-    await this.notificationService.sendPaymentSuccessNotification(payment);
+    await this.notificationService.sendTransactionCompletionNotification(transaction);
 
     // Emit event for other services
     this.eventEmitter.emit('payment.completed', {
-      paymentId: payment.id,
-      transactionId: payment.transaction.id,
-      userId: payment.transaction.user.id,
-      amount: payment.amount,
+      paymentIntentId: paymentIntent.id,
+      transactionId: transaction.id,
+      userId: transaction.user?.id,
+      amount: paymentIntent.amount_received / 100,
     });
   }
 
   private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const paymentId = paymentIntent.metadata?.paymentId;
-    if (!paymentId) {
-      this.logger.warn(`Payment intent ${paymentIntent.id} missing paymentId in metadata`);
+    const transactionId = paymentIntent.metadata?.transactionId;
+    if (!transactionId) {
+      this.logger.warn(`Payment intent ${paymentIntent.id} missing transactionId in metadata`);
       return;
     }
 
-    const payment = await this.paymentRepository.findOne({
-      where: { id: paymentId },
-      relations: ['transaction', 'transaction.user'],
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+      relations: ['user', 'merchant'],
     });
 
-    if (!payment) {
-      this.logger.warn(`Payment not found: ${paymentId}`);
+    if (!transaction) {
+      this.logger.warn(`Transaction not found: ${transactionId}`);
       return;
     }
 
-    // Update payment status
-    payment.status = PaymentStatus.FAILED;
-    payment.failureReason = paymentIntent.last_payment_error?.message || 'Payment failed';
-    payment.retryCount = (payment.retryCount || 0) + 1;
+    // Update transaction status to failed
+    transaction.status = TransactionStatus.FAILED;
+    await this.transactionRepository.save(transaction);
 
-    // Schedule retry if under retry limit
-    if (payment.retryCount < 3) {
-      payment.nextRetryAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // Retry in 24 hours
-      payment.status = PaymentStatus.SCHEDULED; // Reset to scheduled for retry
-    }
+    const failureReason = paymentIntent.last_payment_error?.message || 'Payment failed';
+    this.logger.warn(`Stripe payment failed for transaction: ${transactionId} - ${failureReason}`);
 
-    await this.paymentRepository.save(payment);
-
-    this.logger.warn(`Payment failed: ${paymentId} - ${payment.failureReason}`);
-
-    // Send failure notification
+    // For now, we'll create a simple payment record to send the notification
+    // In a real implementation, you might want to handle this differently
+    const payment = new Payment();
+    payment.amount = paymentIntent.amount / 100;
+    payment.failureReason = failureReason;
+    payment.transaction = transaction;
+    
     await this.notificationService.sendPaymentFailureNotification(payment);
 
     // Emit event for retry logic
-    if (payment.retryCount < 3) {
-      this.eventEmitter.emit('payment.retry_scheduled', {
-        paymentId: payment.id,
-        retryAt: payment.nextRetryAt,
-        retryCount: payment.retryCount,
-      });
-    } else {
-      this.eventEmitter.emit('payment.retry_exhausted', {
-        paymentId: payment.id,
-        transactionId: payment.transaction.id,
-        userId: payment.transaction.user.id,
-      });
-    }
+    this.eventEmitter.emit('payment.failed', {
+      paymentIntentId: paymentIntent.id,
+      transactionId: transaction.id,
+      userId: transaction.user?.id,
+      failureReason,
+    });
   }
 
   private async handlePaymentRequiresAction(paymentIntent: Stripe.PaymentIntent): Promise<void> {

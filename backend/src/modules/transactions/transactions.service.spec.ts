@@ -10,6 +10,7 @@ import { TransactionRepository } from './repositories/transaction.repository';
 import { BusinessRulesService } from './services/business-rules.service';
 import { PaymentSchedulerService } from './services/payment-scheduler.service';
 import { TransactionStateMachineService } from './services/transaction-state-machine.service';
+import { StripeService } from '../payments/services/stripe.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
@@ -64,6 +65,13 @@ describe('TransactionsService', () => {
     save: jest.fn(),
   };
 
+  const mockStripeService = {
+    createCustomer: jest.fn(),
+    createPaymentIntent: jest.fn(),
+    confirmPaymentIntent: jest.fn(),
+    constructWebhookEvent: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -99,6 +107,10 @@ describe('TransactionsService', () => {
         {
           provide: ScalaPayWebSocketGateway,
           useValue: mockWsGateway,
+        },
+        {
+          provide: StripeService,
+          useValue: mockStripeService,
         },
       ],
     }).compile();

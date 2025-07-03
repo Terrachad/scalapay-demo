@@ -13,6 +13,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { WebSocketModule } from './modules/websocket/websocket.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { DynamoDBModule } from './modules/dynamodb/dynamodb.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -63,6 +64,7 @@ import configuration from './config/configuration';
     PaymentsModule,
     AnalyticsModule,
     WebSocketModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

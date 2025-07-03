@@ -74,15 +74,25 @@ export class TransactionsService {
         await this.userRepository.save(user);
       }
 
-      // Create payment intent for the full amount
+      // Calculate first installment amount for BNPL
+      const installments = this.getInstallmentCount(createTransactionDto.paymentPlan);
+      const firstInstallmentAmount = installments > 1 
+        ? Math.round((createTransactionDto.amount / installments) * 100) / 100
+        : createTransactionDto.amount;
+
+      // Create payment intent for FIRST INSTALLMENT ONLY
       const paymentIntent = await this.stripeService.createPaymentIntent({
-        amount: createTransactionDto.amount,
+        amount: firstInstallmentAmount,
         currency: 'usd',
         customerId: user.stripeCustomerId,
         metadata: {
           userId: createTransactionDto.userId,
           merchantId: createTransactionDto.merchantId,
           paymentPlan: createTransactionDto.paymentPlan,
+          totalAmount: createTransactionDto.amount.toString(),
+          installmentNumber: '1',
+          totalInstallments: installments.toString(),
+          firstInstallmentAmount: firstInstallmentAmount.toString(),
         },
       });
 
@@ -375,6 +385,15 @@ export class TransactionsService {
     } catch (error) {
       // If risk calculation fails, default to medium-high risk
       return 70;
+    }
+  }
+
+  private getInstallmentCount(paymentPlan: string): number {
+    switch (paymentPlan) {
+      case 'pay_in_2': return 2;
+      case 'pay_in_3': return 3; 
+      case 'pay_in_4': return 4;
+      default: return 1;
     }
   }
 }

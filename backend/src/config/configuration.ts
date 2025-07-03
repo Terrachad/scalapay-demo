@@ -7,7 +7,7 @@ export default () => ({
       port: parseInt(process.env.MYSQL_PORT || '3306', 10),
       username: process.env.MYSQL_USERNAME || 'scalapay_user',
       password: process.env.MYSQL_PASSWORD || 'scalapay_pass',
-      database: process.env.MYSQL_DATABASE || 'scalapay_db',
+      database: process.env.MYSQL_DATABASE || 'scalapay_demodb',
     },
     redis: {
       host: process.env.REDIS_HOST || 'localhost',
@@ -26,6 +26,7 @@ export default () => ({
   },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || 'sk_test_51Rf1hcP1x4I62TtzPrlCtiRHmO9hIZVy6e2mKjeQ1W612fII0HFu042gN2JT9GWkUw2iEsZ8MiqeTWk2EyjK9NtV000Tz4wWsM',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_51Rf1hcP1x4I62TtzlUl6ho2uxn0eeeCVBNshhFd6tDOxie4AnKFBU0LTyt7Svgx0K85hCmCyLio5iuwHMpBcMZsW005iKFzqeW',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_971f8d8db7eb8378330c0aa262d97f7baaecec70c9517929211ac3b252d305db',
   },
   integrations: {

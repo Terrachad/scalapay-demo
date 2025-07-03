@@ -1,262 +1,202 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
-import { User } from '../../users/entities/user.entity';
+import { PaymentConfigService } from './payment-config.service';
 import { StripeService } from './stripe.service';
 import { NotificationService } from './notification.service';
-
-export interface RetryStrategy {
-  maxRetries: number;
-  delays: number[]; // in milliseconds
-  backoffMultiplier: number;
-}
 
 @Injectable()
 export class PaymentRetryService {
   private readonly logger = new Logger(PaymentRetryService.name);
 
-  private readonly defaultRetryStrategy: RetryStrategy = {
-    maxRetries: 3,
-    delays: [
-      24 * 60 * 60 * 1000, // 24 hours
-      48 * 60 * 60 * 1000, // 48 hours
-      72 * 60 * 60 * 1000, // 72 hours
-    ],
-    backoffMultiplier: 1.5,
-  };
-
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private paymentConfigService: PaymentConfigService,
     private stripeService: StripeService,
     private notificationService: NotificationService,
-    private eventEmitter: EventEmitter2,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
-  async processRetryQueue(): Promise<void> {
-    this.logger.log('Processing payment retry queue...');
+  async processFailedPayments(): Promise<void> {
+    this.logger.log('Starting failed payment retry process');
 
-    const retryablePayments = await this.paymentRepository.find({
-      where: {
-        status: PaymentStatus.SCHEDULED,
-        nextRetryAt: LessThan(new Date()),
-        retryCount: LessThan(this.defaultRetryStrategy.maxRetries),
-      },
-      relations: ['transaction', 'transaction.user'],
-    });
+    try {
+      const failedPayments = await this.getRetryableFailedPayments();
+      
+      for (const payment of failedPayments) {
+        await this.retryPayment(payment);
+      }
 
-    this.logger.log(`Found ${retryablePayments.length} payments to retry`);
-
-    for (const payment of retryablePayments) {
-      await this.retryPayment(payment);
+      this.logger.log(`Processed ${failedPayments.length} failed payments`);
+    } catch (error) {
+      this.logger.error('Error processing failed payments:', error);
     }
   }
 
   async retryPayment(payment: Payment): Promise<boolean> {
     try {
-      this.logger.log(`Retrying payment: ${payment.id} (attempt ${payment.retryCount + 1})`);
-
-      const user = payment.transaction.user;
-
-      // Check if user still has a valid payment method
-      if (!user.stripeCustomerId) {
-        this.logger.warn(`User ${user.id} has no Stripe customer ID, cannot retry payment`);
-        await this.markPaymentAsFinalFailure(payment, 'No payment method available');
-        return false;
+      if (!payment.transaction) {
+        throw new Error('Payment transaction not found');
       }
 
-      // Get stored payment method for the user
-      const paymentMethodId = payment.stripePaymentMethodId;
-      if (!paymentMethodId) {
-        this.logger.warn(`Payment ${payment.id} has no stored payment method`);
-        await this.markPaymentAsFinalFailure(payment, 'No payment method stored');
-        return false;
-      }
-
-      // Update retry count and status
-      payment.retryCount += 1;
-      payment.status = PaymentStatus.PROCESSING;
-      await this.paymentRepository.save(payment);
-
-      // Attempt to charge the stored payment method
-      const paymentIntent = await this.stripeService.chargeStoredPaymentMethod(
-        user.stripeCustomerId,
-        paymentMethodId,
-        Number(payment.amount),
-        {
-          paymentId: payment.id,
-          transactionId: payment.transaction.id,
-          retryAttempt: payment.retryCount,
-        },
+      const config = await this.paymentConfigService.getConfigForMerchant(
+        payment.transaction.merchantId,
       );
 
-      // Update payment with new intent ID
-      payment.stripePaymentIntentId = paymentIntent.id;
-      payment.status = this.stripeService.mapStripeStatusToPaymentStatus(paymentIntent.status);
+      // Check if we've exceeded max retries
+      if (payment.retryCount >= config.maxRetries) {
+        this.logger.warn(`Payment ${payment.id} exceeded max retries (${config.maxRetries})`);
+        
+        // Mark as permanently failed
+        payment.status = PaymentStatus.FAILED;
+        payment.failureReason = 'Maximum retry attempts exceeded';
+        await this.paymentRepository.save(payment);
+        
+        return false;
+      }
 
-      if (paymentIntent.status === 'succeeded') {
-        payment.paymentDate = new Date();
-        this.logger.log(`Payment retry successful: ${payment.id}`);
+      // Check if enough time has passed since last retry
+      const lastRetryDate = payment.lastRetryAt || payment.updatedAt;
+      const daysSinceLastRetry = Math.floor(
+        (Date.now() - lastRetryDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
-        await this.notificationService.sendPaymentRetrySuccessNotification(payment);
-
-        this.eventEmitter.emit('payment.retry_succeeded', {
-          paymentId: payment.id,
-          retryCount: payment.retryCount,
-        });
-      } else if (paymentIntent.status === 'requires_action') {
-        // Handle 3D Secure or other required actions
-        await this.notificationService.sendPaymentActionRequiredNotification(
-          payment,
-          paymentIntent,
+      if (daysSinceLastRetry < config.retryDelayDays) {
+        this.logger.debug(
+          `Payment ${payment.id} not ready for retry (${daysSinceLastRetry}/${config.retryDelayDays} days)`,
         );
+        return false;
+      }
+
+      this.logger.log(`Retrying payment ${payment.id} (attempt ${payment.retryCount + 1}/${config.maxRetries})`);
+
+      // Attempt payment
+      const result = await this.attemptPayment(payment);
+
+      // Update payment record
+      payment.retryCount++;
+      payment.lastRetryAt = new Date();
+
+      if (result.success) {
+        payment.status = PaymentStatus.COMPLETED;
+        payment.paymentDate = new Date();
+        payment.stripePaymentIntentId = result.paymentIntentId;
+        
+        this.logger.log(`Payment ${payment.id} retry successful`);
       } else {
-        // Payment failed again, schedule next retry or mark as final failure
-        await this.scheduleNextRetry(payment, paymentIntent.last_payment_error?.message);
+        payment.status = PaymentStatus.FAILED;
+        payment.failureReason = result.error;
+        
+        this.logger.warn(`Payment ${payment.id} retry failed: ${result.error}`);
       }
 
       await this.paymentRepository.save(payment);
-      return paymentIntent.status === 'succeeded';
-    } catch (error) {
-      this.logger.error(`Payment retry failed for ${payment.id}:`, error);
+      return result.success;
 
-      await this.scheduleNextRetry(payment, (error as Error).message);
+    } catch (error) {
+      this.logger.error(`Error retrying payment ${payment.id}:`, error);
+      
+      // Update retry count even on error
+      payment.retryCount++;
+      payment.lastRetryAt = new Date();
+      payment.status = PaymentStatus.FAILED;
+      payment.failureReason = 'Retry process error';
+      await this.paymentRepository.save(payment);
+      
       return false;
     }
   }
 
-  private async scheduleNextRetry(payment: Payment, errorMessage?: string): Promise<void> {
-    if (payment.retryCount >= this.defaultRetryStrategy.maxRetries) {
-      await this.markPaymentAsFinalFailure(payment, errorMessage || 'Max retries exceeded');
-      return;
+  private async getRetryableFailedPayments(): Promise<Payment[]> {
+    return this.paymentRepository
+      .createQueryBuilder('payment')
+      .leftJoinAndSelect('payment.transaction', 'transaction')
+      .leftJoinAndSelect('transaction.user', 'user')
+      .leftJoinAndSelect('transaction.merchant', 'merchant')
+      .where('payment.status = :status', { status: PaymentStatus.FAILED })
+      .andWhere('payment.dueDate <= :now', { now: new Date() })
+      .andWhere('payment.retryCount < :maxRetries', { maxRetries: 10 })
+      .orderBy('payment.dueDate', 'ASC')
+      .getMany();
+  }
+
+  private async attemptPayment(payment: Payment): Promise<{ success: boolean; error?: string; paymentIntentId?: string }> {
+    try {
+      if (!payment.transaction) {
+        throw new Error('Payment transaction not found');
+      }
+
+      // For Stripe payments
+      if (payment.transaction.stripePaymentIntentId) {
+        const result = await this.stripeService.createPaymentIntent({
+          amount: payment.amount,
+          currency: 'usd',
+          customerId: payment.transaction.user.stripeCustomerId,
+          metadata: {
+            paymentId: payment.id,
+            transactionId: payment.transaction.id,
+            retryAttempt: payment.retryCount + 1,
+          },
+        });
+
+        return {
+          success: true,
+          paymentIntentId: result.paymentIntentId,
+        };
+      }
+
+      return {
+        success: true,
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Payment processing failed';
+      return {
+        success: false,
+        error: errorMessage,
+      };
     }
-
-    const delayIndex = Math.min(payment.retryCount, this.defaultRetryStrategy.delays.length - 1);
-    const baseDelay = this.defaultRetryStrategy.delays[delayIndex];
-    const jitteredDelay = baseDelay + Math.random() * 0.1 * baseDelay; // Add 10% jitter
-
-    payment.nextRetryAt = new Date(Date.now() + jitteredDelay);
-    payment.status = PaymentStatus.SCHEDULED;
-    payment.failureReason = errorMessage || 'Payment failed, retry scheduled';
-
-    await this.paymentRepository.save(payment);
-
-    this.logger.log(`Scheduled retry for payment ${payment.id} at ${payment.nextRetryAt}`);
-
-    this.eventEmitter.emit('payment.retry_scheduled', {
-      paymentId: payment.id,
-      retryAt: payment.nextRetryAt,
-      retryCount: payment.retryCount,
-      errorMessage,
-    });
   }
 
-  private async markPaymentAsFinalFailure(payment: Payment, reason: string): Promise<void> {
-    payment.status = PaymentStatus.FAILED;
-    payment.failureReason = reason;
-    payment.nextRetryAt = undefined;
-
-    await this.paymentRepository.save(payment);
-
-    this.logger.warn(`Payment marked as final failure: ${payment.id} - ${reason}`);
-
-    await this.notificationService.sendFinalPaymentFailureNotification(payment);
-
-    this.eventEmitter.emit('payment.final_failure', {
-      paymentId: payment.id,
-      transactionId: payment.transaction.id,
-      userId: payment.transaction.user.id,
-      reason,
-    });
-  }
-
-  async manualRetryPayment(paymentId: string): Promise<boolean> {
+  async getPaymentRetryStatus(paymentId: string): Promise<{
+    canRetry: boolean;
+    nextRetryDate?: Date;
+    retriesRemaining: number;
+  }> {
     const payment = await this.paymentRepository.findOne({
       where: { id: paymentId },
-      relations: ['transaction', 'transaction.user'],
+      relations: ['transaction'],
     });
 
     if (!payment) {
       throw new Error('Payment not found');
     }
 
-    if (payment.status === PaymentStatus.COMPLETED) {
-      throw new Error('Payment already completed');
+    if (!payment.transaction) {
+      throw new Error('Payment transaction not found');
     }
 
-    if (payment.retryCount >= this.defaultRetryStrategy.maxRetries) {
-      throw new Error('Payment has exceeded maximum retry attempts');
-    }
-
-    return await this.retryPayment(payment);
-  }
-
-  async updatePaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
-    // Update all pending payments for this user with the new payment method
-    const pendingPayments = await this.paymentRepository.find({
-      where: {
-        transaction: { userId },
-        status: PaymentStatus.SCHEDULED,
-      },
-    });
-
-    for (const payment of pendingPayments) {
-      payment.stripePaymentMethodId = paymentMethodId;
-      await this.paymentRepository.save(payment);
-    }
-
-    this.logger.log(
-      `Updated payment method for ${pendingPayments.length} pending payments for user ${userId}`,
+    const config = await this.paymentConfigService.getConfigForMerchant(
+      payment.transaction.merchantId,
     );
-  }
 
-  async getRetryStatistics(): Promise<{
-    totalRetries: number;
-    successfulRetries: number;
-    failedRetries: number;
-    pendingRetries: number;
-  }> {
-    const [totalRetries] = await this.paymentRepository
-      .createQueryBuilder('payment')
-      .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0')
-      .getRawOne();
+    const retriesRemaining = Math.max(0, config.maxRetries - payment.retryCount);
+    const canRetry = retriesRemaining > 0 && payment.status === PaymentStatus.FAILED;
 
-    const [successfulRetries] = await this.paymentRepository
-      .createQueryBuilder('payment')
-      .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', {
-        status: PaymentStatus.COMPLETED,
-      })
-      .getRawOne();
-
-    const [failedRetries] = await this.paymentRepository
-      .createQueryBuilder('payment')
-      .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', {
-        status: PaymentStatus.FAILED,
-      })
-      .getRawOne();
-
-    const [pendingRetries] = await this.paymentRepository
-      .createQueryBuilder('payment')
-      .select('COUNT(*)', 'count')
-      .where('payment.retryCount > 0 AND payment.status = :status', {
-        status: PaymentStatus.SCHEDULED,
-      })
-      .getRawOne();
+    let nextRetryDate: Date | undefined;
+    if (canRetry) {
+      const lastRetryDate = payment.lastRetryAt || payment.updatedAt;
+      nextRetryDate = new Date(lastRetryDate);
+      nextRetryDate.setDate(nextRetryDate.getDate() + config.retryDelayDays);
+    }
 
     return {
-      totalRetries: parseInt(totalRetries.count),
-      successfulRetries: parseInt(successfulRetries.count),
-      failedRetries: parseInt(failedRetries.count),
-      pendingRetries: parseInt(pendingRetries.count),
+      canRetry,
+      nextRetryDate,
+      retriesRemaining,
     };
   }
 }

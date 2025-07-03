@@ -59,6 +59,10 @@ export class PaymentProcessor {
   }
 
   private async processCharge(payment: Payment): Promise<void> {
+    if (!payment.transaction) {
+      throw new Error('Payment transaction is required');
+    }
+    
     const user = payment.transaction.user;
 
     if (!user.stripeCustomerId || !payment.stripePaymentMethodId) {
@@ -76,7 +80,7 @@ export class PaymentProcessor {
       Number(payment.amount),
       {
         paymentId: payment.id,
-        transactionId: payment.transaction.id,
+        transactionId: payment.transaction!.id,
       },
     );
 

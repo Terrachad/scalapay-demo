@@ -10,9 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { PaymentPlanSelector } from '@/components/features/payment-plan-selector';
+import { PaymentMethodSelector, PaymentMethod } from '@/components/checkout/payment-method-selector';
+import { StripePaymentForm } from '@/components/checkout/stripe-payment-form';
 import { useToast } from '@/components/ui/use-toast';
 import { transactionService } from '@/services/transaction-service';
 import { merchantService } from '@/services/merchant-service';
+import { authService } from '@/services/auth-service';
 import { formatCurrency } from '@/lib/utils';
 import {
   ShoppingCart,

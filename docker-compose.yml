@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: scalapay_root_pass
-      MYSQL_DATABASE: scalapay_db
+      MYSQL_DATABASE: scalapay_demodb
       MYSQL_USER: scalapay_user
       MYSQL_PASSWORD: scalapay_pass
     ports:

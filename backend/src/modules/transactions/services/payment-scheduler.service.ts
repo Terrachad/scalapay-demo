@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { Transaction, PaymentPlan } from '../entities/transaction.entity';
+import { PaymentConfigService } from '../../payments/services/payment-config.service';
+import { StripeService } from '../../payments/services/stripe.service';
 
 export interface PaymentSchedule {
   amount: number;
@@ -15,27 +17,28 @@ export class PaymentSchedulerService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
+    private paymentConfigService: PaymentConfigService,
+    private stripeService: StripeService,
   ) {}
 
-  calculatePaymentSchedule(
+  async calculatePaymentSchedule(
     amount: number,
     paymentPlan: PaymentPlan,
+    merchantId?: string,
     startDate: Date = new Date(),
-  ): PaymentSchedule[] {
+  ): Promise<PaymentSchedule[]> {
+    const config = await this.paymentConfigService.getConfigForMerchant(merchantId);
     const installments = this.getInstallmentCount(paymentPlan);
     const installmentAmount = this.calculateInstallmentAmount(amount, installments);
     const schedule: PaymentSchedule[] = [];
 
+    // Create payments with temporary numbering first
     for (let i = 0; i < installments; i++) {
-      const dueDate = new Date(startDate);
-
-      if (i === 0) {
-        // First payment due immediately (or within 24 hours)
-        dueDate.setHours(dueDate.getHours() + 24);
-      } else {
-        // Subsequent payments due every 2 weeks
-        dueDate.setDate(dueDate.getDate() + i * 14);
-      }
+      const dueDate = this.paymentConfigService.calculateDueDate(
+        startDate,
+        i + 1,
+        config,
+      );
 
       // Adjust the last payment to account for rounding
       const paymentAmount =
@@ -46,30 +49,63 @@ export class PaymentSchedulerService {
       schedule.push({
         amount: paymentAmount,
         dueDate,
-        installmentNumber: i + 1,
+        installmentNumber: 0, // Temporary - will be assigned after sorting
       });
     }
 
-    return schedule;
+    // CRITICAL: Sort by due date first, then assign correct installment numbers
+    const sortedSchedule = schedule.sort((a, b) => 
+      new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    );
+
+    // Reassign installment numbers based on chronological order
+    sortedSchedule.forEach((payment, index) => {
+      payment.installmentNumber = index + 1;
+    });
+
+    return sortedSchedule;
   }
 
   async createPaymentSchedule(transaction: Transaction): Promise<Payment[]> {
-    const schedule = this.calculatePaymentSchedule(transaction.amount, transaction.paymentPlan);
+    // Schedule is already sorted chronologically with correct installment numbers
+    const schedule = await this.calculatePaymentSchedule(
+      transaction.amount, 
+      transaction.paymentPlan,
+      transaction.merchantId,
+    );
 
     const payments: Payment[] = [];
 
+    // Create payments using the correctly ordered schedule
     for (const scheduledPayment of schedule) {
       const payment = new Payment();
       payment.amount = scheduledPayment.amount;
       payment.dueDate = scheduledPayment.dueDate;
-      payment.status = PaymentStatus.SCHEDULED;
+      payment.installmentNumber = scheduledPayment.installmentNumber; // Already correctly assigned
       payment.transactionId = transaction.id;
       payment.transaction = transaction;
+
+      // CRITICAL: Process first payment immediately if due now or in the past
+      const now = new Date();
+      if (scheduledPayment.installmentNumber === 1 && scheduledPayment.dueDate <= now) {
+        payment.status = PaymentStatus.PROCESSING;
+        // First payment will be processed immediately after saving
+      } else {
+        payment.status = PaymentStatus.SCHEDULED;
+      }
 
       payments.push(payment);
     }
 
-    return this.paymentRepository.save(payments);
+    const savedPayments = await this.paymentRepository.save(payments);
+
+    // Process first payment immediately if it's due now
+    const firstPayment = savedPayments.find(p => p.installmentNumber === 1);
+    if (firstPayment && firstPayment.status === PaymentStatus.PROCESSING) {
+      await this.processFirstPaymentImmediately(firstPayment);
+    }
+
+    return savedPayments;
   }
 
   async schedulePayments(transaction: Transaction): Promise<Payment[]> {
@@ -121,7 +157,11 @@ export class PaymentSchedulerService {
     });
 
     // Create new schedule for remaining amount
-    const schedule = this.calculatePaymentSchedule(remainingAmount, transaction.paymentPlan);
+    const schedule = await this.calculatePaymentSchedule(
+      remainingAmount, 
+      transaction.paymentPlan,
+      transaction.merchantId,
+    );
 
     const payments: Payment[] = [];
 
@@ -157,14 +197,48 @@ export class PaymentSchedulerService {
     return Math.round((totalAmount / installments) * 100) / 100;
   }
 
-  getPaymentPlanInfo(paymentPlan: PaymentPlan) {
+  async getPaymentPlanInfo(paymentPlan: PaymentPlan, merchantId?: string) {
+    const config = await this.paymentConfigService.getConfigForMerchant(merchantId);
     const installments = this.getInstallmentCount(paymentPlan);
+    const intervalDescription = this.paymentConfigService.getIntervalDescription(config);
 
     return {
       installments,
       description: `Pay in ${installments} installments`,
-      frequency: installments === 2 ? 'Every 2 weeks' : 'Every 2 weeks',
-      firstPaymentDue: '24 hours after approval',
+      frequency: intervalDescription,
+      firstPaymentDue: config.firstPaymentDelayHours === 0 
+        ? 'Immediately upon approval' 
+        : `${config.firstPaymentDelayHours} hours after approval`,
+      config,
     };
+  }
+
+  /**
+   * Process the first payment immediately for better cash flow
+   */
+  private async processFirstPaymentImmediately(payment: Payment): Promise<void> {
+    try {
+      console.log(`💳 Processing first payment immediately: ${payment.id} - $${payment.amount}`);
+      
+      // If transaction uses Stripe (insufficient credit), process through Stripe
+      if (payment.transaction?.paymentMethod === 'stripe' && payment.transaction?.stripePaymentIntentId) {
+        await this.stripeService.processInstallmentPayment(payment);
+        console.log(`✅ First payment processed via Stripe: ${payment.id}`);
+      } else {
+        // For credit-based payments, mark as completed since credit was already deducted
+        await this.paymentRepository.update(payment.id, {
+          status: PaymentStatus.COMPLETED,
+          paymentDate: new Date(),
+        });
+        console.log(`✅ First payment completed via credit: ${payment.id}`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to process first payment immediately: ${payment.id}`, error);
+      // Mark as failed but don't throw to prevent transaction creation failure
+      await this.paymentRepository.update(payment.id, {
+        status: PaymentStatus.FAILED,
+        failureReason: `Immediate processing failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
   }
 }

@@ -28,10 +28,7 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/seed-demo-users.ts",
-    "seed:simple": "ts-node -r tsconfig-paths/register src/seed-demo-simple.ts",
-    "seed:demo": "node create-demo-users-direct.js && node create-proper-hash.js",
-    "fix:demo": "node create-proper-hash.js",
-    "fix:lint": "eslint src --fix"
+    "seed:demo": "node create-demo-users-direct.js && node create-proper-hash.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",

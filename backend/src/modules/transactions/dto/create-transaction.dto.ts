@@ -74,6 +74,17 @@ export class CreateTransactionDto {
   items!: TransactionItemDto[];
 
   @ApiPropertyOptional({
+    description: 'Payment method preference',
+    example: { type: 'split', creditAmount: 500, cardAmount: 499.99 }
+  })
+  @IsOptional()
+  paymentMethodPreference?: {
+    type: 'credit' | 'stripe' | 'split';
+    creditAmount?: number;
+    cardAmount?: number;
+  };
+
+  @ApiPropertyOptional({
     description: 'Additional metadata',
     example: { source: 'mobile_app', campaign: 'summer_sale' },
   })

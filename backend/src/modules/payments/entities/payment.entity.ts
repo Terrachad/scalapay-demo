@@ -55,6 +55,9 @@ export class Payment {
   retryCount!: number;
 
   @Column({ nullable: true })
+  lastRetryAt?: Date;
+
+  @Column({ nullable: true })
   nextRetryAt?: Date;
 
   @CreateDateColumn()
@@ -63,10 +66,10 @@ export class Payment {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column()
+  @Column({ nullable: true })
   @Index()
-  transactionId!: string;
+  transactionId?: string;
 
   @ManyToOne(() => Transaction, (transaction) => transaction.payments)
-  transaction!: Transaction;
+  transaction?: Transaction;
 }

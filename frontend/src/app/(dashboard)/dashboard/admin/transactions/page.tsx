@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,17 @@ export default function AdminTransactionsPage() {
     queryFn: adminService.getAllTransactions,
   });
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Admin Transactions Debug:', {
+      transactions,
+      isLoading,
+      transactionsLength: transactions?.length,
+      transactionsType: typeof transactions,
+      isArray: Array.isArray(transactions)
+    });
+  }, [transactions, isLoading]);
+
   const approveTransactionMutation = useMutation({
     mutationFn: (transactionId: string) => adminService.approveTransaction(transactionId),
     onSuccess: () => {
@@ -58,14 +69,20 @@ export default function AdminTransactionsPage() {
     },
   });
 
-  const filteredTransactions =
-    transactions?.filter((transaction) => {
+  const filteredTransactions = React.useMemo(() => {
+    if (!transactions || !Array.isArray(transactions)) {
+      return [];
+    }
+    
+    return transactions.filter((transaction) => {
+      if (!transaction) return false;
+      
       const customerName = transaction.user?.name || 'Unknown';
       const merchantName =
         transaction.merchant?.businessName || transaction.merchant?.name || 'Unknown';
 
       const matchesSearch =
-        transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (transaction.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         merchantName.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -74,20 +91,61 @@ export default function AdminTransactionsPage() {
       }
 
       return matchesSearch;
-    }) || [];
+    });
+  }, [transactions, searchTerm, statusFilter]);
+
+  const getNextPaymentInfo = (transaction: Transaction) => {
+    const nextPayment = transaction.payments?.find((p) => p.status === 'scheduled');
+    if (!nextPayment) {
+      return {
+        exists: false,
+        amount: 0,
+        dueDate: null,
+        daysTillDue: 0,
+        isOverdue: false,
+        formattedDate: 'N/A',
+        remainingPayments: 0
+      };
+    }
+
+    const dueDate = new Date(nextPayment.dueDate);
+    const today = new Date();
+    const daysTillDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const isOverdue = daysTillDue < 0;
+    const remainingPayments = transaction.payments?.filter(p => p.status === 'scheduled').length || 0;
+
+    return {
+      exists: true,
+      amount: parseFloat(nextPayment.amount?.toString() || '0'),
+      dueDate,
+      daysTillDue: Math.abs(daysTillDue),
+      isOverdue,
+      formattedDate: dueDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      remainingPayments
+    };
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
         return 'bg-green-100 text-green-800';
+      case 'approved':
+        return 'bg-blue-100 text-blue-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'failed':
         return 'bg-red-100 text-red-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800';
       case 'processing':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -97,9 +155,13 @@ export default function AdminTransactionsPage() {
     switch (status) {
       case 'completed':
         return <CheckCircle className="w-4 h-4" />;
+      case 'approved':
+        return <CheckCircle className="w-4 h-4" />;
       case 'pending':
         return <Clock className="w-4 h-4" />;
       case 'failed':
+        return <XCircle className="w-4 h-4" />;
+      case 'rejected':
         return <XCircle className="w-4 h-4" />;
       case 'cancelled':
         return <XCircle className="w-4 h-4" />;
@@ -138,19 +200,19 @@ export default function AdminTransactionsPage() {
     );
   }
 
-  const pendingCount = transactions?.filter((t) => t.status === 'pending').length || 0;
-  const processingCount = transactions?.filter((t) => t.status === 'processing').length || 0;
-  const totalVolume =
-    transactions?.reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0) || 0;
+  const pendingCount = transactions?.filter((t) => t?.status === 'pending').length || 0;
+  const processingCount = transactions?.filter((t) => t?.status === 'processing').length || 0;
+  const approvedCount = transactions?.filter((t) => t?.status === 'approved').length || 0;
+  const totalVolume = transactions?.reduce((sum, t) => {
+    if (!t?.amount) return sum;
+    const amount = typeof t.amount === 'string' ? parseFloat(t.amount) : Number(t.amount);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0) || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div>
           <div className="flex items-center gap-3 mb-2">
             <CreditCard className="w-8 h-8 text-primary" />
             <h1 className="text-2xl lg:text-3xl font-bold">Transaction Management</h1>
@@ -158,7 +220,7 @@ export default function AdminTransactionsPage() {
           <p className="text-gray-600 dark:text-gray-400">
             Scalapay transaction approval and risk management system
           </p>
-        </motion.div>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -188,10 +250,10 @@ export default function AdminTransactionsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Processing</p>
-                  <p className="text-2xl font-bold text-orange-600">{processingCount}</p>
+                  <p className="text-sm text-gray-600">Approved</p>
+                  <p className="text-2xl font-bold text-blue-600">{approvedCount}</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-orange-600 opacity-20" />
+                <CheckCircle className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -237,6 +299,13 @@ export default function AdminTransactionsPage() {
                   Pending
                 </Button>
                 <Button
+                  variant={statusFilter === 'approved' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('approved')}
+                  size="sm"
+                >
+                  Approved
+                </Button>
+                <Button
                   variant={statusFilter === 'processing' ? 'default' : 'outline'}
                   onClick={() => setStatusFilter('processing')}
                   size="sm"
@@ -257,6 +326,13 @@ export default function AdminTransactionsPage() {
                 >
                   Failed
                 </Button>
+                <Button
+                  variant={statusFilter === 'rejected' ? 'default' : 'outline'}
+                  onClick={() => setStatusFilter('rejected')}
+                  size="sm"
+                >
+                  Rejected
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -270,10 +346,8 @@ export default function AdminTransactionsPage() {
           <CardContent>
             <div className="space-y-4">
               {filteredTransactions.map((transaction) => (
-                <motion.div
-                  key={transaction.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <div
+                  key={transaction?.id || Math.random()}
                   className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -281,11 +355,11 @@ export default function AdminTransactionsPage() {
                       <div className="flex items-center gap-3 mb-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">#{transaction.id.slice(-8)}</h3>
-                            <Badge className={getStatusColor(transaction.status)}>
+                            <h3 className="font-semibold">#{transaction?.id?.slice(-8) || 'N/A'}</h3>
+                            <Badge className={getStatusColor(transaction?.status || 'pending')}>
                               <div className="flex items-center gap-1">
-                                {getStatusIcon(transaction.status)}
-                                {transaction.status}
+                                {getStatusIcon(transaction?.status || 'pending')}
+                                {transaction?.status || 'pending'}
                               </div>
                             </Badge>
                           </div>
@@ -307,14 +381,33 @@ export default function AdminTransactionsPage() {
                               <span>{formatDate(transaction.createdAt)}</span>
                             </div>
                           </div>
+                          <div className="mt-2">
+                            <p className={`text-xs ${
+                              (() => {
+                                const nextInfo = getNextPaymentInfo(transaction);
+                                return nextInfo.isOverdue ? 'text-red-600 font-medium' : nextInfo.daysTillDue <= 3 ? 'text-yellow-600' : 'text-gray-500'
+                              })()
+                            }`}>
+                              {(() => {
+                                const nextInfo = getNextPaymentInfo(transaction);
+                                if (!nextInfo.exists) return '✓ All payments complete';
+                                return `Next Payment: ${formatCurrency(nextInfo.amount)} • ${nextInfo.isOverdue ? `${nextInfo.daysTillDue} days overdue` : nextInfo.daysTillDue === 0 ? 'Due today' : `Due in ${nextInfo.daysTillDue} days`}`;
+                              })()
+                              }
+                            </p>
+                          </div>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-lg font-bold text-green-600">
-                          {formatCurrency(transaction.amount)}
+                          {formatCurrency(
+                            typeof transaction?.amount === 'string' 
+                              ? parseFloat(transaction.amount) 
+                              : Number(transaction?.amount || 0)
+                          )}
                         </div>
-                        <Badge variant="outline">{transaction.paymentPlan}</Badge>
-                        {transaction.riskScore && (
+                        <Badge variant="outline">{transaction?.paymentPlan || 'N/A'}</Badge>
+                        {transaction?.riskScore && (
                           <Badge variant={transaction.riskScore > 70 ? 'destructive' : 'secondary'}>
                             Risk: {transaction.riskScore}%
                           </Badge>
@@ -332,7 +425,7 @@ export default function AdminTransactionsPage() {
                         View
                       </Button>
 
-                      {canApprove(transaction) && (
+                      {canApprove(transaction) && transaction?.id && (
                         <Button
                           variant="default"
                           size="sm"
@@ -344,7 +437,7 @@ export default function AdminTransactionsPage() {
                         </Button>
                       )}
 
-                      {canReject(transaction) && (
+                      {canReject(transaction) && transaction?.id && (
                         <Button
                           variant="destructive"
                           size="sm"
@@ -357,7 +450,7 @@ export default function AdminTransactionsPage() {
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </CardContent>

@@ -13,6 +13,8 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -109,12 +111,14 @@ export class PaymentsController {
   @ApiResponse({ status: 200, description: 'Payments retrieved successfully' })
   async getUserPayments(
     @Request() req: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
     @Query('status') status?: PaymentStatus,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
     const queryBuilder = this.paymentRepository
       .createQueryBuilder('payment')
       .leftJoinAndSelect('payment.transaction', 'transaction')
@@ -135,15 +139,15 @@ export class PaymentsController {
 
     const [payments, total] = await queryBuilder
       .orderBy('payment.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
+      .skip((pageNum - 1) * limitNum)
+      .take(limitNum)
       .getManyAndCount();
 
     return {
       data: payments,
       total,
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
     };
   }
 
@@ -163,11 +167,11 @@ export class PaymentsController {
       .getOne();
 
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new NotFoundException('Payment not found');
     }
 
     if (payment.transaction?.user?.id !== req.user.userId) {
-      throw new Error('Access denied');
+      throw new ForbiddenException('Access denied');
     }
 
     return payment;
@@ -186,7 +190,7 @@ export class PaymentsController {
     const user = await this.usersService.findById(req.user.userId);
 
     if (new Date(scheduleDto.scheduledDate) <= new Date()) {
-      throw new Error('Scheduled date must be in the future');
+      throw new BadRequestException('Scheduled date must be in the future');
     }
 
     const payment = new Payment();
@@ -219,11 +223,11 @@ export class PaymentsController {
       .getOne();
 
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new NotFoundException('Payment not found');
     }
 
     if (payment.transaction?.user?.id !== req.user.userId) {
-      throw new Error('Access denied');
+      throw new ForbiddenException('Access denied');
     }
 
     // Reset payment for retry

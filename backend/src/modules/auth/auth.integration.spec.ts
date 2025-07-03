@@ -28,7 +28,7 @@ describe('AuthController (Integration)', () => {
           port: parseInt(process.env.MYSQL_PORT || '3306', 10),
           username: process.env.MYSQL_USERNAME || 'scalapay_user',
           password: process.env.MYSQL_PASSWORD || 'scalapay_pass',
-          database: process.env.MYSQL_DATABASE || 'scalapay_db', // Use same database as main app
+          database: process.env.MYSQL_DATABASE || 'scalapay_demodb', // Use same database as main app
           entities: [__dirname + '/../**/*.entity{.ts,.js}'],
           synchronize: false, // Don't modify existing schema
           logging: false,

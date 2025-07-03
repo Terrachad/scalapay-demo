@@ -28,19 +28,51 @@ export class TransactionRepository extends Repository<Transaction> {
 
     const [transactions, total] = await queryBuilder
       .orderBy('transaction.createdAt', 'DESC')
+      .addOrderBy('payments.installmentNumber', 'ASC')
+      .addOrderBy('payments.dueDate', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
+
+    // Sort payments within each transaction
+    transactions.forEach(transaction => {
+      if (transaction.payments) {
+        transaction.payments.sort((a, b) => {
+          const aInstallment = a.installmentNumber ?? 999;
+          const bInstallment = b.installmentNumber ?? 999;
+          if (aInstallment !== bInstallment) {
+            return aInstallment - bInstallment;
+          }
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+      }
+    });
 
     return { transactions, total };
   }
 
   async findByUserWithStatus(userId: string, status: TransactionStatus): Promise<Transaction[]> {
-    return this.transactionRepository.find({
+    const transactions = await this.transactionRepository.find({
       where: { userId, status },
       relations: ['user', 'merchant', 'payments'],
       order: { createdAt: 'DESC' },
     });
+
+    // Sort payments within each transaction
+    transactions.forEach(transaction => {
+      if (transaction.payments) {
+        transaction.payments.sort((a, b) => {
+          const aInstallment = a.installmentNumber ?? 999;
+          const bInstallment = b.installmentNumber ?? 999;
+          if (aInstallment !== bInstallment) {
+            return aInstallment - bInstallment;
+          }
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+      }
+    });
+
+    return transactions;
   }
 
   async findByMerchantWithDateRange(
@@ -48,7 +80,7 @@ export class TransactionRepository extends Repository<Transaction> {
     startDate: Date,
     endDate: Date,
   ): Promise<Transaction[]> {
-    return this.createQueryBuilder('transaction')
+    const transactions = await this.createQueryBuilder('transaction')
       .leftJoinAndSelect('transaction.user', 'user')
       .leftJoinAndSelect('transaction.merchant', 'merchant')
       .leftJoinAndSelect('transaction.payments', 'payments')
@@ -58,7 +90,25 @@ export class TransactionRepository extends Repository<Transaction> {
         endDate,
       })
       .orderBy('transaction.createdAt', 'DESC')
+      .addOrderBy('payments.installmentNumber', 'ASC')
+      .addOrderBy('payments.dueDate', 'ASC')
       .getMany();
+
+    // Sort payments within each transaction
+    transactions.forEach(transaction => {
+      if (transaction.payments) {
+        transaction.payments.sort((a, b) => {
+          const aInstallment = a.installmentNumber ?? 999;
+          const bInstallment = b.installmentNumber ?? 999;
+          if (aInstallment !== bInstallment) {
+            return aInstallment - bInstallment;
+          }
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        });
+      }
+    });
+
+    return transactions;
   }
 
   async getTotalAmountByMerchant(merchantId: string): Promise<number> {
