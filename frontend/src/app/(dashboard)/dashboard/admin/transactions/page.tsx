@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '@/services/admin-service';
+import { Transaction } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -43,7 +44,7 @@ export default function AdminTransactionsPage() {
       isLoading,
       transactionsLength: transactions?.length,
       transactionsType: typeof transactions,
-      isArray: Array.isArray(transactions)
+      isArray: Array.isArray(transactions),
     });
   }, [transactions, isLoading]);
 
@@ -73,10 +74,10 @@ export default function AdminTransactionsPage() {
     if (!transactions || !Array.isArray(transactions)) {
       return [];
     }
-    
+
     return transactions.filter((transaction) => {
       if (!transaction) return false;
-      
+
       const customerName = transaction.user?.name || 'Unknown';
       const merchantName =
         transaction.merchant?.businessName || transaction.merchant?.name || 'Unknown';
@@ -104,7 +105,7 @@ export default function AdminTransactionsPage() {
         daysTillDue: 0,
         isOverdue: false,
         formattedDate: 'N/A',
-        remainingPayments: 0
+        remainingPayments: 0,
       };
     }
 
@@ -112,7 +113,8 @@ export default function AdminTransactionsPage() {
     const today = new Date();
     const daysTillDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     const isOverdue = daysTillDue < 0;
-    const remainingPayments = transaction.payments?.filter(p => p.status === 'scheduled').length || 0;
+    const remainingPayments =
+      transaction.payments?.filter((p) => p.status === 'scheduled').length || 0;
 
     return {
       exists: true,
@@ -124,9 +126,9 @@ export default function AdminTransactionsPage() {
         weekday: 'short',
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       }),
-      remainingPayments
+      remainingPayments,
     };
   };
 
@@ -203,11 +205,12 @@ export default function AdminTransactionsPage() {
   const pendingCount = transactions?.filter((t) => t?.status === 'pending').length || 0;
   const processingCount = transactions?.filter((t) => t?.status === 'processing').length || 0;
   const approvedCount = transactions?.filter((t) => t?.status === 'approved').length || 0;
-  const totalVolume = transactions?.reduce((sum, t) => {
-    if (!t?.amount) return sum;
-    const amount = typeof t.amount === 'string' ? parseFloat(t.amount) : Number(t.amount);
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0) || 0;
+  const totalVolume =
+    transactions?.reduce((sum, t) => {
+      if (!t?.amount) return sum;
+      const amount = typeof t.amount === 'string' ? parseFloat(t.amount) : Number(t.amount);
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0) || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
@@ -223,7 +226,7 @@ export default function AdminTransactionsPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -243,6 +246,17 @@ export default function AdminTransactionsPage() {
                   <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
                 </div>
                 <Clock className="w-8 h-8 text-yellow-600 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Processing</p>
+                  <p className="text-2xl font-bold text-orange-600">{processingCount}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-orange-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -345,9 +359,12 @@ export default function AdminTransactionsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredTransactions.map((transaction) => (
-                <div
+              {filteredTransactions.map((transaction, index) => (
+                <motion.div
                   key={transaction?.id || Math.random()}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
                   className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -355,7 +372,9 @@ export default function AdminTransactionsPage() {
                       <div className="flex items-center gap-3 mb-2">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">#{transaction?.id?.slice(-8) || 'N/A'}</h3>
+                            <h3 className="font-semibold">
+                              #{transaction?.id?.slice(-8) || 'N/A'}
+                            </h3>
                             <Badge className={getStatusColor(transaction?.status || 'pending')}>
                               <div className="flex items-center gap-1">
                                 {getStatusIcon(transaction?.status || 'pending')}
@@ -382,18 +401,21 @@ export default function AdminTransactionsPage() {
                             </div>
                           </div>
                           <div className="mt-2">
-                            <p className={`text-xs ${
-                              (() => {
+                            <p
+                              className={`text-xs ${(() => {
                                 const nextInfo = getNextPaymentInfo(transaction);
-                                return nextInfo.isOverdue ? 'text-red-600 font-medium' : nextInfo.daysTillDue <= 3 ? 'text-yellow-600' : 'text-gray-500'
-                              })()
-                            }`}>
+                                return nextInfo.isOverdue
+                                  ? 'text-red-600 font-medium'
+                                  : nextInfo.daysTillDue <= 3
+                                    ? 'text-yellow-600'
+                                    : 'text-gray-500';
+                              })()}`}
+                            >
                               {(() => {
                                 const nextInfo = getNextPaymentInfo(transaction);
                                 if (!nextInfo.exists) return '✓ All payments complete';
                                 return `Next Payment: ${formatCurrency(nextInfo.amount)} • ${nextInfo.isOverdue ? `${nextInfo.daysTillDue} days overdue` : nextInfo.daysTillDue === 0 ? 'Due today' : `Due in ${nextInfo.daysTillDue} days`}`;
-                              })()
-                              }
+                              })()}
                             </p>
                           </div>
                         </div>
@@ -401,9 +423,9 @@ export default function AdminTransactionsPage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <div className="text-lg font-bold text-green-600">
                           {formatCurrency(
-                            typeof transaction?.amount === 'string' 
-                              ? parseFloat(transaction.amount) 
-                              : Number(transaction?.amount || 0)
+                            typeof transaction?.amount === 'string'
+                              ? parseFloat(transaction.amount)
+                              : Number(transaction?.amount || 0),
                           )}
                         </div>
                         <Badge variant="outline">{transaction?.paymentPlan || 'N/A'}</Badge>
@@ -450,7 +472,7 @@ export default function AdminTransactionsPage() {
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </CardContent>

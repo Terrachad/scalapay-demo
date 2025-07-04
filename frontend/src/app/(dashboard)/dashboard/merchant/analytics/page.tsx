@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function MerchantAnalyticsPage() {
-  const [timeframe] = useState('7d');
+  const [timeframe, setTimeframe] = useState('7d');
 
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ['merchant-transactions'],
@@ -159,15 +159,35 @@ export default function MerchantAnalyticsPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-              <Button>
+              {['24h', '7d', '30d', '90d', '1y'].map((period) => (
+                <Button
+                  key={period}
+                  variant={timeframe === period ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTimeframe(period)}
+                  className="capitalize"
+                >
+                  {period}
+                </Button>
+              ))}
+              <Button variant="outline" className="ml-4">
                 <Download className="w-4 h-4 mr-2" />
-                Export Report
+                Export
               </Button>
             </div>
+          </div>
+
+          {/* Timeframe Info */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <Clock className="w-4 h-4 inline mr-2" />
+              Currently showing data for: <strong className="capitalize">{timeframe}</strong>
+              {timeframe === '24h' && ' (Last 24 hours)'}
+              {timeframe === '7d' && ' (Last 7 days)'}
+              {timeframe === '30d' && ' (Last 30 days)'}
+              {timeframe === '90d' && ' (Last 90 days)'}
+              {timeframe === '1y' && ' (Last year)'}
+            </p>
           </div>
         </motion.div>
 

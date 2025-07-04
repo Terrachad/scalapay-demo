@@ -77,7 +77,7 @@ export default function MerchantTransactionsPage() {
         daysTillDue: 0,
         isOverdue: false,
         formattedDate: 'N/A',
-        remainingPayments: 0
+        remainingPayments: 0,
       };
     }
 
@@ -85,7 +85,8 @@ export default function MerchantTransactionsPage() {
     const today = new Date();
     const daysTillDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     const isOverdue = daysTillDue < 0;
-    const remainingPayments = transaction.payments?.filter(p => p.status === 'scheduled').length || 0;
+    const remainingPayments =
+      transaction.payments?.filter((p) => p.status === 'scheduled').length || 0;
 
     return {
       exists: true,
@@ -97,9 +98,9 @@ export default function MerchantTransactionsPage() {
         weekday: 'short',
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       }),
-      remainingPayments
+      remainingPayments,
     };
   };
 
@@ -338,18 +339,21 @@ export default function MerchantTransactionsPage() {
                                   Customer: {transaction.userId?.slice(0, 8)}...
                                 </p>
                                 <div className="mt-1">
-                                  <p className={`text-xs ${
-                                    (() => {
+                                  <p
+                                    className={`text-xs ${(() => {
                                       const nextInfo = getNextPaymentInfo(transaction);
-                                      return nextInfo.isOverdue ? 'text-red-600 font-medium' : nextInfo.daysTillDue <= 3 ? 'text-yellow-600' : 'text-gray-500'
-                                    })()
-                                  }`}>
+                                      return nextInfo.isOverdue
+                                        ? 'text-red-600 font-medium'
+                                        : nextInfo.daysTillDue <= 3
+                                          ? 'text-yellow-600'
+                                          : 'text-gray-500';
+                                    })()}`}
+                                  >
                                     {(() => {
                                       const nextInfo = getNextPaymentInfo(transaction);
                                       if (!nextInfo.exists) return 'All payments complete';
                                       return `Next: ${formatCurrency(nextInfo.amount)} • ${nextInfo.isOverdue ? `${nextInfo.daysTillDue} days overdue` : nextInfo.daysTillDue === 0 ? 'Due today' : `${nextInfo.daysTillDue} days left`}`;
-                                    })()
-                                    }
+                                    })()}
                                   </p>
                                 </div>
                               </div>
@@ -423,8 +427,8 @@ export default function MerchantTransactionsPage() {
                               <span>Updated {formatDate(transaction.updatedAt)}</span>
                             </div>
                             <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => setSelectedTransaction(transaction)}
                               >
@@ -471,12 +475,18 @@ export default function MerchantTransactionsPage() {
                       <div>
                         <label className="text-sm font-medium text-gray-600">Amount</label>
                         <p className="text-xl font-bold text-green-600">
-                          {formatCurrency(parseFloat(selectedTransaction.amount?.toString() || '0'))}
+                          {formatCurrency(
+                            parseFloat(selectedTransaction.amount?.toString() || '0'),
+                          )}
                         </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Status</label>
-                        <Badge className={statusColors[selectedTransaction.status as keyof typeof statusColors]}>
+                        <Badge
+                          className={
+                            statusColors[selectedTransaction.status as keyof typeof statusColors]
+                          }
+                        >
                           {selectedTransaction.status}
                         </Badge>
                       </div>
@@ -496,19 +506,25 @@ export default function MerchantTransactionsPage() {
                     <div className="space-y-3">
                       <div>
                         <label className="text-sm font-medium text-gray-600">Customer ID</label>
-                        <p className="font-mono">{selectedTransaction.userId?.slice(0, 8) || 'N/A'}</p>
+                        <p className="font-mono">
+                          {selectedTransaction.userId?.slice(0, 8) || 'N/A'}
+                        </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Revenue</label>
                         <p className="text-lg font-bold text-blue-600">
-                          {formatCurrency(parseFloat(selectedTransaction.amount?.toString() || '0') * 0.975)}
+                          {formatCurrency(
+                            parseFloat(selectedTransaction.amount?.toString() || '0') * 0.975,
+                          )}
                         </p>
                         <p className="text-sm text-gray-500">After 2.5% Scalapay fee</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Commission</label>
                         <p className="text-sm text-gray-600">
-                          {formatCurrency(parseFloat(selectedTransaction.amount?.toString() || '0') * 0.025)}
+                          {formatCurrency(
+                            parseFloat(selectedTransaction.amount?.toString() || '0') * 0.025,
+                          )}
                         </p>
                       </div>
                     </div>
@@ -541,7 +557,9 @@ export default function MerchantTransactionsPage() {
                         <div className="flex justify-between items-center font-semibold">
                           <span>Order Total:</span>
                           <span className="text-lg text-green-600">
-                            {formatCurrency(parseFloat(selectedTransaction.amount?.toString() || '0'))}
+                            {formatCurrency(
+                              parseFloat(selectedTransaction.amount?.toString() || '0'),
+                            )}
                           </span>
                         </div>
                       </div>
@@ -571,7 +589,9 @@ export default function MerchantTransactionsPage() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">{formatCurrency(parseFloat(payment.amount?.toString() || '0'))}</p>
+                            <p className="font-medium">
+                              {formatCurrency(parseFloat(payment.amount?.toString() || '0'))}
+                            </p>
                             <Badge
                               variant={
                                 payment.status === 'completed'

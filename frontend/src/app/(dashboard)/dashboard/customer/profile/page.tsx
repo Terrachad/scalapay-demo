@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth-store';
+import { authService, NotificationPreferences } from '@/services/auth-service';
 import { transactionService } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
@@ -34,28 +35,34 @@ export default function CustomerProfilePage() {
   const { toast } = useToast();
   const { user, setUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
     queryKey: ['customer-transactions'],
     queryFn: transactionService.getMyTransactions,
   });
 
+  const { data: extendedProfile } = useQuery({
+    queryKey: ['user-extended-profile'],
+    queryFn: authService.getExtendedProfile,
+  });
+
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main Street, Anytown, ST 12345',
-    dateOfBirth: '1990-01-01',
+    phone: '',
+    address: '',
+    dateOfBirth: '',
+    emergencyContact: '',
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
-    paymentReminders: true,
-    orderUpdates: true,
-    promotions: true,
-    newsletter: false,
-    sms: false,
     email: true,
+    sms: false,
     push: true,
+    paymentReminders: true,
+    transactionUpdates: true,
+    promotional: false,
   });
 
   const [securitySettings, setSecuritySettings] = useState({
@@ -66,14 +73,41 @@ export default function CustomerProfilePage() {
 
   // Load user data into form
   useEffect(() => {
-    if (user) {
+    console.log('Loading user data - extendedProfile:', extendedProfile);
+    console.log('Loading user data - user:', user);
+
+    if (extendedProfile) {
+      console.log('Using extended profile data');
+      setProfileData({
+        name: extendedProfile.name || '',
+        email: extendedProfile.email || '',
+        phone: extendedProfile.phone || '',
+        address: extendedProfile.address || '',
+        dateOfBirth: extendedProfile.dateOfBirth ? extendedProfile.dateOfBirth.split('T')[0] : '',
+        emergencyContact: extendedProfile.emergencyContact || '',
+      });
+
+      if (extendedProfile.notificationPreferences) {
+        setNotificationSettings(extendedProfile.notificationPreferences);
+      }
+
+      if (extendedProfile.securityPreferences) {
+        setSecuritySettings({
+          twoFactorEnabled: extendedProfile.securityPreferences.twoFactorEnabled,
+          sessionTimeout: extendedProfile.securityPreferences.sessionTimeout.toString(),
+          loginNotifications: extendedProfile.securityPreferences.loginNotifications,
+        });
+      }
+    } else if (user) {
+      console.log('Using basic user data fallback');
+      // Fallback to basic user data if extended profile not available
       setProfileData((prev) => ({
         ...prev,
         name: user.name || '',
         email: user.email || '',
       }));
     }
-  }, [user]);
+  }, [user, extendedProfile]);
 
   // Calculate stats
   const totalSpent = transactions
@@ -101,15 +135,18 @@ export default function CustomerProfilePage() {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      // Real API call to update profile - NO MORE MOCKING
-      const updatedProfile = await authService.updateProfile({
+      // Send all profile data - let backend handle validation
+      const updateData = {
         name: profileData.name,
         email: profileData.email,
         phone: profileData.phone,
         address: profileData.address,
         dateOfBirth: profileData.dateOfBirth,
         emergencyContact: profileData.emergencyContact,
-      });
+      };
+
+      // Real API call to update profile - NO MORE MOCKING
+      const updatedProfile = await authService.updateProfile(updateData);
 
       // Update local user state with real response
       if (user) {
@@ -119,6 +156,19 @@ export default function CustomerProfilePage() {
           email: updatedProfile.email,
         });
       }
+
+      // Refresh the extended profile query to get updated data
+      await queryClient.invalidateQueries({ queryKey: ['user-extended-profile'] });
+
+      // Update the form data with the saved values to reflect changes immediately
+      setProfileData({
+        name: updatedProfile.name || '',
+        email: updatedProfile.email || '',
+        phone: updatedProfile.phone || '',
+        address: updatedProfile.address || '',
+        dateOfBirth: updatedProfile.dateOfBirth ? updatedProfile.dateOfBirth.split('T')[0] : '',
+        emergencyContact: updatedProfile.emergencyContact || '',
+      });
 
       toast({
         title: 'Profile updated',
@@ -139,7 +189,11 @@ export default function CustomerProfilePage() {
     setLoading(true);
     try {
       // Real API call to update notification preferences - NO MORE MOCKING
-      await authService.updateNotificationPreferences(notificationData);
+      await authService.updateNotificationPreferences(notificationSettings);
+
+      // Refresh the extended profile query to get updated preferences
+      await queryClient.invalidateQueries({ queryKey: ['user-extended-profile'] });
+
       toast({
         title: 'Notification settings saved',
         description: 'Your notification preferences have been updated.',
@@ -158,8 +212,20 @@ export default function CustomerProfilePage() {
   const handleSaveSecurity = async () => {
     setLoading(true);
     try {
+      // Convert sessionTimeout back to number and prepare security preferences
+      const securityPreferences = {
+        twoFactorEnabled: securitySettings.twoFactorEnabled,
+        sessionTimeout: parseInt(securitySettings.sessionTimeout) || 30,
+        loginNotifications: securitySettings.loginNotifications,
+        deviceVerification: false, // Add missing field with default value
+      };
+
       // Real API call to update security preferences - NO MORE MOCKING
-      await authService.updateSecurityPreferences(securityData);
+      await authService.updateSecurityPreferences(securityPreferences);
+
+      // Refresh the extended profile query to get updated preferences
+      await queryClient.invalidateQueries({ queryKey: ['user-extended-profile'] });
+
       toast({
         title: 'Security settings saved',
         description: 'Your security settings have been updated.',
@@ -330,6 +396,17 @@ export default function CustomerProfilePage() {
                           placeholder="Enter your address"
                         />
                       </div>
+                      <div className="space-y-2 mt-4">
+                        <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                        <Input
+                          id="emergencyContact"
+                          value={profileData.emergencyContact}
+                          onChange={(e) =>
+                            setProfileData({ ...profileData, emergencyContact: e.target.value })
+                          }
+                          placeholder="Enter emergency contact information"
+                        />
+                      </div>
                     </div>
 
                     {/* Credit Information */}
@@ -378,19 +455,29 @@ export default function CustomerProfilePage() {
                             description: 'Get notified about upcoming payments',
                           },
                           {
-                            key: 'orderUpdates',
-                            label: 'Order Updates',
-                            description: 'Receive updates about your orders',
+                            key: 'transactionUpdates',
+                            label: 'Transaction Updates',
+                            description: 'Receive updates about your transactions',
                           },
                           {
-                            key: 'promotions',
-                            label: 'Promotions & Offers',
-                            description: 'Get notified about special deals',
+                            key: 'promotional',
+                            label: 'Promotional Content',
+                            description: 'Get notified about special deals and offers',
                           },
                           {
-                            key: 'newsletter',
-                            label: 'Newsletter',
-                            description: 'Receive our monthly newsletter',
+                            key: 'email',
+                            label: 'Email Notifications',
+                            description: 'Receive notifications via email',
+                          },
+                          {
+                            key: 'sms',
+                            label: 'SMS Notifications',
+                            description: 'Receive notifications via SMS',
+                          },
+                          {
+                            key: 'push',
+                            label: 'Push Notifications',
+                            description: 'Receive push notifications',
                           },
                         ].map((item) => (
                           <div

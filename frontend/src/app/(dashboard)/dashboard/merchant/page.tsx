@@ -103,7 +103,9 @@ export default function MerchantDashboard() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs lg:text-sm text-gray-600 truncate">Today&apos;s Revenue</p>
+                    <p className="text-xs lg:text-sm text-gray-600 truncate">
+                      Today&apos;s Revenue
+                    </p>
                     <p className="text-lg lg:text-2xl font-bold truncate">
                       {formatCurrency(todaysRevenue)}
                     </p>

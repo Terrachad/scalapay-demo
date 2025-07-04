@@ -18,7 +18,6 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 
 const statusIcons = {
   pending: Clock,
@@ -40,6 +39,7 @@ export default function MerchantOrdersPage() {
   const [orders, setOrders] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Transaction | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -376,12 +376,14 @@ export default function MerchantOrdersPage() {
                               Process Order
                             </Button>
                           )}
-                          <Link href={`/dashboard/merchant/orders/${order.id}`}>
-                            <Button variant="outline" size="sm">
-                              View Details
-                              <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            View Details
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
                         </div>
                       </div>
                     </motion.div>
@@ -391,6 +393,166 @@ export default function MerchantOrdersPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Order Detail Modal */}
+        {selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Order Details</CardTitle>
+                  <Button variant="outline" onClick={() => setSelectedOrder(null)}>
+                    Close
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Order Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Order ID</label>
+                        <p className="font-mono">#{selectedOrder.id?.slice(0, 8) || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Amount</label>
+                        <p className="text-xl font-bold text-green-600">
+                          {formatCurrency(selectedOrder.amount)}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Status</label>
+                        <Badge
+                          className={
+                            statusColors[selectedOrder.status as keyof typeof statusColors]
+                          }
+                        >
+                          {selectedOrder.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Payment Plan</label>
+                        <p>{selectedOrder.paymentPlan?.replace('_', ' ').toUpperCase()}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Order Date</label>
+                        <p>{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Customer Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Customer Name</label>
+                        <p className="font-medium">
+                          {selectedOrder.user?.name || 'Unknown Customer'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Email</label>
+                        <p className="text-sm text-gray-500">
+                          {selectedOrder.user?.email || 'No email'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Revenue</label>
+                        <p className="text-lg font-bold text-blue-600">
+                          {formatCurrency(selectedOrder.amount * 0.975)}
+                        </p>
+                        <p className="text-sm text-gray-500">After 2.5% Scalapay fee</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Commission</label>
+                        <p className="text-sm text-gray-600">
+                          {formatCurrency(selectedOrder.amount * 0.025)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Section */}
+                {selectedOrder.items && selectedOrder.items.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Items Sold</h3>
+                    <div className="space-y-3">
+                      {selectedOrder.items.map((item: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatCurrency(item.price)}</p>
+                            <p className="text-sm text-gray-600">
+                              Total: {formatCurrency(item.price * item.quantity)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="border-t pt-3">
+                        <div className="flex justify-between items-center font-semibold">
+                          <span>Order Total:</span>
+                          <span className="text-lg text-green-600">
+                            {formatCurrency(selectedOrder.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Schedule */}
+                {selectedOrder.payments && selectedOrder.payments.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Payment Schedule</h3>
+                    <div className="space-y-3">
+                      {selectedOrder.payments.map((payment: any, index: number) => (
+                        <div
+                          key={payment.id}
+                          className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">Payment #{index + 1}</p>
+                            <p className="text-sm text-gray-600">
+                              Due: {new Date(payment.dueDate).toLocaleDateString()}
+                            </p>
+                            {payment.paymentDate && (
+                              <p className="text-sm text-green-600">
+                                Paid: {new Date(payment.paymentDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatCurrency(payment.amount)}</p>
+                            <Badge
+                              variant={
+                                payment.status === 'completed'
+                                  ? 'default'
+                                  : payment.status === 'failed'
+                                    ? 'destructive'
+                                    : 'secondary'
+                              }
+                              className="text-xs"
+                            >
+                              {payment.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
