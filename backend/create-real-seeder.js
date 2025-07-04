@@ -37,14 +37,14 @@ async function createRealSeeder() {
           push: true,
           paymentReminders: true,
           transactionUpdates: true,
-          promotional: false
+          promotional: false,
         },
         securityPreferences: {
           twoFactorEnabled: false,
           sessionTimeout: 30,
           loginNotifications: true,
-          deviceVerification: false
-        }
+          deviceVerification: false,
+        },
       },
       {
         email: 'merchant@demo.com',
@@ -60,12 +60,12 @@ async function createRealSeeder() {
         businessDocuments: {
           businessLicense: 'BL-2024-001',
           taxId: 'TX-123456789',
-          bankAccount: 'BA-987654321'
+          bankAccount: 'BA-987654321',
         },
         riskScore: 2.5,
         approvedAt: new Date(),
         approvedBy: 'system',
-        approvalNotes: 'Demo merchant account - auto-approved'
+        approvalNotes: 'Demo merchant account - auto-approved',
       },
       {
         email: 'admin@demo.com',
@@ -84,15 +84,15 @@ async function createRealSeeder() {
           push: true,
           paymentReminders: true,
           transactionUpdates: true,
-          promotional: true
+          promotional: true,
         },
         securityPreferences: {
           twoFactorEnabled: true,
           sessionTimeout: 15,
           loginNotifications: true,
-          deviceVerification: true
-        }
-      }
+          deviceVerification: true,
+        },
+      },
     ];
 
     console.log('🔄 Creating demo users with real data...');
@@ -106,7 +106,8 @@ async function createRealSeeder() {
 
         if (existing.length > 0) {
           // Update existing user with full data
-          await connection.execute(`
+          await connection.execute(
+            `
             UPDATE users SET 
               password = ?, 
               name = ?, 
@@ -129,62 +130,67 @@ async function createRealSeeder() {
               securityPreferences = ?,
               updatedAt = NOW() 
             WHERE email = ?
-          `, [
-            user.password,
-            user.name,
-            user.role,
-            user.creditLimit,
-            user.availableCredit,
-            user.isActive,
-            user.phone || null,
-            user.address || null,
-            user.emergencyContact || null,
-            user.businessName || null,
-            user.businessAddress || null,
-            user.businessPhone || null,
-            user.businessDocuments ? JSON.stringify(user.businessDocuments) : null,
-            user.riskScore || null,
-            user.approvedAt || null,
-            user.approvedBy || null,
-            user.approvalNotes || null,
-            user.notificationPreferences ? JSON.stringify(user.notificationPreferences) : null,
-            user.securityPreferences ? JSON.stringify(user.securityPreferences) : null,
-            user.email,
-          ]);
+          `,
+            [
+              user.password,
+              user.name,
+              user.role,
+              user.creditLimit,
+              user.availableCredit,
+              user.isActive,
+              user.phone || null,
+              user.address || null,
+              user.emergencyContact || null,
+              user.businessName || null,
+              user.businessAddress || null,
+              user.businessPhone || null,
+              user.businessDocuments ? JSON.stringify(user.businessDocuments) : null,
+              user.riskScore || null,
+              user.approvedAt || null,
+              user.approvedBy || null,
+              user.approvalNotes || null,
+              user.notificationPreferences ? JSON.stringify(user.notificationPreferences) : null,
+              user.securityPreferences ? JSON.stringify(user.securityPreferences) : null,
+              user.email,
+            ],
+          );
           console.log(`🔄 Updated user: ${user.email} (${user.role})`);
         } else {
           // Create new user with UUID and full data
           const userId = uuidv4();
-          await connection.execute(`
+          await connection.execute(
+            `
             INSERT INTO users (
               id, email, password, name, role, isActive, creditLimit, availableCredit,
               phone, address, emergencyContact, businessName, businessAddress, businessPhone,
               businessDocuments, riskScore, approvedAt, approvedBy, approvalNotes,
               notificationPreferences, securityPreferences, createdAt, updatedAt
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-          `, [
-            userId,
-            user.email,
-            user.password,
-            user.name,
-            user.role,
-            user.isActive,
-            user.creditLimit,
-            user.availableCredit,
-            user.phone || null,
-            user.address || null,
-            user.emergencyContact || null,
-            user.businessName || null,
-            user.businessAddress || null,
-            user.businessPhone || null,
-            user.businessDocuments ? JSON.stringify(user.businessDocuments) : null,
-            user.riskScore || null,
-            user.approvedAt || null,
-            user.approvedBy || null,
-            user.approvalNotes || null,
-            user.notificationPreferences ? JSON.stringify(user.notificationPreferences) : null,
-            user.securityPreferences ? JSON.stringify(user.securityPreferences) : null,
-          ]);
+          `,
+            [
+              userId,
+              user.email,
+              user.password,
+              user.name,
+              user.role,
+              user.isActive,
+              user.creditLimit,
+              user.availableCredit,
+              user.phone || null,
+              user.address || null,
+              user.emergencyContact || null,
+              user.businessName || null,
+              user.businessAddress || null,
+              user.businessPhone || null,
+              user.businessDocuments ? JSON.stringify(user.businessDocuments) : null,
+              user.riskScore || null,
+              user.approvedAt || null,
+              user.approvedBy || null,
+              user.approvalNotes || null,
+              user.notificationPreferences ? JSON.stringify(user.notificationPreferences) : null,
+              user.securityPreferences ? JSON.stringify(user.securityPreferences) : null,
+            ],
+          );
           console.log(`✅ Created user: ${user.email} (${user.role})`);
         }
       } catch (error) {
@@ -195,14 +201,13 @@ async function createRealSeeder() {
 
     // Verify users were created properly
     console.log('🔍 Verifying users...');
-    const [users] = await connection.execute('SELECT id, email, name, role, isActive FROM users WHERE email IN (?, ?, ?)', [
-      'customer@demo.com',
-      'merchant@demo.com', 
-      'admin@demo.com'
-    ]);
+    const [users] = await connection.execute(
+      'SELECT id, email, name, role, isActive FROM users WHERE email IN (?, ?, ?)',
+      ['customer@demo.com', 'merchant@demo.com', 'admin@demo.com'],
+    );
 
     console.log('📋 Created users:');
-    users.forEach(user => {
+    users.forEach((user) => {
       console.log(`   ${user.email} (${user.role}) - Active: ${user.isActive}`);
     });
 

@@ -25,32 +25,32 @@ async function createAdminSeeder() {
           interestRate: 0.0,
           enableEarlyPayment: true,
           enableAutoRetry: true,
-          enableNotifications: true
+          enableNotifications: true,
         }),
         description: 'Default payment configuration for all transactions',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'platform_fees',
         value: JSON.stringify({
           transactionFee: 2.5,
-          processingFee: 0.30,
-          chargeback_fee: 15.00,
-          refund_fee: 0.00
+          processingFee: 0.3,
+          chargeback_fee: 15.0,
+          refund_fee: 0.0,
         }),
         description: 'Platform fee structure',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'payment_limits',
         value: JSON.stringify({
-          minAmount: 1.00,
-          maxAmount: 10000.00,
-          dailyLimit: 50000.00,
-          monthlyLimit: 500000.00
+          minAmount: 1.0,
+          maxAmount: 10000.0,
+          dailyLimit: 50000.0,
+          monthlyLimit: 500000.0,
         }),
         description: 'Payment amount and frequency limits',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'fraud_detection',
@@ -59,10 +59,10 @@ async function createAdminSeeder() {
           riskScoreThreshold: 75,
           autoReject: false,
           requireManualReview: true,
-          velocityChecks: true
+          velocityChecks: true,
         }),
         description: 'Fraud detection configuration',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'credit_check',
@@ -71,10 +71,10 @@ async function createAdminSeeder() {
           provider: 'experian',
           minCreditScore: 600,
           autoApprove: false,
-          softPull: true
+          softPull: true,
         }),
         description: 'Credit check configuration',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'notification_settings',
@@ -83,10 +83,10 @@ async function createAdminSeeder() {
           smsEnabled: false,
           pushEnabled: true,
           webhookEnabled: true,
-          retryAttempts: 3
+          retryAttempts: 3,
         }),
         description: 'Global notification settings',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'stripe_config',
@@ -94,10 +94,10 @@ async function createAdminSeeder() {
           publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
           webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
           connectEnabled: false,
-          captureMethod: 'automatic'
+          captureMethod: 'automatic',
         }),
         description: 'Stripe payment processor configuration',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'platform_settings',
@@ -111,10 +111,10 @@ async function createAdminSeeder() {
           maintenanceMode: false,
           maxTransactionAmount: 10000,
           minTransactionAmount: 1,
-          defaultCurrency: 'USD'
+          defaultCurrency: 'USD',
         }),
         description: 'General platform configuration and defaults',
-        isActive: true
+        isActive: true,
       },
       {
         key: 'admin_settings',
@@ -124,11 +124,11 @@ async function createAdminSeeder() {
           maxExportRecords: 10000,
           sessionTimeout: 60,
           enableAuditLog: true,
-          enableDataExport: true
+          enableDataExport: true,
         }),
         description: 'Admin dashboard and system settings',
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     console.log('🔄 Creating payment configurations...');
@@ -138,14 +138,14 @@ async function createAdminSeeder() {
         // Check if config exists
         const [existing] = await connection.execute(
           'SELECT id FROM payment_configs WHERE `key` = ?',
-          [config.key]
+          [config.key],
         );
 
         if (existing.length > 0) {
           // Update existing config
           await connection.execute(
             'UPDATE payment_configs SET value = ?, description = ?, isActive = ?, updatedAt = NOW() WHERE `key` = ?',
-            [config.value, config.description, config.isActive, config.key]
+            [config.value, config.description, config.isActive, config.key],
           );
           console.log(`🔄 Updated payment config: ${config.key}`);
         } else {
@@ -153,7 +153,7 @@ async function createAdminSeeder() {
           const configId = uuidv4();
           await connection.execute(
             'INSERT INTO payment_configs (id, `key`, value, description, isActive, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
-            [configId, config.key, config.value, config.description, config.isActive]
+            [configId, config.key, config.value, config.description, config.isActive],
           );
           console.log(`✅ Created payment config: ${config.key}`);
         }
@@ -164,16 +164,15 @@ async function createAdminSeeder() {
 
     // Create merchant settings for demo merchant (if exists)
     console.log('🔄 Setting up demo merchant settings...');
-    
+
     // First, find the demo merchant
-    const [merchants] = await connection.execute(
-      'SELECT id FROM merchants WHERE email = ?',
-      ['merchant@demo.com']
-    );
+    const [merchants] = await connection.execute('SELECT id FROM merchants WHERE email = ?', [
+      'merchant@demo.com',
+    ]);
 
     if (merchants.length > 0) {
       const merchantId = merchants[0].id;
-      
+
       const merchantSettings = [
         // Payment settings
         {
@@ -181,119 +180,119 @@ async function createAdminSeeder() {
           settingType: 'payment',
           settingKey: 'enablePayIn2',
           settingValue: 'true',
-          description: 'Enable Pay in 2 installments'
+          description: 'Enable Pay in 2 installments',
         },
         {
           merchantId,
           settingType: 'payment',
           settingKey: 'enablePayIn3',
           settingValue: 'true',
-          description: 'Enable Pay in 3 installments'
+          description: 'Enable Pay in 3 installments',
         },
         {
           merchantId,
           settingType: 'payment',
           settingKey: 'enablePayIn4',
           settingValue: 'true',
-          description: 'Enable Pay in 4 installments'
+          description: 'Enable Pay in 4 installments',
         },
         {
           merchantId,
           settingType: 'payment',
           settingKey: 'minimumAmount',
           settingValue: '50.00',
-          description: 'Minimum order amount for installments'
+          description: 'Minimum order amount for installments',
         },
         {
           merchantId,
           settingType: 'payment',
           settingKey: 'maximumAmount',
           settingValue: '5000.00',
-          description: 'Maximum order amount for installments'
+          description: 'Maximum order amount for installments',
         },
         {
           merchantId,
           settingType: 'payment',
           settingKey: 'autoApprove',
           settingValue: 'false',
-          description: 'Auto-approve payment plans'
+          description: 'Auto-approve payment plans',
         },
-        
+
         // Notification settings
         {
           merchantId,
           settingType: 'notification',
           settingKey: 'newOrders',
           settingValue: 'true',
-          description: 'Notify on new orders'
+          description: 'Notify on new orders',
         },
         {
           merchantId,
           settingType: 'notification',
           settingKey: 'paymentReceived',
           settingValue: 'true',
-          description: 'Notify on payment received'
+          description: 'Notify on payment received',
         },
         {
           merchantId,
           settingType: 'notification',
           settingKey: 'paymentFailed',
           settingValue: 'true',
-          description: 'Notify on payment failures'
+          description: 'Notify on payment failures',
         },
         {
           merchantId,
           settingType: 'notification',
           settingKey: 'email',
           settingValue: 'true',
-          description: 'Enable email notifications'
+          description: 'Enable email notifications',
         },
-        
+
         // Security settings
         {
           merchantId,
           settingType: 'security',
           settingKey: 'twoFactorEnabled',
           settingValue: 'false',
-          description: 'Enable two-factor authentication'
+          description: 'Enable two-factor authentication',
         },
         {
           merchantId,
           settingType: 'security',
           settingKey: 'sessionTimeout',
           settingValue: '60',
-          description: 'Session timeout in minutes'
+          description: 'Session timeout in minutes',
         },
         {
           merchantId,
           settingType: 'security',
           settingKey: 'webhookUrl',
           settingValue: 'https://demo-merchant.com/webhook',
-          description: 'Webhook URL for notifications'
+          description: 'Webhook URL for notifications',
         },
-        
+
         // Store settings
         {
           merchantId,
           settingType: 'store',
           settingKey: 'businessName',
           settingValue: 'Demo Electronics Store',
-          description: 'Business display name'
+          description: 'Business display name',
         },
         {
           merchantId,
           settingType: 'store',
           settingKey: 'feePercentage',
           settingValue: '2.5',
-          description: 'Merchant fee percentage'
+          description: 'Merchant fee percentage',
         },
         {
           merchantId,
           settingType: 'store',
           settingKey: 'isActive',
           settingValue: 'true',
-          description: 'Store active status'
-        }
+          description: 'Store active status',
+        },
       ];
 
       for (const setting of merchantSettings) {
@@ -301,27 +300,48 @@ async function createAdminSeeder() {
           // Check if setting exists
           const [existing] = await connection.execute(
             'SELECT id FROM merchant_settings WHERE merchant_id = ? AND setting_type = ? AND setting_key = ?',
-            [setting.merchantId, setting.settingType, setting.settingKey]
+            [setting.merchantId, setting.settingType, setting.settingKey],
           );
 
           if (existing.length > 0) {
             // Update existing setting
             await connection.execute(
               'UPDATE merchant_settings SET setting_value = ?, description = ?, updated_at = NOW() WHERE merchant_id = ? AND setting_type = ? AND setting_key = ?',
-              [setting.settingValue, setting.description, setting.merchantId, setting.settingType, setting.settingKey]
+              [
+                setting.settingValue,
+                setting.description,
+                setting.merchantId,
+                setting.settingType,
+                setting.settingKey,
+              ],
             );
-            console.log(`🔄 Updated merchant setting: ${setting.settingType}.${setting.settingKey}`);
+            console.log(
+              `🔄 Updated merchant setting: ${setting.settingType}.${setting.settingKey}`,
+            );
           } else {
             // Create new setting
             const settingId = uuidv4();
             await connection.execute(
               'INSERT INTO merchant_settings (id, merchant_id, setting_type, setting_key, setting_value, description, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-              [settingId, setting.merchantId, setting.settingType, setting.settingKey, setting.settingValue, setting.description, true]
+              [
+                settingId,
+                setting.merchantId,
+                setting.settingType,
+                setting.settingKey,
+                setting.settingValue,
+                setting.description,
+                true,
+              ],
             );
-            console.log(`✅ Created merchant setting: ${setting.settingType}.${setting.settingKey}`);
+            console.log(
+              `✅ Created merchant setting: ${setting.settingType}.${setting.settingKey}`,
+            );
           }
         } catch (error) {
-          console.error(`❌ Failed to create/update merchant setting ${setting.settingType}.${setting.settingKey}:`, error.message);
+          console.error(
+            `❌ Failed to create/update merchant setting ${setting.settingType}.${setting.settingKey}:`,
+            error.message,
+          );
         }
       }
     } else {
@@ -332,7 +352,7 @@ async function createAdminSeeder() {
     console.log('🔍 Verifying default payment config...');
     const [defaultConfig] = await connection.execute(
       'SELECT * FROM payment_configs WHERE `key` = ?',
-      ['default']
+      ['default'],
     );
 
     if (defaultConfig.length > 0) {
