@@ -1,6 +1,6 @@
 'use client';
 
-import PaymentConfigPanel from '@/components/ui/payment-config-panel';
+import PaymentConfigPanelSimple from '@/components/ui/payment-config-panel-simple';
 
 export default function PaymentSettings() {
   return (
@@ -14,10 +14,7 @@ export default function PaymentSettings() {
       </div>
 
       {/* Reusable Payment Configuration Panel */}
-      <PaymentConfigPanel 
-        context="admin"
-        showPlatformSettings={true}
-      />
+      <PaymentConfigPanelSimple context="admin" showPlatformSettings={true} />
     </div>
   );
 }

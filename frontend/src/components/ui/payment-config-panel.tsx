@@ -12,36 +12,50 @@ interface PaymentConfigPanelProps {
   showPlatformSettings?: boolean;
 }
 
-export default function PaymentConfigPanel({ 
-  merchantId, 
-  context, 
-  showPlatformSettings = false 
+export default function PaymentConfigPanel({
+  merchantId,
+  context,
+  showPlatformSettings = false,
 }: PaymentConfigPanelProps) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('general');
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch payment configuration
-  const { data: paymentConfig, isLoading: configLoading } = useQuery({
+  const {
+    data: paymentConfig,
+    isLoading: configLoading,
+    error: configError,
+  } = useQuery({
     queryKey: ['payment-config', merchantId],
-    queryFn: () => merchantId 
-      ? paymentConfigService.getPaymentConfig(merchantId)
-      : paymentConfigService.getDefaultPaymentConfig(),
+    queryFn: () =>
+      merchantId
+        ? paymentConfigService.getPaymentConfig(merchantId)
+        : paymentConfigService.getDefaultPaymentConfig(),
     enabled: !!merchantId || context === 'admin',
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
   // Fetch platform settings (admin only)
-  const { data: platformSettings, isLoading: platformLoading } = useQuery({
+  const {
+    data: platformSettings,
+    isLoading: platformLoading,
+    error: platformError,
+  } = useQuery({
     queryKey: ['platform-settings'],
     queryFn: platformSettingsService.getPlatformSettings,
     enabled: context === 'admin' && showPlatformSettings,
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
   // Update payment config mutation
   const updateConfigMutation = useMutation({
-    mutationFn: (data: any) => merchantId 
-      ? paymentConfigService.updatePaymentConfig(merchantId, data)
-      : paymentConfigService.updateDefaultPaymentConfig(data),
+    mutationFn: (data: any) =>
+      merchantId
+        ? paymentConfigService.updatePaymentConfig(merchantId, data)
+        : paymentConfigService.updateDefaultPaymentConfig(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payment-config'] });
     },
@@ -77,12 +91,38 @@ export default function PaymentConfigPanel({
     }
   };
 
+  // Show errors if any
+  if (configError || platformError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 className="text-red-800 font-medium mb-2">Configuration Error</h3>
+        <p className="text-red-600 text-sm">
+          {configError
+            ? `Payment config error: ${configError instanceof Error ? configError.message : 'Unknown error'}`
+            : ''}
+          {platformError
+            ? `Platform settings error: ${platformError instanceof Error ? platformError.message : 'Unknown error'}`
+            : ''}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (configLoading || platformLoading) {
     return (
       <div className="animate-pulse">
         <div className="h-8 bg-gray-200 rounded mb-4"></div>
         <div className="h-32 bg-gray-200 rounded mb-4"></div>
         <div className="h-24 bg-gray-200 rounded"></div>
+        <p className="text-sm text-gray-500 mt-2">
+          Loading {configLoading ? 'payment configuration' : 'platform settings'}...
+        </p>
       </div>
     );
   }
@@ -94,10 +134,9 @@ export default function PaymentConfigPanel({
           {context === 'admin' ? 'Payment Configuration' : 'Payment Settings'}
         </h2>
         <p className="text-gray-600">
-          {context === 'admin' 
+          {context === 'admin'
             ? 'Configure payment processing and platform settings'
-            : 'Manage your payment processing preferences'
-          }
+            : 'Manage your payment processing preferences'}
         </p>
       </div>
 
@@ -135,40 +174,40 @@ export default function PaymentConfigPanel({
       {/* Tab Content */}
       <div className="space-y-6">
         {activeTab === 'general' && (
-          <GeneralSettingsPanel 
-            config={paymentConfig} 
+          <GeneralSettingsPanel
+            config={paymentConfig}
             onUpdate={(data) => handleConfigUpdate('general', data)}
             isLoading={isLoading}
           />
         )}
-        
+
         {activeTab === 'processing' && (
-          <ProcessingSettingsPanel 
-            config={paymentConfig} 
+          <ProcessingSettingsPanel
+            config={paymentConfig}
             onUpdate={(data) => handleConfigUpdate('processing', data)}
             isLoading={isLoading}
           />
         )}
-        
+
         {activeTab === 'security' && (
-          <SecuritySettingsPanel 
-            config={paymentConfig} 
+          <SecuritySettingsPanel
+            config={paymentConfig}
             onUpdate={(data) => handleConfigUpdate('security', data)}
             isLoading={isLoading}
           />
         )}
-        
+
         {activeTab === 'limits' && (
-          <LimitsSettingsPanel 
-            config={paymentConfig} 
+          <LimitsSettingsPanel
+            config={paymentConfig}
             onUpdate={(data) => handleConfigUpdate('limits', data)}
             isLoading={isLoading}
           />
         )}
-        
+
         {activeTab === 'platform' && context === 'admin' && (
-          <PlatformSettingsPanel 
-            settings={platformSettings} 
+          <PlatformSettingsPanel
+            settings={platformSettings}
             onUpdate={handlePlatformUpdate}
             isLoading={isLoading}
           />
@@ -195,9 +234,7 @@ function GeneralSettingsPanel({ config, onUpdate, isLoading }: any) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Company Name
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
         <input
           type="text"
           value={formData.companyName}
@@ -209,9 +246,7 @@ function GeneralSettingsPanel({ config, onUpdate, isLoading }: any) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Default Currency
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Default Currency</label>
           <select
             value={formData.defaultCurrency}
             onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
@@ -225,9 +260,7 @@ function GeneralSettingsPanel({ config, onUpdate, isLoading }: any) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Time Zone
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Time Zone</label>
           <select
             value={formData.timeZone}
             onChange={(e) => setFormData({ ...formData, timeZone: e.target.value })}
@@ -281,9 +314,7 @@ function ProcessingSettingsPanel({ config, onUpdate, isLoading }: any) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Processing Mode
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Processing Mode</label>
         <select
           value={formData.processingMode}
           onChange={(e) => setFormData({ ...formData, processingMode: e.target.value })}
@@ -312,9 +343,7 @@ function ProcessingSettingsPanel({ config, onUpdate, isLoading }: any) {
                 }}
                 className="mr-2"
               />
-              <span className="text-sm text-gray-700 capitalize">
-                {method.replace('_', ' ')}
-              </span>
+              <span className="text-sm text-gray-700 capitalize">{method.replace('_', ' ')}</span>
             </label>
           ))}
         </div>
@@ -334,9 +363,7 @@ function ProcessingSettingsPanel({ config, onUpdate, isLoading }: any) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Capture Mode
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Capture Mode</label>
           <select
             value={formData.captureMode}
             onChange={(e) => setFormData({ ...formData, captureMode: e.target.value })}
@@ -445,9 +472,7 @@ function LimitsSettingsPanel({ config, onUpdate, isLoading }: any) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Daily Limit ($)
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Daily Limit ($)</label>
           <input
             type="number"
             value={formData.dailyLimit}
@@ -458,9 +483,7 @@ function LimitsSettingsPanel({ config, onUpdate, isLoading }: any) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Monthly Limit ($)
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Limit ($)</label>
           <input
             type="number"
             value={formData.monthlyLimit}
@@ -477,16 +500,16 @@ function LimitsSettingsPanel({ config, onUpdate, isLoading }: any) {
           <input
             type="number"
             value={formData.singleTransactionLimit}
-            onChange={(e) => setFormData({ ...formData, singleTransactionLimit: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, singleTransactionLimit: parseInt(e.target.value) })
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             min="0"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Minimum Amount ($)
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Amount ($)</label>
           <input
             type="number"
             value={formData.minimumAmount}
@@ -524,9 +547,7 @@ function PlatformSettingsPanel({ settings, onUpdate, isLoading }: any) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Platform Name
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Platform Name</label>
         <input
           type="text"
           value={formData.platformName}
@@ -537,9 +558,7 @@ function PlatformSettingsPanel({ settings, onUpdate, isLoading }: any) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Support Email
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
         <input
           type="email"
           value={formData.supportEmail}
@@ -557,7 +576,9 @@ function PlatformSettingsPanel({ settings, onUpdate, isLoading }: any) {
           type="number"
           step="0.1"
           value={formData.defaultMerchantCommission}
-          onChange={(e) => setFormData({ ...formData, defaultMerchantCommission: parseFloat(e.target.value) })}
+          onChange={(e) =>
+            setFormData({ ...formData, defaultMerchantCommission: parseFloat(e.target.value) })
+          }
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           min="0"
           max="10"
