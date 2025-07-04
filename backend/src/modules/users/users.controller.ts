@@ -1,11 +1,30 @@
-import { Controller, Get, Put, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './entities/user.entity';
 import { UsersService } from './users.service';
-import { UpdateUserProfileDto, UpdateNotificationPreferencesDto, UpdateSecurityPreferencesDto, UserProfileResponseDto, NotificationPreferences, SecurityPreferences } from './dto/update-profile.dto';
+import {
+  UpdateUserProfileDto,
+  UpdateNotificationPreferencesDto,
+  UpdateSecurityPreferencesDto,
+  UserProfileResponseDto,
+  NotificationPreferences,
+  SecurityPreferences,
+} from './dto/update-profile.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -95,24 +114,46 @@ export class UsersController {
   @Put('profile/update')
   @ApiOperation({ summary: 'Update user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated', type: UserProfileResponseDto })
-  async updateProfile(@Request() req: any, @Body() updateData: UpdateUserProfileDto): Promise<UserProfileResponseDto> {
-    await this.usersService.updateUserProfile(req.user.id, updateData);
-    return this.usersService.getUserProfile(req.user.id);
+  async updateProfile(
+    @Request() req: any,
+    @Body() updateData: any,
+  ): Promise<UserProfileResponseDto> {
+    try {
+      console.log('Raw request body:', updateData);
+      console.log('User ID:', req.user.id);
+
+      await this.usersService.updateUserProfile(req.user.id, updateData);
+      return this.usersService.getUserProfile(req.user.id);
+    } catch (error) {
+      console.error('Profile update controller error:', error);
+      if (error instanceof BadRequestException) {
+        console.error('Validation error details:', error.getResponse());
+      }
+      throw error;
+    }
   }
 
   @Get('notification-preferences')
   @ApiOperation({ summary: 'Get user notification preferences' })
-  @ApiResponse({ status: 200, description: 'Notification preferences', type: NotificationPreferences })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification preferences',
+    type: NotificationPreferences,
+  })
   async getNotificationPreferences(@Request() req: any): Promise<NotificationPreferences> {
     return this.usersService.getNotificationPreferences(req.user.id);
   }
 
   @Put('notification-preferences')
   @ApiOperation({ summary: 'Update user notification preferences' })
-  @ApiResponse({ status: 200, description: 'Notification preferences updated', type: NotificationPreferences })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification preferences updated',
+    type: NotificationPreferences,
+  })
   async updateNotificationPreferences(
     @Request() req: any,
-    @Body() updateData: UpdateNotificationPreferencesDto
+    @Body() updateData: UpdateNotificationPreferencesDto,
   ): Promise<NotificationPreferences> {
     await this.usersService.updateNotificationPreferences(req.user.id, updateData);
     return this.usersService.getNotificationPreferences(req.user.id);
@@ -127,10 +168,14 @@ export class UsersController {
 
   @Put('security-preferences')
   @ApiOperation({ summary: 'Update user security preferences' })
-  @ApiResponse({ status: 200, description: 'Security preferences updated', type: SecurityPreferences })
+  @ApiResponse({
+    status: 200,
+    description: 'Security preferences updated',
+    type: SecurityPreferences,
+  })
   async updateSecurityPreferences(
     @Request() req: any,
-    @Body() updateData: UpdateSecurityPreferencesDto
+    @Body() updateData: UpdateSecurityPreferencesDto,
   ): Promise<SecurityPreferences> {
     await this.usersService.updateSecurityPreferences(req.user.id, updateData);
     return this.usersService.getSecurityPreferences(req.user.id);

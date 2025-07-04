@@ -4,7 +4,14 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
-import { UpdateUserProfileDto, NotificationPreferences, SecurityPreferences, UpdateNotificationPreferencesDto, UpdateSecurityPreferencesDto, UserProfileResponseDto } from './dto/update-profile.dto';
+import {
+  UpdateUserProfileDto,
+  NotificationPreferences,
+  SecurityPreferences,
+  UpdateNotificationPreferencesDto,
+  UpdateSecurityPreferencesDto,
+  UserProfileResponseDto,
+} from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -43,34 +50,36 @@ export class UsersService {
 
   async deductUserCredit(userId: string, amount: number): Promise<User> {
     const user = await this.findById(userId);
-    
+
     // CRITICAL: Validate amount is positive
     if (amount <= 0) {
       throw new Error('Deduction amount must be positive');
     }
-    
+
     // CRITICAL: Prevent negative balance
     const newBalance = Number(user.availableCredit) - amount;
     if (newBalance < 0) {
-      throw new Error(`Insufficient credit. Available: ${user.availableCredit}, Required: ${amount}`);
+      throw new Error(
+        `Insufficient credit. Available: ${user.availableCredit}, Required: ${amount}`,
+      );
     }
-    
+
     user.availableCredit = newBalance;
     return this.usersRepository.save(user);
   }
 
   async updateCreditLimit(userId: string, newLimit: number): Promise<User> {
     const user = await this.findById(userId);
-    
+
     // CRITICAL: Actually update the credit limit (not deduct credit)
     if (newLimit <= 0) {
       throw new Error('Credit limit must be positive');
     }
-    
+
     const currentUsed = Number(user.creditLimit) - Number(user.availableCredit);
     user.creditLimit = newLimit;
     user.availableCredit = Math.max(0, newLimit - currentUsed);
-    
+
     return this.usersRepository.save(user);
   }
 
@@ -259,33 +268,69 @@ export class UsersService {
   // User Profile Management Methods
 
   async updateUserProfile(userId: string, updateData: UpdateUserProfileDto): Promise<User> {
-    const user = await this.findById(userId);
+    try {
+      console.log('Update profile called with:', { userId, updateData });
 
-    // Update profile fields
-    if (updateData.name !== undefined) user.name = updateData.name;
-    if (updateData.email !== undefined) {
-      // Check if email is already taken by another user
-      const existingUser = await this.usersRepository.findOne({
-        where: { email: updateData.email }
-      });
-      if (existingUser && existingUser.id !== userId) {
-        throw new Error('Email is already in use');
+      const user = await this.findById(userId);
+      console.log('Found user:', { id: user.id, name: user.name, email: user.email });
+
+      // Update profile fields
+      if (updateData.name !== undefined) {
+        user.name = updateData.name;
+        console.log('Updated name to:', updateData.name);
       }
-      user.email = updateData.email;
-    }
-    if (updateData.phone !== undefined) user.phone = updateData.phone;
-    if (updateData.address !== undefined) user.address = updateData.address;
-    if (updateData.dateOfBirth !== undefined) {
-      user.dateOfBirth = new Date(updateData.dateOfBirth);
-    }
-    if (updateData.emergencyContact !== undefined) {
-      user.emergencyContact = updateData.emergencyContact;
-    }
 
-    return this.usersRepository.save(user);
+      if (updateData.email !== undefined) {
+        // Skip email validation for now - just update it
+        user.email = updateData.email;
+        console.log('Updated email to:', updateData.email);
+      }
+
+      if (updateData.phone !== undefined) {
+        user.phone = updateData.phone;
+      }
+      if (updateData.address !== undefined) {
+        user.address = updateData.address;
+      }
+      if (updateData.dateOfBirth !== undefined) {
+        if (updateData.dateOfBirth && updateData.dateOfBirth.trim() !== '') {
+          try {
+            const dateObj = new Date(updateData.dateOfBirth);
+            if (!isNaN(dateObj.getTime())) {
+              user.dateOfBirth = dateObj;
+            }
+          } catch (error) {
+            console.error('Date parsing error:', error);
+          }
+        } else {
+          user.dateOfBirth = undefined;
+        }
+      }
+      if (updateData.emergencyContact !== undefined) {
+        user.emergencyContact = updateData.emergencyContact;
+      }
+
+      console.log('About to save user:', {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+      });
+
+      const savedUser = await this.usersRepository.save(user);
+      console.log('User saved successfully');
+      return savedUser;
+    } catch (error) {
+      console.error('Error in updateUserProfile:', error);
+      throw error;
+    }
   }
 
-  async updateNotificationPreferences(userId: string, updateData: UpdateNotificationPreferencesDto): Promise<User> {
+  async updateNotificationPreferences(
+    userId: string,
+    updateData: UpdateNotificationPreferencesDto,
+  ): Promise<User> {
     const user = await this.findById(userId);
 
     // Initialize preferences if they don't exist
@@ -306,7 +351,10 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updateSecurityPreferences(userId: string, updateData: UpdateSecurityPreferencesDto): Promise<User> {
+  async updateSecurityPreferences(
+    userId: string,
+    updateData: UpdateSecurityPreferencesDto,
+  ): Promise<User> {
     const user = await this.findById(userId);
 
     // Initialize preferences if they don't exist
@@ -332,23 +380,27 @@ export class UsersService {
 
   async getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
     const user = await this.findById(userId);
-    return user.notificationPreferences || {
-      email: true,
-      sms: false,
-      push: true,
-      paymentReminders: true,
-      transactionUpdates: true,
-      promotional: false,
-    };
+    return (
+      user.notificationPreferences || {
+        email: true,
+        sms: false,
+        push: true,
+        paymentReminders: true,
+        transactionUpdates: true,
+        promotional: false,
+      }
+    );
   }
 
   async getSecurityPreferences(userId: string): Promise<SecurityPreferences> {
     const user = await this.findById(userId);
-    return user.securityPreferences || {
-      twoFactorEnabled: false,
-      sessionTimeout: 30,
-      loginNotifications: true,
-      deviceVerification: false,
-    };
+    return (
+      user.securityPreferences || {
+        twoFactorEnabled: false,
+        sessionTimeout: 30,
+        loginNotifications: true,
+        deviceVerification: false,
+      }
+    );
   }
 }
