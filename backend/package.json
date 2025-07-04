@@ -28,7 +28,10 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/seed-demo-users.ts",
-    "seed:demo": "node create-demo-users-direct.js && node create-proper-hash.js"
+    "seed:demo": "node create-demo-users-direct.js && node create-proper-hash.js",
+    "seed:configs": "ts-node -r tsconfig-paths/register src/seed-payment-configs.ts",
+    "seed:all": "ts-node -r tsconfig-paths/register src/seed-all.ts",
+    "verify:configs": "ts-node -r tsconfig-paths/register src/verify-configs.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",
