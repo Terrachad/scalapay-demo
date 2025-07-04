@@ -3,8 +3,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Merchant } from './entities/merchant.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
-import { MerchantSettings, SettingType, PaymentSettings, NotificationSettings, SecuritySettings, StoreSettings } from './entities/merchant-settings.entity';
-import { UpdatePaymentSettingsDto, UpdateNotificationSettingsDto, UpdateSecuritySettingsDto, UpdateStoreSettingsDto } from './dto/merchant-settings.dto';
+import {
+  MerchantSettings,
+  SettingType,
+  PaymentSettings,
+  NotificationSettings,
+  SecuritySettings,
+  StoreSettings,
+} from './entities/merchant-settings.entity';
+import {
+  UpdatePaymentSettingsDto,
+  UpdateNotificationSettingsDto,
+  UpdateSecuritySettingsDto,
+  UpdateStoreSettingsDto,
+} from './dto/merchant-settings.dto';
 
 @Injectable()
 export class MerchantsService {
@@ -211,10 +223,13 @@ export class MerchantsService {
       where: { merchantId, settingType: SettingType.PAYMENT, isActive: true },
     });
 
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, string>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return {
       enablePayIn2: settingsMap.enablePayIn2 === 'true',
@@ -227,11 +242,14 @@ export class MerchantsService {
     };
   }
 
-  async updatePaymentSettings(merchantId: string, updateData: UpdatePaymentSettingsDto): Promise<PaymentSettings> {
+  async updatePaymentSettings(
+    merchantId: string,
+    updateData: UpdatePaymentSettingsDto,
+  ): Promise<PaymentSettings> {
     await this.findOne(merchantId); // Verify merchant exists
 
     const updatePromises = Object.entries(updateData).map(([key, value]) =>
-      this.updatePaymentSetting(merchantId, key, String(value))
+      this.updatePaymentSetting(merchantId, key, String(value)),
     );
 
     await Promise.all(updatePromises);
@@ -245,10 +263,13 @@ export class MerchantsService {
       where: { merchantId, settingType: SettingType.NOTIFICATION, isActive: true },
     });
 
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, string>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return {
       newOrders: settingsMap.newOrders === 'true',
@@ -263,11 +284,14 @@ export class MerchantsService {
     };
   }
 
-  async updateNotificationSettings(merchantId: string, updateData: UpdateNotificationSettingsDto): Promise<NotificationSettings> {
+  async updateNotificationSettings(
+    merchantId: string,
+    updateData: UpdateNotificationSettingsDto,
+  ): Promise<NotificationSettings> {
     await this.findOne(merchantId); // Verify merchant exists
 
     const updatePromises = Object.entries(updateData).map(([key, value]) =>
-      this.updateNotificationSetting(merchantId, key, String(value))
+      this.updateNotificationSetting(merchantId, key, String(value)),
     );
 
     await Promise.all(updatePromises);
@@ -281,10 +305,13 @@ export class MerchantsService {
       where: { merchantId, settingType: SettingType.SECURITY, isActive: true },
     });
 
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, string>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return {
       twoFactorEnabled: settingsMap.twoFactorEnabled === 'true',
@@ -295,7 +322,10 @@ export class MerchantsService {
     };
   }
 
-  async updateSecuritySettings(merchantId: string, updateData: UpdateSecuritySettingsDto): Promise<SecuritySettings> {
+  async updateSecuritySettings(
+    merchantId: string,
+    updateData: UpdateSecuritySettingsDto,
+  ): Promise<SecuritySettings> {
     await this.findOne(merchantId); // Verify merchant exists
 
     const updatePromises = Object.entries(updateData).map(([key, value]) => {
@@ -314,10 +344,13 @@ export class MerchantsService {
       where: { merchantId, settingType: SettingType.STORE, isActive: true },
     });
 
-    const settingsMap = settings.reduce((acc, setting) => {
-      acc[setting.settingKey] = setting.settingValue;
-      return acc;
-    }, {} as Record<string, string>);
+    const settingsMap = settings.reduce(
+      (acc, setting) => {
+        acc[setting.settingKey] = setting.settingValue;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return {
       businessName: settingsMap.businessName || merchant.businessName,
@@ -331,11 +364,14 @@ export class MerchantsService {
     };
   }
 
-  async updateStoreSettings(merchantId: string, updateData: UpdateStoreSettingsDto): Promise<StoreSettings> {
+  async updateStoreSettings(
+    merchantId: string,
+    updateData: UpdateStoreSettingsDto,
+  ): Promise<StoreSettings> {
     await this.findOne(merchantId); // Verify merchant exists
 
     const updatePromises = Object.entries(updateData).map(([key, value]) =>
-      this.updateStoreSetting(merchantId, key, String(value))
+      this.updateStoreSetting(merchantId, key, String(value)),
     );
 
     await Promise.all(updatePromises);
@@ -344,15 +380,27 @@ export class MerchantsService {
 
   // Private helper methods for updating individual settings
 
-  private async updatePaymentSetting(merchantId: string, key: string, value: string): Promise<void> {
+  private async updatePaymentSetting(
+    merchantId: string,
+    key: string,
+    value: string,
+  ): Promise<void> {
     await this.updateSetting(merchantId, SettingType.PAYMENT, key, value);
   }
 
-  private async updateNotificationSetting(merchantId: string, key: string, value: string): Promise<void> {
+  private async updateNotificationSetting(
+    merchantId: string,
+    key: string,
+    value: string,
+  ): Promise<void> {
     await this.updateSetting(merchantId, SettingType.NOTIFICATION, key, value);
   }
 
-  private async updateSecuritySetting(merchantId: string, key: string, value: string): Promise<void> {
+  private async updateSecuritySetting(
+    merchantId: string,
+    key: string,
+    value: string,
+  ): Promise<void> {
     await this.updateSetting(merchantId, SettingType.SECURITY, key, value);
   }
 
@@ -360,7 +408,12 @@ export class MerchantsService {
     await this.updateSetting(merchantId, SettingType.STORE, key, value);
   }
 
-  private async updateSetting(merchantId: string, settingType: SettingType, key: string, value: string): Promise<void> {
+  private async updateSetting(
+    merchantId: string,
+    settingType: SettingType,
+    key: string,
+    value: string,
+  ): Promise<void> {
     let setting = await this.merchantSettingsRepository.findOne({
       where: { merchantId, settingType, settingKey: key },
     });
