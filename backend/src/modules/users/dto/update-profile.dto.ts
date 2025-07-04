@@ -1,5 +1,14 @@
-import { IsString, IsEmail, IsOptional, IsBoolean, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({ description: 'User full name' })
@@ -9,6 +18,7 @@ export class UpdateUserProfileDto {
 
   @ApiPropertyOptional({ description: 'User email address' })
   @IsOptional()
+  @ValidateIf((o) => o.email && o.email.trim() !== '')
   @IsEmail()
   email?: string;
 
@@ -68,7 +78,7 @@ export class NotificationPreferences {
 export class UpdateNotificationPreferencesDto {
   @ApiProperty({ description: 'Notification preferences' })
   @IsObject()
-  preferences: NotificationPreferences;
+  preferences!: NotificationPreferences;
 }
 
 export class SecurityPreferences {
@@ -95,7 +105,7 @@ export class SecurityPreferences {
 export class UpdateSecurityPreferencesDto {
   @ApiProperty({ description: 'Security preferences' })
   @IsObject()
-  preferences: SecurityPreferences;
+  preferences!: SecurityPreferences;
 }
 
 export class UserProfileResponseDto {
@@ -142,19 +152,19 @@ export class UserProfileResponseDto {
   updatedAt: Date;
 
   constructor(user: any) {
-    this.id = user.id;
-    this.name = user.name;
-    this.email = user.email;
-    this.role = user.role;
-    this.phone = user.phone;
-    this.address = user.address;
-    this.dateOfBirth = user.dateOfBirth;
-    this.emergencyContact = user.emergencyContact;
-    this.creditLimit = user.creditLimit;
-    this.isActive = user.isActive;
-    this.notificationPreferences = user.notificationPreferences;
-    this.securityPreferences = user.securityPreferences;
-    this.createdAt = user.createdAt;
-    this.updatedAt = user.updatedAt;
+    this.id = user?.id;
+    this.name = user?.name || '';
+    this.email = user?.email || '';
+    this.role = user?.role || 'customer';
+    this.phone = user?.phone;
+    this.address = user?.address;
+    this.dateOfBirth = user?.dateOfBirth;
+    this.emergencyContact = user?.emergencyContact;
+    this.creditLimit = user?.creditLimit;
+    this.isActive = user?.isActive;
+    this.notificationPreferences = user?.notificationPreferences;
+    this.securityPreferences = user?.securityPreferences;
+    this.createdAt = user?.createdAt;
+    this.updatedAt = user?.updatedAt;
   }
 }
