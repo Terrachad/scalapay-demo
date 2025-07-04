@@ -9,7 +9,7 @@ export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:300
 // API Endpoints object for consistent usage across services
 export const API_ENDPOINTS = {
   BASE_URL,
-  
+
   // Authentication
   AUTH: {
     LOGIN: '/auth/login',
@@ -84,7 +84,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/merchants/${id}`,
     ANALYTICS: (id: string) => `/merchants/${id}/analytics`,
     API_KEYS: (id: string) => `/merchants/${id}/api-keys`,
-    
+
     // Merchant Settings (NEW - To be implemented)
     PAYMENT_SETTINGS: (id: string) => `/merchants/${id}/payment-settings`,
     NOTIFICATION_SETTINGS: (id: string) => `/merchants/${id}/notification-settings`,
@@ -183,17 +183,17 @@ export const CONFIG_KEYS = {
   PAYMENT_INTERVAL_WEEKLY: 'payment.interval.weekly',
   PAYMENT_INTERVAL_BIWEEKLY: 'payment.interval.biweekly',
   PAYMENT_INTERVAL_MONTHLY: 'payment.interval.monthly',
-  
+
   // Risk Management
   GRACE_PERIOD_DAYS: 'risk.gracePeriodDays',
   LATE_FEE_AMOUNT: 'risk.lateFeeAmount',
   MAX_RETRY_ATTEMPTS: 'risk.maxRetryAttempts',
-  
+
   // Feature Flags
   ENABLE_EARLY_PAYMENT: 'features.enableEarlyPayment',
   ENABLE_AUTO_APPROVAL: 'features.enableAutoApproval',
   REQUIRE_KYC: 'features.requireKYC',
-  
+
   // Business Rules
   MIN_TRANSACTION_AMOUNT: 'business.minTransactionAmount',
   MAX_TRANSACTION_AMOUNT: 'business.maxTransactionAmount',
@@ -213,8 +213,8 @@ export const DEFAULTS = {
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;
-export type PaymentPlan = typeof PAYMENT_PLANS[keyof typeof PAYMENT_PLANS];
-export type TransactionStatus = typeof TRANSACTION_STATUS[keyof typeof TRANSACTION_STATUS];
-export type PaymentStatus = typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS];
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
-export type ConfigKey = typeof CONFIG_KEYS[keyof typeof CONFIG_KEYS];
+export type PaymentPlan = (typeof PAYMENT_PLANS)[keyof typeof PAYMENT_PLANS];
+export type TransactionStatus = (typeof TRANSACTION_STATUS)[keyof typeof TRANSACTION_STATUS];
+export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
+export type ConfigKey = (typeof CONFIG_KEYS)[keyof typeof CONFIG_KEYS];
