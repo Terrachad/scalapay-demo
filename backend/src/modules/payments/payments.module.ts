@@ -30,8 +30,30 @@ import { UsersModule } from '../users/users.module';
     ScheduleModule.forRoot(),
     UsersModule,
   ],
-  controllers: [PaymentsController, WebhooksController, PaymentMethodController, PaymentConfigController, StripeConfigController],
-  providers: [StripeService, PaymentWebhookService, NotificationService, PaymentMethodService, PaymentConfigService, PaymentRetryService, EarlyPaymentService],
-  exports: [StripeService, PaymentWebhookService, NotificationService, PaymentMethodService, PaymentConfigService, PaymentRetryService, EarlyPaymentService],
+  controllers: [
+    PaymentsController,
+    WebhooksController,
+    PaymentMethodController,
+    PaymentConfigController,
+    StripeConfigController,
+  ],
+  providers: [
+    StripeService,
+    PaymentWebhookService,
+    NotificationService,
+    PaymentMethodService,
+    PaymentConfigService,
+    PaymentRetryService,
+    EarlyPaymentService,
+  ],
+  exports: [
+    StripeService,
+    PaymentWebhookService,
+    NotificationService,
+    PaymentMethodService,
+    PaymentConfigService,
+    PaymentRetryService,
+    EarlyPaymentService,
+  ],
 })
 export class PaymentsModule {}

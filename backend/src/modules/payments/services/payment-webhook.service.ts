@@ -75,7 +75,9 @@ export class PaymentWebhookService {
     if (!transaction) {
       const transactionId = paymentIntent.metadata?.transactionId;
       if (!transactionId) {
-        this.logger.warn(`Payment intent ${paymentIntent.id} missing transactionId in metadata and no matching transaction found`);
+        this.logger.warn(
+          `Payment intent ${paymentIntent.id} missing transactionId in metadata and no matching transaction found`,
+        );
         return;
       }
 
@@ -110,7 +112,7 @@ export class PaymentWebhookService {
       payment.transaction = transaction;
       payment.transactionId = transaction.id;
       payment.dueDate = new Date(); // First payment due immediately
-      
+
       await this.paymentRepository.save(payment);
       this.logger.log(`Created payment record for first installment: ${payment.id}`);
     } else {
@@ -121,7 +123,9 @@ export class PaymentWebhookService {
       this.logger.log(`Updated payment record: ${payment.id}`);
     }
 
-    this.logger.log(`Stripe payment succeeded for transaction: ${transaction.id}, amount: $${paymentIntent.amount_received / 100}`);
+    this.logger.log(
+      `Stripe payment succeeded for transaction: ${transaction.id}, amount: $${paymentIntent.amount_received / 100}`,
+    );
 
     // Create remaining installments if this is a multi-installment plan
     const totalInstallments = parseInt(paymentIntent.metadata?.totalInstallments || '1');
@@ -171,7 +175,7 @@ export class PaymentWebhookService {
     payment.amount = paymentIntent.amount / 100;
     payment.failureReason = failureReason;
     payment.transaction = transaction;
-    
+
     await this.notificationService.sendPaymentFailureNotification(payment);
 
     // Emit event for retry logic
@@ -295,23 +299,27 @@ export class PaymentWebhookService {
     this.logger.log(`Sent ${reminderType} reminder for payment: ${paymentId}`);
   }
 
-  private async createRemainingInstallments(transaction: Transaction, paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async createRemainingInstallments(
+    transaction: Transaction,
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
     try {
       const totalInstallments = parseInt(paymentIntent.metadata?.totalInstallments || '1');
       const totalAmount = parseFloat(paymentIntent.metadata?.totalAmount || '0');
       const cardAmount = parseFloat(paymentIntent.metadata?.cardAmount || '0');
       const creditAmount = parseFloat(paymentIntent.metadata?.creditAmount || '0');
       const firstInstallmentCardAmount = paymentIntent.amount_received / 100;
-      
+
       if (totalInstallments <= 1) return;
 
       // Calculate remaining card amount after first installment
       const remainingCardAmount = cardAmount - firstInstallmentCardAmount;
       const remainingInstallments = totalInstallments - 1;
-      
+
       // Each remaining installment has both card and credit portions
       const creditPerInstallment = creditAmount / totalInstallments;
-      const cardPerInstallment = Math.round((remainingCardAmount / remainingInstallments) * 100) / 100;
+      const cardPerInstallment =
+        Math.round((remainingCardAmount / remainingInstallments) * 100) / 100;
 
       // Get merchant settings for payment intervals
       const config = {
@@ -325,23 +333,24 @@ export class PaymentWebhookService {
       for (let i = 1; i <= remainingInstallments; i++) {
         const installmentNumber = i + 1;
         const dueDate = new Date();
-        
+
         // Calculate due date based on payment interval
         if (config.paymentInterval === 'biweekly') {
-          dueDate.setDate(dueDate.getDate() + (i * 14));
+          dueDate.setDate(dueDate.getDate() + i * 14);
         } else if (config.paymentInterval === 'monthly') {
           dueDate.setMonth(dueDate.getMonth() + i);
         } else {
           // Default weekly
-          dueDate.setDate(dueDate.getDate() + (i * 7));
+          dueDate.setDate(dueDate.getDate() + i * 7);
         }
 
         // Calculate total payment amount (credit + card)
         const creditPortion = creditPerInstallment;
-        const cardPortion = (i === remainingInstallments) 
-          ? remainingCardAmount - (cardPerInstallment * (remainingInstallments - 1))
-          : cardPerInstallment;
-        
+        const cardPortion =
+          i === remainingInstallments
+            ? remainingCardAmount - cardPerInstallment * (remainingInstallments - 1)
+            : cardPerInstallment;
+
         const totalPaymentAmount = creditPortion + cardPortion;
 
         const payment = new Payment();
@@ -353,13 +362,20 @@ export class PaymentWebhookService {
         payment.transactionId = transaction.id;
 
         await this.paymentRepository.save(payment);
-        
-        this.logger.log(`Created installment ${installmentNumber}/${totalInstallments}: $${totalPaymentAmount} (credit: $${creditPortion}, card: $${cardPortion}) due ${dueDate.toISOString().split('T')[0]}`);
+
+        this.logger.log(
+          `Created installment ${installmentNumber}/${totalInstallments}: $${totalPaymentAmount} (credit: $${creditPortion}, card: $${cardPortion}) due ${dueDate.toISOString().split('T')[0]}`,
+        );
       }
 
-      this.logger.log(`Created ${remainingInstallments} remaining installments for transaction ${transaction.id}`);
+      this.logger.log(
+        `Created ${remainingInstallments} remaining installments for transaction ${transaction.id}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to create remaining installments for transaction ${transaction.id}:`, error);
+      this.logger.error(
+        `Failed to create remaining installments for transaction ${transaction.id}:`,
+        error,
+      );
     }
   }
 }

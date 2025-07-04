@@ -79,8 +79,11 @@ export class StripeService {
         setup_future_usage: dto.setupFutureUsage || 'off_session',
       } as any; // Type assertion for newer API properties
 
-      console.log('💳 Creating Stripe PaymentIntent with data:', JSON.stringify(paymentIntentData, null, 2));
-      
+      console.log(
+        '💳 Creating Stripe PaymentIntent with data:',
+        JSON.stringify(paymentIntentData, null, 2),
+      );
+
       const paymentIntent = await this.stripe.paymentIntents.create(paymentIntentData);
 
       this.logger.log(`Created payment intent: ${paymentIntent.id} for $${dto.amount}`);

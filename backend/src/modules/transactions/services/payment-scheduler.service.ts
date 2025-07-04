@@ -28,7 +28,7 @@ export class PaymentSchedulerService {
     startDate: Date = new Date(),
   ): Promise<PaymentSchedule[]> {
     // Use default config if no merchantId provided
-    const config = merchantId 
+    const config = merchantId
       ? await this.paymentConfigService.getConfigForMerchant(merchantId)
       : {
           paymentInterval: 'biweekly',
@@ -62,8 +62,8 @@ export class PaymentSchedulerService {
     }
 
     // CRITICAL: Sort by due date first, then assign correct installment numbers
-    const sortedSchedule = schedule.sort((a, b) => 
-      new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    const sortedSchedule = schedule.sort(
+      (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
     );
 
     // Reassign installment numbers based on chronological order
@@ -77,7 +77,7 @@ export class PaymentSchedulerService {
   async createPaymentSchedule(transaction: Transaction): Promise<Payment[]> {
     // Schedule is already sorted chronologically with correct installment numbers
     const schedule = await this.calculatePaymentSchedule(
-      transaction.amount, 
+      transaction.amount,
       transaction.paymentPlan,
       transaction.merchantId,
     );
@@ -108,7 +108,7 @@ export class PaymentSchedulerService {
     const savedPayments = await this.paymentRepository.save(payments);
 
     // Process first payment immediately if it's due now
-    const firstPayment = savedPayments.find(p => p.installmentNumber === 1);
+    const firstPayment = savedPayments.find((p) => p.installmentNumber === 1);
     if (firstPayment && firstPayment.status === PaymentStatus.PROCESSING) {
       await this.processFirstPaymentImmediately(firstPayment);
     }
@@ -166,7 +166,7 @@ export class PaymentSchedulerService {
 
     // Create new schedule for remaining amount
     const schedule = await this.calculatePaymentSchedule(
-      remainingAmount, 
+      remainingAmount,
       transaction.paymentPlan,
       transaction.merchantId,
     );
@@ -207,7 +207,7 @@ export class PaymentSchedulerService {
 
   async getPaymentPlanInfo(paymentPlan: PaymentPlan, merchantId?: string) {
     // Use default config if no merchantId provided
-    const config = merchantId 
+    const config = merchantId
       ? await this.paymentConfigService.getConfigForMerchant(merchantId)
       : {
           paymentInterval: 'biweekly',
@@ -223,9 +223,10 @@ export class PaymentSchedulerService {
       installments,
       description: `Pay in ${installments} installments`,
       frequency: intervalDescription,
-      firstPaymentDue: config.firstPaymentDelayHours === 0 
-        ? 'Immediately upon approval' 
-        : `${config.firstPaymentDelayHours} hours after approval`,
+      firstPaymentDue:
+        config.firstPaymentDelayHours === 0
+          ? 'Immediately upon approval'
+          : `${config.firstPaymentDelayHours} hours after approval`,
       config,
     };
   }
@@ -236,9 +237,12 @@ export class PaymentSchedulerService {
   private async processFirstPaymentImmediately(payment: Payment): Promise<void> {
     try {
       console.log(`💳 Processing first payment immediately: ${payment.id} - $${payment.amount}`);
-      
+
       // If transaction uses Stripe (insufficient credit), process through Stripe
-      if (payment.transaction?.paymentMethod === 'stripe' && payment.transaction?.stripePaymentIntentId) {
+      if (
+        payment.transaction?.paymentMethod === 'stripe' &&
+        payment.transaction?.stripePaymentIntentId
+      ) {
         await this.stripeService.processInstallmentPayment(payment);
         console.log(`✅ First payment processed via Stripe: ${payment.id}`);
       } else {

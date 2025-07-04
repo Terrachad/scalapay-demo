@@ -62,7 +62,7 @@ export class PaymentProcessor {
     if (!payment.transaction) {
       throw new Error('Payment transaction is required');
     }
-    
+
     const user = payment.transaction.user;
 
     if (!user.stripeCustomerId || !payment.stripePaymentMethodId) {

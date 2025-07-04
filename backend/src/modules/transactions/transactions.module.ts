@@ -14,10 +14,12 @@ import { TransactionStateMachineService } from './services/transaction-state-mac
 import { PaymentOrderingFixService } from './services/payment-ordering-fix.service';
 import { WebSocketModule } from '../websocket/websocket.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { EnterprisePaymentSchedulerService } from '../payments/services/enterprise-payment-scheduler.service';
+import { UnifiedPaymentSortingService } from '../payments/services/unified-payment-sorting.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment, PaymentConfig]), 
+    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment, PaymentConfig]),
     WebSocketModule,
     PaymentsModule,
   ],
@@ -27,6 +29,8 @@ import { PaymentsModule } from '../payments/payments.module';
     TransactionRepository,
     BusinessRulesService,
     PaymentSchedulerService,
+    EnterprisePaymentSchedulerService,
+    UnifiedPaymentSortingService,
     TransactionStateMachineService,
     PaymentOrderingFixService,
   ],

@@ -25,7 +25,7 @@ export class PaymentRetryService {
 
     try {
       const failedPayments = await this.getRetryableFailedPayments();
-      
+
       for (const payment of failedPayments) {
         await this.retryPayment(payment);
       }
@@ -43,7 +43,7 @@ export class PaymentRetryService {
       }
 
       // Use default config if no merchantId provided
-      const config = payment.transaction.merchantId 
+      const config = payment.transaction.merchantId
         ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
         : {
             paymentInterval: 'biweekly',
@@ -55,12 +55,12 @@ export class PaymentRetryService {
       // Check if we've exceeded max retries
       if (payment.retryCount >= config.maxRetries) {
         this.logger.warn(`Payment ${payment.id} exceeded max retries (${config.maxRetries})`);
-        
+
         // Mark as permanently failed
         payment.status = PaymentStatus.FAILED;
         payment.failureReason = 'Maximum retry attempts exceeded';
         await this.paymentRepository.save(payment);
-        
+
         return false;
       }
 
@@ -77,7 +77,9 @@ export class PaymentRetryService {
         return false;
       }
 
-      this.logger.log(`Retrying payment ${payment.id} (attempt ${payment.retryCount + 1}/${config.maxRetries})`);
+      this.logger.log(
+        `Retrying payment ${payment.id} (attempt ${payment.retryCount + 1}/${config.maxRetries})`,
+      );
 
       // Attempt payment
       const result = await this.attemptPayment(payment);
@@ -90,28 +92,27 @@ export class PaymentRetryService {
         payment.status = PaymentStatus.COMPLETED;
         payment.paymentDate = new Date();
         payment.stripePaymentIntentId = result.paymentIntentId;
-        
+
         this.logger.log(`Payment ${payment.id} retry successful`);
       } else {
         payment.status = PaymentStatus.FAILED;
         payment.failureReason = result.error;
-        
+
         this.logger.warn(`Payment ${payment.id} retry failed: ${result.error}`);
       }
 
       await this.paymentRepository.save(payment);
       return result.success;
-
     } catch (error) {
       this.logger.error(`Error retrying payment ${payment.id}:`, error);
-      
+
       // Update retry count even on error
       payment.retryCount++;
       payment.lastRetryAt = new Date();
       payment.status = PaymentStatus.FAILED;
       payment.failureReason = 'Retry process error';
       await this.paymentRepository.save(payment);
-      
+
       return false;
     }
   }
@@ -129,7 +130,9 @@ export class PaymentRetryService {
       .getMany();
   }
 
-  private async attemptPayment(payment: Payment): Promise<{ success: boolean; error?: string; paymentIntentId?: string }> {
+  private async attemptPayment(
+    payment: Payment,
+  ): Promise<{ success: boolean; error?: string; paymentIntentId?: string }> {
     try {
       if (!payment.transaction) {
         throw new Error('Payment transaction not found');
@@ -157,7 +160,6 @@ export class PaymentRetryService {
       return {
         success: true,
       };
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Payment processing failed';
       return {
@@ -186,7 +188,7 @@ export class PaymentRetryService {
     }
 
     // Use default config if no merchantId provided
-    const config = payment.transaction.merchantId 
+    const config = payment.transaction.merchantId
       ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
       : {
           paymentInterval: 'biweekly',

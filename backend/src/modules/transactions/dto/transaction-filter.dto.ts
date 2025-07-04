@@ -1,11 +1,4 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsUUID,
-  IsDateString,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsUUID, IsDateString, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionStatus } from '../entities/transaction.entity';
 

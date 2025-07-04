@@ -94,7 +94,7 @@ describe('PaymentsController (Integration)', () => {
     if (app) {
       try {
         const dataSource = app.get(DataSource);
-        
+
         if (dataSource) {
           // Clean up payments first (they reference transactions)
           if (testPaymentIds.length > 0) {

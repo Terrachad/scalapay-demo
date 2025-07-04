@@ -11,6 +11,8 @@ import { TransactionFilterDto } from './dto/transaction-filter.dto';
 import { TransactionRepository } from './repositories/transaction.repository';
 import { BusinessRulesService } from './services/business-rules.service';
 import { PaymentSchedulerService } from './services/payment-scheduler.service';
+import { EnterprisePaymentSchedulerService } from '../payments/services/enterprise-payment-scheduler.service';
+import { UnifiedPaymentSortingService } from '../payments/services/unified-payment-sorting.service';
 import { TransactionStateMachineService } from './services/transaction-state-machine.service';
 import { StripeService } from '../payments/services/stripe.service';
 
@@ -26,6 +28,8 @@ export class TransactionsService {
     private customTransactionRepository: TransactionRepository,
     private businessRulesService: BusinessRulesService,
     private paymentSchedulerService: PaymentSchedulerService,
+    private enterprisePaymentSchedulerService: EnterprisePaymentSchedulerService,
+    private unifiedPaymentSortingService: UnifiedPaymentSortingService,
     private stateMachineService: TransactionStateMachineService,
     private wsGateway: ScalaPayWebSocketGateway,
     private stripeService: StripeService,
@@ -109,9 +113,8 @@ export class TransactionsService {
 
       // Calculate first installment amount for BNPL
       const installments = this.getInstallmentCount(createTransactionDto.paymentPlan);
-      const firstInstallmentCardAmount = installments > 1 
-        ? Math.round((cardAmount / installments) * 100) / 100
-        : cardAmount;
+      const firstInstallmentCardAmount =
+        installments > 1 ? Math.round((cardAmount / installments) * 100) / 100 : cardAmount;
 
       console.log('📊 Installment calculation debug:');
       console.log('  Payment plan:', createTransactionDto.paymentPlan);
@@ -165,17 +168,14 @@ export class TransactionsService {
     if (initialStatus === TransactionStatus.APPROVED) {
       // Deduct credit amount immediately if any credit is used
       if (creditAmount > 0) {
-        await this.updateUserCredit(
-          createTransactionDto.userId!,
-          -Number(creditAmount),
-        );
+        await this.updateUserCredit(createTransactionDto.userId!, -Number(creditAmount));
       }
 
-      // Create payment schedule only for pure credit transactions
-      // Stripe-involved transactions will handle scheduling in webhook after first payment
+      // Create payment schedule using enterprise scheduler for maximum reliability
+      // Pure credit transactions get full schedule, Stripe transactions get scheduled in webhook
       if (cardAmount === 0) {
-        // Pure credit transaction - create full payment schedule
-        await this.paymentSchedulerService.createPaymentSchedule(saved);
+        // Pure credit transaction - use enterprise payment scheduler for bulletproof scheduling
+        await this.enterprisePaymentSchedulerService.createEnterprisePaymentSchedule(saved);
       }
     }
 
@@ -197,12 +197,18 @@ export class TransactionsService {
       // Always include payment fields when card payment is required
       requiresPayment: !!stripeClientSecret,
       clientSecret: stripeClientSecret,
-      firstInstallmentCardAmount: stripeClientSecret ? Math.round((cardAmount / this.getInstallmentCount(createTransactionDto.paymentPlan)) * 100) / 100 : undefined,
-      paymentBreakdown: stripeClientSecret ? {
-        creditAmount,
-        cardAmount,
-        totalAmount: createTransactionDto.amount
-      } : undefined
+      firstInstallmentCardAmount: stripeClientSecret
+        ? Math.round(
+            (cardAmount / this.getInstallmentCount(createTransactionDto.paymentPlan)) * 100,
+          ) / 100
+        : undefined,
+      paymentBreakdown: stripeClientSecret
+        ? {
+            creditAmount,
+            cardAmount,
+            totalAmount: createTransactionDto.amount,
+          }
+        : undefined,
     };
 
     console.log('🚀 Returning transaction data:', {
@@ -211,35 +217,58 @@ export class TransactionsService {
       hasFirstInstallment: 'firstInstallmentCardAmount' in responseData,
       requiresPaymentValue: responseData.requiresPayment,
       clientSecretExists: !!responseData.clientSecret,
-      firstInstallmentValue: responseData.firstInstallmentCardAmount
+      firstInstallmentValue: responseData.firstInstallmentCardAmount,
     });
 
     // Additional debug: log the exact response structure being returned
-    console.log('📤 Full response object being returned:', JSON.stringify({
-      id: responseData.id,
-      amount: responseData.amount,
-      requiresPayment: responseData.requiresPayment,
-      clientSecret: responseData.clientSecret ? '[CLIENT_SECRET_PRESENT]' : undefined,
-      firstInstallmentCardAmount: responseData.firstInstallmentCardAmount,
-      paymentBreakdown: responseData.paymentBreakdown
-    }, null, 2));
+    console.log(
+      '📤 Full response object being returned:',
+      JSON.stringify(
+        {
+          id: responseData.id,
+          amount: responseData.amount,
+          requiresPayment: responseData.requiresPayment,
+          clientSecret: responseData.clientSecret ? '[CLIENT_SECRET_PRESENT]' : undefined,
+          firstInstallmentCardAmount: responseData.firstInstallmentCardAmount,
+          paymentBreakdown: responseData.paymentBreakdown,
+        },
+        null,
+        2,
+      ),
+    );
 
     return responseData;
   }
 
   async findByUser(userId: string): Promise<Transaction[]> {
-    return this.transactionRepository.find({
+    const transactions = await this.transactionRepository.find({
       where: { user: { id: userId } },
       relations: ['merchant', 'payments'],
       order: { createdAt: 'DESC' },
     });
+
+    // Use enterprise-grade unified payment sorting for consistent results
+    return this.unifiedPaymentSortingService.sortTransactionsWithPayments(transactions, {
+      sortBy: 'hybrid',
+      order: 'ASC',
+      validateSequence: true,
+      repairSequence: false, // Don't auto-repair in read operations
+    });
   }
 
   async findByMerchant(merchantId: string): Promise<Transaction[]> {
-    return this.transactionRepository.find({
+    const transactions = await this.transactionRepository.find({
       where: { merchant: { id: merchantId } },
       relations: ['user', 'payments'],
       order: { createdAt: 'DESC' },
+    });
+
+    // Use enterprise-grade unified payment sorting for consistent results
+    return this.unifiedPaymentSortingService.sortTransactionsWithPayments(transactions, {
+      sortBy: 'hybrid',
+      order: 'ASC',
+      validateSequence: true,
+      repairSequence: false, // Don't auto-repair in read operations
     });
   }
 
@@ -485,10 +514,14 @@ export class TransactionsService {
 
   private getInstallmentCount(paymentPlan: string): number {
     switch (paymentPlan) {
-      case 'pay_in_2': return 2;
-      case 'pay_in_3': return 3; 
-      case 'pay_in_4': return 4;
-      default: return 1;
+      case 'pay_in_2':
+        return 2;
+      case 'pay_in_3':
+        return 3;
+      case 'pay_in_4':
+        return 4;
+      default:
+        return 1;
     }
   }
 }

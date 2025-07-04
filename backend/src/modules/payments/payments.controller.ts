@@ -51,7 +51,7 @@ export class PaymentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createPaymentIntent(@Body() createPaymentDto: CreatePaymentDto, @Request() req: any) {
     const user = await this.usersService.findById(req.user.userId);
-    
+
     // Create Stripe customer if doesn't exist
     if (!user.stripeCustomerId) {
       const customer = await this.stripeService.createCustomer(user.email, user.name);
@@ -73,7 +73,7 @@ export class PaymentsController {
     payment.status = PaymentStatus.SCHEDULED;
     payment.stripePaymentIntentId = paymentIntent.paymentIntentId;
     payment.dueDate = new Date(); // Immediate payment
-    
+
     const savedPayment = await this.paymentRepository.save(payment);
 
     return {
@@ -271,5 +271,4 @@ export class PaymentsController {
       throw new BadRequestException('Webhook processing failed');
     }
   }
-
 }

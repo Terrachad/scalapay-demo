@@ -45,8 +45,8 @@ export class Payment {
   @Column({ nullable: true })
   stripePaymentMethodId?: string;
 
-  @Column({ type: 'int', nullable: true })
-  installmentNumber?: number;
+  @Column({ type: 'int', nullable: false })
+  installmentNumber!: number;
 
   @Column({ type: 'text', nullable: true })
   failureReason?: string;

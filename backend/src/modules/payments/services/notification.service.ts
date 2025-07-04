@@ -290,7 +290,7 @@ export class NotificationService {
   async sendMerchantApprovalEmail(
     email: string,
     name: string,
-    details?: { creditLimit?: number; welcomeMessage?: string }
+    details?: { creditLimit?: number; welcomeMessage?: string },
   ): Promise<void> {
     try {
       const template = this.getMerchantApprovalTemplate(name, details);
@@ -301,11 +301,7 @@ export class NotificationService {
     }
   }
 
-  async sendMerchantRejectionEmail(
-    email: string,
-    name: string,
-    reason?: string
-  ): Promise<void> {
+  async sendMerchantRejectionEmail(email: string, name: string, reason?: string): Promise<void> {
     try {
       const template = this.getMerchantRejectionTemplate(name, reason);
       await this.sendEmail(email, template);
@@ -316,11 +312,12 @@ export class NotificationService {
   }
 
   private getMerchantApprovalTemplate(
-    name: string, 
-    details?: { creditLimit?: number; welcomeMessage?: string }
+    name: string,
+    details?: { creditLimit?: number; welcomeMessage?: string },
   ): EmailTemplate {
-    const welcomeMessage = details?.welcomeMessage || 'Welcome to Scalapay! Your merchant account has been approved.';
-    const creditInfo = details?.creditLimit 
+    const welcomeMessage =
+      details?.welcomeMessage || 'Welcome to Scalapay! Your merchant account has been approved.';
+    const creditInfo = details?.creditLimit
       ? `<p>Your account has been set up with a credit limit of $${details.creditLimit.toLocaleString()}.</p>`
       : '';
 
@@ -348,7 +345,7 @@ export class NotificationService {
   }
 
   private getMerchantRejectionTemplate(name: string, reason?: string): EmailTemplate {
-    const rejectionReason = reason 
+    const rejectionReason = reason
       ? `<p>Reason for rejection: ${reason}</p>`
       : '<p>Your application did not meet our current approval criteria.</p>';
 
@@ -415,7 +412,9 @@ export class NotificationService {
   }
 
   private getPaymentMethodExpiringTemplate(paymentMethod: any): EmailTemplate {
-    const expiryDate = paymentMethod.expiresAt ? new Date(paymentMethod.expiresAt).toLocaleDateString() : 'soon';
+    const expiryDate = paymentMethod.expiresAt
+      ? new Date(paymentMethod.expiresAt).toLocaleDateString()
+      : 'soon';
     return {
       subject: 'Payment Method Expiring Soon',
       htmlContent: `
@@ -433,7 +432,11 @@ export class NotificationService {
     return this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
   }
 
-  async sendEarlyPaymentConfirmation(user: User, transaction: Transaction, amount: number): Promise<void> {
+  async sendEarlyPaymentConfirmation(
+    user: User,
+    transaction: Transaction,
+    amount: number,
+  ): Promise<void> {
     try {
       const template = this.getEarlyPaymentConfirmationTemplate(transaction, amount);
       await this.sendEmail(user.email, template);
@@ -443,7 +446,10 @@ export class NotificationService {
     }
   }
 
-  private getEarlyPaymentConfirmationTemplate(transaction: Transaction, amount: number): EmailTemplate {
+  private getEarlyPaymentConfirmationTemplate(
+    transaction: Transaction,
+    amount: number,
+  ): EmailTemplate {
     return {
       subject: 'Early Payment Processed - Scalapay',
       htmlContent: `

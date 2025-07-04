@@ -35,7 +35,7 @@ export class TransactionRepository extends Repository<Transaction> {
       .getManyAndCount();
 
     // Sort payments within each transaction
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       if (transaction.payments) {
         transaction.payments.sort((a, b) => {
           const aInstallment = a.installmentNumber ?? 999;
@@ -59,7 +59,7 @@ export class TransactionRepository extends Repository<Transaction> {
     });
 
     // Sort payments within each transaction
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       if (transaction.payments) {
         transaction.payments.sort((a, b) => {
           const aInstallment = a.installmentNumber ?? 999;
@@ -95,7 +95,7 @@ export class TransactionRepository extends Repository<Transaction> {
       .getMany();
 
     // Sort payments within each transaction
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       if (transaction.payments) {
         transaction.payments.sort((a, b) => {
           const aInstallment = a.installmentNumber ?? 999;

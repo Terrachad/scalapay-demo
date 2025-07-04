@@ -75,7 +75,7 @@ export class CreateTransactionDto {
 
   @ApiPropertyOptional({
     description: 'Payment method preference',
-    example: { type: 'split', creditAmount: 500, cardAmount: 499.99 }
+    example: { type: 'split', creditAmount: 500, cardAmount: 499.99 },
   })
   @IsOptional()
   paymentMethodPreference?: {
