@@ -60,7 +60,7 @@ export interface PendingMerchant {
 class PlatformSettingsService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = useAuthStore.getState().token;
-    
+
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${endpoint}`, {
       ...options,
       headers: {
@@ -108,39 +108,54 @@ class PlatformSettingsService {
     return this.makeRequest<PendingMerchant[]>('/admin/pending-merchants');
   }
 
-  async approveMerchant(merchantId: string, notes?: string): Promise<{ success: boolean; message: string }> {
-    return this.makeRequest<{ success: boolean; message: string }>(`/admin/merchants/${merchantId}/approve`, {
-      method: 'POST',
-      body: JSON.stringify({ notes }),
-    });
+  async approveMerchant(
+    merchantId: string,
+    notes?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.makeRequest<{ success: boolean; message: string }>(
+      `/admin/merchants/${merchantId}/approve`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      },
+    );
   }
 
-  async rejectMerchant(merchantId: string, reason?: string): Promise<{ success: boolean; message: string }> {
-    return this.makeRequest<{ success: boolean; message: string }>(`/admin/merchants/${merchantId}/reject`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    });
+  async rejectMerchant(
+    merchantId: string,
+    reason?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.makeRequest<{ success: boolean; message: string }>(
+      `/admin/merchants/${merchantId}/reject`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      },
+    );
   }
 
   validateSettings(settings: UpdatePlatformSettingsDto): string[] {
     const errors: string[] = [];
-    
-    if (settings.merchantFeeRate !== undefined && (settings.merchantFeeRate < 0 || settings.merchantFeeRate > 10)) {
+
+    if (
+      settings.merchantFeeRate !== undefined &&
+      (settings.merchantFeeRate < 0 || settings.merchantFeeRate > 10)
+    ) {
       errors.push('Merchant fee rate must be between 0% and 10%');
     }
-    
+
     if (settings.latePaymentFee !== undefined && settings.latePaymentFee < 0) {
       errors.push('Late payment fee cannot be negative');
     }
-    
+
     if (settings.defaultCreditLimit !== undefined && settings.defaultCreditLimit < 0) {
       errors.push('Default credit limit cannot be negative');
     }
-    
+
     if (settings.maxTransactionAmount !== undefined && settings.maxTransactionAmount < 0) {
       errors.push('Max transaction amount cannot be negative');
     }
-    
+
     return errors;
   }
 }

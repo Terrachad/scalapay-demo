@@ -26,7 +26,7 @@ export interface SetupIntentResponse {
 class StripeService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = useAuthStore.getState().token;
-    
+
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${endpoint}`, {
       ...options,
       headers: {

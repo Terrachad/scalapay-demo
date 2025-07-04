@@ -97,7 +97,7 @@ export function validateBillingDetails(details: Partial<BillingDetails>): {
  */
 export function createStripeElementsOptions(
   clientSecret: string,
-  appearance?: Partial<StripeElementsOptions['appearance']>
+  appearance?: Partial<StripeElementsOptions['appearance']>,
 ): StripeElementsOptions {
   return {
     clientSecret,
@@ -237,7 +237,7 @@ export function formatStripeError(error: any): string {
         case 'insufficient_funds':
           return 'Your card has insufficient funds. Please try a different payment method.';
         case 'incorrect_cvc':
-          return 'Your card\'s security code is incorrect. Please check and try again.';
+          return "Your card's security code is incorrect. Please check and try again.";
         case 'expired_card':
           return 'Your card has expired. Please try a different payment method.';
         case 'processing_error':
@@ -245,12 +245,14 @@ export function formatStripeError(error: any): string {
         case 'incorrect_number':
           return 'Your card number is incorrect. Please check and try again.';
         default:
-          return error.message || 'Your payment was declined. Please try a different payment method.';
+          return (
+            error.message || 'Your payment was declined. Please try a different payment method.'
+          );
       }
     case 'validation_error':
       return error.message || 'Please check your payment information and try again.';
     case 'api_error':
-      return 'We\'re experiencing technical difficulties. Please try again in a moment.';
+      return "We're experiencing technical difficulties. Please try again in a moment.";
     case 'connection_error':
       return 'Network error. Please check your connection and try again.';
     case 'rate_limit_error':
@@ -268,18 +270,18 @@ export function requires3DSecure(amount: number, currency: string, country?: str
   if (currency.toLowerCase() === 'eur' && amount >= 30) {
     return true;
   }
-  
+
   // UK cards require 3D Secure for amounts over £30
   if (currency.toLowerCase() === 'gbp' && amount >= 30) {
     return true;
   }
-  
+
   // Some countries have lower thresholds
   const lowThresholdCountries = ['IT', 'ES', 'FR', 'DE'];
   if (country && lowThresholdCountries.includes(country.toUpperCase()) && amount >= 20) {
     return true;
   }
-  
+
   return false;
 }
 
