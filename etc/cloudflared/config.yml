@@ -1,7 +1,0 @@
-tunnel: scala
-credentials-file: /home/bombspinner/.cloudflared/a5574e9f-f8ce-4154-9643-b0dc07850bf5.json
-
-ingress:
-  - hostname: scala.vlady.website
-    service: http://localhost:3000 # Adjust port as needed
-  - service: http_status:404
