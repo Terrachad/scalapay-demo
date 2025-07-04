@@ -43,7 +43,7 @@ export class PaymentMethodService {
     }
 
     const setupIntent = await this.stripeService.retrieveSetupIntent(setupIntentId);
-    
+
     if (setupIntent.status !== 'succeeded') {
       throw new BadRequestException('Setup intent not succeeded');
     }
@@ -53,10 +53,7 @@ export class PaymentMethodService {
 
     // If making this default, unset other defaults
     if (makeDefault) {
-      await this.paymentMethodRepository.update(
-        { userId, isDefault: true },
-        { isDefault: false }
-      );
+      await this.paymentMethodRepository.update({ userId, isDefault: true }, { isDefault: false });
     }
 
     const paymentMethod = new PaymentMethod();
@@ -112,10 +109,7 @@ export class PaymentMethodService {
     }
 
     // Unset other defaults
-    await this.paymentMethodRepository.update(
-      { userId, isDefault: true },
-      { isDefault: false }
-    );
+    await this.paymentMethodRepository.update({ userId, isDefault: true }, { isDefault: false });
 
     // Set this as default
     paymentMethod.isDefault = true;

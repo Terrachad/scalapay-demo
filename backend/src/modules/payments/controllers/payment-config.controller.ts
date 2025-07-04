@@ -58,4 +58,106 @@ export class PaymentConfigController {
   async deleteConfig(@Param('key') key: string) {
     return this.paymentConfigService.deleteConfig(key);
   }
+
+  @Get('merchant/:merchantId')
+  @ApiOperation({ summary: 'Get merchant-specific payment configuration' })
+  @ApiResponse({
+    status: 200,
+    description: 'Merchant payment configuration retrieved successfully',
+  })
+  async getMerchantConfig(@Param('merchantId') merchantId: string) {
+    return this.paymentConfigService.getConfigForMerchant(merchantId);
+  }
+
+  @Get('default')
+  @ApiOperation({ summary: 'Get default payment configuration' })
+  @ApiResponse({ status: 200, description: 'Default payment configuration retrieved successfully' })
+  async getDefaultConfig() {
+    // Try to get the 'default' config from database first
+    try {
+      const defaultConfig = await this.paymentConfigService.getConfigByKey('default');
+      if (defaultConfig && defaultConfig.value) {
+        return JSON.parse(defaultConfig.value);
+      }
+    } catch (error) {
+      // If no 'default' config found in database, return hardcoded defaults
+      console.log('No default config found in database, returning hardcoded defaults');
+    }
+
+    // Return hardcoded default configuration
+    return {
+      paymentInterval: 'biweekly',
+      gracePeriodDays: 3,
+      lateFeeAmount: 25,
+      maxRetries: 3,
+      interestRate: 0.0,
+      enableEarlyPayment: true,
+      enableAutoRetry: true,
+      enableNotifications: true,
+    };
+  }
+
+  @Put('merchant/:merchantId')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiOperation({ summary: 'Update merchant payment configuration' })
+  @ApiResponse({ status: 200, description: 'Merchant payment configuration updated successfully' })
+  async updateMerchantConfig(@Param('merchantId') merchantId: string, @Body() updateData: any) {
+    // For now, we'll just return the merchant config since the service doesn't support merchant-specific updates yet
+    return this.paymentConfigService.getConfigForMerchant(merchantId);
+  }
+
+  @Put('default')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiOperation({ summary: 'Update default payment configuration' })
+  @ApiResponse({ status: 200, description: 'Default payment configuration updated successfully' })
+  async updateDefaultConfig(@Body() updateData: any) {
+    try {
+      // Try to update existing default config
+      await this.paymentConfigService.updateConfig('default', {
+        value: JSON.stringify(updateData),
+      });
+    } catch (error) {
+      // If it doesn't exist, create it
+      await this.paymentConfigService.createConfig({
+        key: 'default',
+        value: JSON.stringify(updateData),
+        description: 'Default payment configuration for all transactions',
+        isActive: true,
+      });
+    }
+
+    return updateData;
+  }
+
+  @Post('seed-default')
+  @ApiOperation({ summary: 'Seed default payment configuration (dev only)' })
+  @ApiResponse({ status: 201, description: 'Default payment configuration seeded successfully' })
+  async seedDefaultConfig() {
+    const defaultConfig = {
+      paymentInterval: 'biweekly',
+      gracePeriodDays: 3,
+      lateFeeAmount: 25,
+      maxRetries: 3,
+      interestRate: 0.0,
+      enableEarlyPayment: true,
+      enableAutoRetry: true,
+      enableNotifications: true,
+    };
+
+    try {
+      await this.paymentConfigService.createConfig({
+        key: 'default',
+        value: JSON.stringify(defaultConfig),
+        description: 'Default payment configuration for all transactions',
+        isActive: true,
+      });
+      return { message: 'Default config created successfully', config: defaultConfig };
+    } catch (error) {
+      // If it already exists, update it
+      await this.paymentConfigService.updateConfig('default', {
+        value: JSON.stringify(defaultConfig),
+      });
+      return { message: 'Default config updated successfully', config: defaultConfig };
+    }
+  }
 }

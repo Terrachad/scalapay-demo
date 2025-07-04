@@ -28,17 +28,14 @@ export class EarlyPaymentService {
     }
 
     const pendingPayments = transaction.payments.filter(
-      payment => payment.status === PaymentStatus.SCHEDULED
+      (payment) => payment.status === PaymentStatus.SCHEDULED,
     );
 
     if (pendingPayments.length === 0) {
       throw new BadRequestException('No pending payments to process early');
     }
 
-    const totalAmount = pendingPayments.reduce(
-      (sum, payment) => sum + Number(payment.amount), 
-      0
-    );
+    const totalAmount = pendingPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
 
     // Create payment intent for the total remaining amount
     const paymentIntent = await this.stripeService.createPaymentIntent({
@@ -48,7 +45,7 @@ export class EarlyPaymentService {
       metadata: {
         transactionId,
         type: 'early_payment',
-        paymentIds: pendingPayments.map(p => p.id).join(','),
+        paymentIds: pendingPayments.map((p) => p.id).join(','),
       },
     });
 
@@ -62,7 +59,7 @@ export class EarlyPaymentService {
 
   async confirmEarlyPayment(paymentIntentId: string) {
     const paymentIntent = await this.stripeService.retrievePaymentIntent(paymentIntentId);
-    
+
     if (paymentIntent.status !== 'succeeded') {
       throw new BadRequestException('Payment not succeeded');
     }
@@ -95,7 +92,7 @@ export class EarlyPaymentService {
       await this.notificationService.sendEarlyPaymentConfirmation(
         transaction.user,
         transaction,
-        Number(paymentIntent.amount) / 100
+        Number(paymentIntent.amount) / 100,
       );
     }
 
@@ -117,14 +114,11 @@ export class EarlyPaymentService {
     }
 
     const pendingPayments = transaction.payments.filter(
-      payment => payment.status === PaymentStatus.SCHEDULED
+      (payment) => payment.status === PaymentStatus.SCHEDULED,
     );
 
     // Simple discount calculation: 1% discount for early payment
-    const totalAmount = pendingPayments.reduce(
-      (sum, payment) => sum + Number(payment.amount), 
-      0
-    );
+    const totalAmount = pendingPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
 
     return totalAmount * 0.01; // 1% discount
   }

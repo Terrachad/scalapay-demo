@@ -26,8 +26,8 @@ export class PaymentConfigService {
   }
 
   async getConfigValue(key: string): Promise<string | null> {
-    const config = await this.paymentConfigRepository.findOne({ 
-      where: { key, isActive: true } 
+    const config = await this.paymentConfigRepository.findOne({
+      where: { key, isActive: true },
     });
     return config?.value || null;
   }
@@ -47,7 +47,7 @@ export class PaymentConfigService {
 
   async updateConfig(key: string, updateDto: UpdatePaymentConfigDto): Promise<PaymentConfig> {
     const config = await this.getConfigByKey(key);
-    
+
     Object.assign(config, updateDto);
     return this.paymentConfigRepository.save(config);
   }
@@ -59,7 +59,7 @@ export class PaymentConfigService {
 
   async setConfigValue(key: string, value: string): Promise<PaymentConfig> {
     let config = await this.paymentConfigRepository.findOne({ where: { key } });
-    
+
     if (config) {
       config.value = value;
     } else {
@@ -69,7 +69,7 @@ export class PaymentConfigService {
         isActive: true,
       });
     }
-    
+
     return this.paymentConfigRepository.save(config);
   }
 
@@ -90,21 +90,21 @@ export class PaymentConfigService {
 
   calculateDueDate(installmentIndex: number, startDate: Date, interval: string): Date {
     const dueDate = new Date(startDate);
-    
+
     switch (interval) {
       case 'weekly':
-        dueDate.setDate(dueDate.getDate() + (installmentIndex * 7));
+        dueDate.setDate(dueDate.getDate() + installmentIndex * 7);
         break;
       case 'biweekly':
-        dueDate.setDate(dueDate.getDate() + (installmentIndex * 14));
+        dueDate.setDate(dueDate.getDate() + installmentIndex * 14);
         break;
       case 'monthly':
         dueDate.setMonth(dueDate.getMonth() + installmentIndex);
         break;
       default:
-        dueDate.setDate(dueDate.getDate() + (installmentIndex * 14)); // Default to biweekly
+        dueDate.setDate(dueDate.getDate() + installmentIndex * 14); // Default to biweekly
     }
-    
+
     return dueDate;
   }
 
