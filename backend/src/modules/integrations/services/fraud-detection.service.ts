@@ -76,7 +76,7 @@ export enum FraudProvider {
   MAXMIND = 'maxmind',
   SIFT = 'sift',
   KOUNT = 'kount',
-  SANDBOX = 'sandbox'
+  SANDBOX = 'sandbox',
 }
 
 export interface FraudCheckAuditLog {
@@ -114,14 +114,20 @@ export class FraudDetectionService {
     private transactionRepository: Repository<Transaction>,
   ) {
     this.isProduction = this.configService.get('NODE_ENV') === 'production';
-    this.fraudProvider = this.configService.get('FRAUD_PROVIDER', FraudProvider.SANDBOX) as FraudProvider;
-    
+    this.fraudProvider = this.configService.get(
+      'FRAUD_PROVIDER',
+      FraudProvider.SANDBOX,
+    ) as FraudProvider;
+
     // Fraud detection API credentials
-    this.maxMindApiKey = this.configService.get('MAXMIND_API_KEY');
-    this.maxMindApiUrl = this.configService.get('MAXMIND_API_URL', 'https://minfraud.maxmind.com/minfraud/v2.0');
-    this.siftApiKey = this.configService.get('SIFT_API_KEY');
+    this.maxMindApiKey = this.configService.get('MAXMIND_API_KEY') || '';
+    this.maxMindApiUrl = this.configService.get(
+      'MAXMIND_API_URL',
+      'https://minfraud.maxmind.com/minfraud/v2.0',
+    );
+    this.siftApiKey = this.configService.get('SIFT_API_KEY') || '';
     this.siftApiUrl = this.configService.get('SIFT_API_URL', 'https://api.sift.com/v205');
-    this.kountApiKey = this.configService.get('KOUNT_API_KEY');
+    this.kountApiKey = this.configService.get('KOUNT_API_KEY') || '';
     this.kountApiUrl = this.configService.get('KOUNT_API_URL', 'https://api.kount.com/rpc');
 
     this.logger.log(`Fraud detection service initialized with provider: ${this.fraudProvider}`);
@@ -129,7 +135,7 @@ export class FraudDetectionService {
 
   async checkForFraud(request: FraudCheckRequest): Promise<FraudCheckResponse> {
     const startTime = Date.now();
-    
+
     try {
       this.logger.log(
         `Performing fraud check for user ${request.userId}, amount: $${request.transactionAmount}, provider: ${this.fraudProvider}`,
@@ -151,7 +157,7 @@ export class FraudDetectionService {
         case FraudProvider.SIFT:
           thirdPartyResponse = await this.performSiftFraudCheck(request);
           externalRiskScore = thirdPartyResponse.score;
-          externalFactors = thirdPartyResponse.reasons.map(r => r.name);
+          externalFactors = thirdPartyResponse.reasons.map((r: any) => r.name);
           break;
         case FraudProvider.KOUNT:
           thirdPartyResponse = await this.performKountFraudCheck(request);
@@ -184,16 +190,11 @@ export class FraudDetectionService {
       ]);
 
       // Weight external vs internal scores (external providers are typically more sophisticated)
-      const finalRiskScore = Math.round((externalRiskScore * 0.6) + (internalScore * 0.4));
+      const finalRiskScore = Math.round(externalRiskScore * 0.6 + internalScore * 0.4);
 
       const riskFactors = [
         ...externalFactors,
-        ...this.collectRiskFactors([
-          velocityCheck,
-          patternCheck,
-          deviceCheck,
-          amountCheck,
-        ])
+        ...this.collectRiskFactors([velocityCheck, patternCheck, deviceCheck, amountCheck]),
       ];
 
       const decision = this.makeDecision(finalRiskScore, riskFactors);
@@ -224,13 +225,13 @@ export class FraudDetectionService {
 
       this.logger.log(
         `Fraud check completed for ${request.userId}: ${decision}, ` +
-        `score: ${finalRiskScore}, provider: ${this.fraudProvider}, time: ${processingTimeMs}ms`,
+          `score: ${finalRiskScore}, provider: ${this.fraudProvider}, time: ${processingTimeMs}ms`,
       );
 
       return response;
     } catch (error) {
       const processingTimeMs = Date.now() - startTime;
-      
+
       this.logger.error(`Fraud check failed for user ${request.userId}:`, error);
 
       // Log the failure for audit
@@ -239,7 +240,7 @@ export class FraudDetectionService {
         transactionAmount: request.transactionAmount,
         riskScore: 75,
         decision: 'REVIEW',
-        riskFactors: [`Service error: ${error.message}`],
+        riskFactors: [`Service error: ${error instanceof Error ? error.message : String(error)}`],
         provider: this.fraudProvider,
         referenceId: this.generateReferenceId(),
         ipAddress: request.ipAddress,
@@ -336,7 +337,10 @@ export class FraudDetectionService {
     return { score, factors };
   }
 
-  private async checkDeviceRisk(request: FraudCheckRequest, externalFactors: string[]): Promise<{
+  private async checkDeviceRisk(
+    request: FraudCheckRequest,
+    externalFactors: string[],
+  ): Promise<{
     score: number;
     factors: string[];
   }> {
@@ -356,10 +360,11 @@ export class FraudDetectionService {
 
     // Use external fraud detection results for IP analysis
     // No more mock implementations - rely on real fraud detection APIs
-    const hasProxyDetection = externalFactors.some(f => 
-      f.toLowerCase().includes('proxy') || 
-      f.toLowerCase().includes('vpn') || 
-      f.toLowerCase().includes('tor')
+    const hasProxyDetection = externalFactors.some(
+      (f) =>
+        f.toLowerCase().includes('proxy') ||
+        f.toLowerCase().includes('vpn') ||
+        f.toLowerCase().includes('tor'),
     );
 
     if (hasProxyDetection) {
@@ -499,11 +504,11 @@ export class FraudDetectionService {
       const response = await firstValueFrom(
         this.httpService.post(`${this.maxMindApiUrl}/score`, requestBody, {
           headers: {
-            'Authorization': `Bearer ${this.maxMindApiKey}`,
+            Authorization: `Bearer ${this.maxMindApiKey}`,
             'Content-Type': 'application/json',
           },
           timeout: 10000,
-        })
+        }),
       );
 
       return {
@@ -539,19 +544,21 @@ export class FraudDetectionService {
         $browser: {
           $user_agent: request.userAgent || 'Unknown',
         },
-        $billing_address: request.billingAddress ? {
-          $address_1: request.billingAddress.street,
-          $city: request.billingAddress.city,
-          $region: request.billingAddress.state,
-          $zipcode: request.billingAddress.zipCode,
-          $country: request.billingAddress.country,
-        } : undefined,
+        $billing_address: request.billingAddress
+          ? {
+              $address_1: request.billingAddress.street,
+              $city: request.billingAddress.city,
+              $region: request.billingAddress.state,
+              $zipcode: request.billingAddress.zipCode,
+              $country: request.billingAddress.country,
+            }
+          : undefined,
       };
 
       const response = await firstValueFrom(
         this.httpService.post(`${this.siftApiUrl}/events`, requestBody, {
           timeout: 10000,
-        })
+        }),
       );
 
       // Get the score from Sift
@@ -559,7 +566,7 @@ export class FraudDetectionService {
         this.httpService.get(`${this.siftApiUrl}/score/${request.userId}`, {
           params: { api_key: this.siftApiKey },
           timeout: 5000,
-        })
+        }),
       );
 
       return {
@@ -596,11 +603,11 @@ export class FraudDetectionService {
       const response = await firstValueFrom(
         this.httpService.post(`${this.kountApiUrl}/process`, requestBody, {
           headers: {
-            'Authorization': `Bearer ${this.kountApiKey}`,
+            Authorization: `Bearer ${this.kountApiKey}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           timeout: 10000,
-        })
+        }),
       );
 
       return {
@@ -618,16 +625,16 @@ export class FraudDetectionService {
   private async performSandboxFraudCheck(request: FraudCheckRequest): Promise<any> {
     // Enhanced sandbox mode with realistic but deterministic behavior
     // Uses email and IP patterns for consistent testing
-    
+
     const emailHash = this.hashString(request.userEmail);
     const ipHash = this.hashString(request.ipAddress || 'unknown');
-    
+
     // Generate deterministic risk score based on email and IP
     const baseScore = (emailHash % 80) + (ipHash % 20); // Range: 0-100
-    
+
     const factors: string[] = [];
     let riskScore = baseScore;
-    
+
     // Email domain adjustments (for testing different scenarios)
     const emailDomain = request.userEmail.split('@')[1];
     if (emailDomain === 'fraudulent.test') {
@@ -642,7 +649,7 @@ export class FraudDetectionService {
       riskScore = Math.min(riskScore, 25);
       factors.push('Trusted email domain');
     }
-    
+
     // IP pattern adjustments
     if (request.ipAddress) {
       if (request.ipAddress.startsWith('10.0.0.')) {
@@ -658,7 +665,7 @@ export class FraudDetectionService {
         factors.push('Tor network detected');
       }
     }
-    
+
     return {
       risk_score: Math.min(riskScore, 100),
       factors,
@@ -703,7 +710,7 @@ export class FraudDetectionService {
       const fingerprintHash = this.hashString(deviceFingerprint);
       const daysAgo = (fingerprintHash % 90) + 1; // 1-90 days
       const txCount = (fingerprintHash % 20) + 1; // 1-20 transactions
-      
+
       return {
         fingerprint: deviceFingerprint,
         ipAddress: `192.168.1.${(fingerprintHash % 254) + 1}`,
@@ -725,7 +732,7 @@ export class FraudDetectionService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
