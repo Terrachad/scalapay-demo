@@ -76,7 +76,7 @@ export enum CreditProvider {
   EQUIFAX = 'equifax',
   TRANSUNION = 'transunion',
   PLAID = 'plaid',
-  SANDBOX = 'sandbox'
+  SANDBOX = 'sandbox',
 }
 
 export interface CreditCheckAuditLog {
@@ -113,15 +113,21 @@ export class CreditCheckService {
     private userRepository: Repository<User>,
   ) {
     this.isProduction = this.configService.get('NODE_ENV') === 'production';
-    this.creditProvider = this.configService.get('CREDIT_PROVIDER', CreditProvider.SANDBOX) as CreditProvider;
-    
+    this.creditProvider = this.configService.get(
+      'CREDIT_PROVIDER',
+      CreditProvider.SANDBOX,
+    ) as CreditProvider;
+
     // Credit bureau API credentials
-    this.experianApiKey = this.configService.get('EXPERIAN_API_KEY');
-    this.experianApiUrl = this.configService.get('EXPERIAN_API_URL', 'https://api.experian.com/consumer-services');
-    this.equifaxApiKey = this.configService.get('EQUIFAX_API_KEY');
+    this.experianApiKey = this.configService.get('EXPERIAN_API_KEY') || '';
+    this.experianApiUrl = this.configService.get(
+      'EXPERIAN_API_URL',
+      'https://api.experian.com/consumer-services',
+    );
+    this.equifaxApiKey = this.configService.get('EQUIFAX_API_KEY') || '';
     this.equifaxApiUrl = this.configService.get('EQUIFAX_API_URL', 'https://api.equifax.com');
-    this.plaidClientId = this.configService.get('PLAID_CLIENT_ID');
-    this.plaidSecret = this.configService.get('PLAID_SECRET');
+    this.plaidClientId = this.configService.get('PLAID_CLIENT_ID') || '';
+    this.plaidSecret = this.configService.get('PLAID_SECRET') || '';
     this.plaidEnvironment = this.configService.get('PLAID_ENVIRONMENT', 'sandbox');
 
     this.logger.log(`Credit check service initialized with provider: ${this.creditProvider}`);
@@ -129,7 +135,7 @@ export class CreditCheckService {
 
   async performCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
     const startTime = Date.now();
-    
+
     try {
       this.logger.log(
         `Performing credit check for user ${request.userId}, amount: $${request.requestedAmount}, provider: ${this.creditProvider}`,
@@ -179,13 +185,13 @@ export class CreditCheckService {
 
       this.logger.log(
         `Credit check completed for ${request.userId}: ${creditResponse.approved ? 'APPROVED' : 'DENIED'}, ` +
-        `score: ${creditResponse.creditScore}, provider: ${this.creditProvider}, time: ${processingTimeMs}ms`,
+          `score: ${creditResponse.creditScore}, provider: ${this.creditProvider}, time: ${processingTimeMs}ms`,
       );
 
       return creditResponse;
     } catch (error) {
       const processingTimeMs = Date.now() - startTime;
-      
+
       this.logger.error(`Credit check failed for user ${request.userId}:`, error);
 
       // Log the failure for audit
@@ -198,7 +204,7 @@ export class CreditCheckService {
         riskLevel: 'HIGH',
         provider: this.creditProvider,
         referenceId: this.generateReferenceId(),
-        factors: [`Service error: ${error.message}`],
+        factors: [`Service error: ${error instanceof Error ? error.message : String(error)}`],
         timestamp: new Date(),
         processingTimeMs,
       });
@@ -240,12 +246,12 @@ export class CreditCheckService {
   async updateCreditLimit(userId: string, newLimit: number): Promise<boolean> {
     try {
       this.logger.log(`Updating credit limit for user ${userId} to $${newLimit}`);
-      
+
       await this.userRepository.update(userId, {
         creditLimit: newLimit,
         availableCredit: newLimit, // Reset available credit to new limit
       });
-      
+
       return true;
     } catch (error) {
       this.logger.error(`Failed to update credit limit for user ${userId}:`, error);
@@ -255,7 +261,9 @@ export class CreditCheckService {
 
   // REAL CREDIT BUREAU INTEGRATIONS - NO MORE MOCKING
 
-  private async performExperianCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
+  private async performExperianCreditCheck(
+    request: CreditCheckRequest,
+  ): Promise<CreditCheckResponse> {
     try {
       const requestBody = {
         consumerInfo: {
@@ -271,11 +279,11 @@ export class CreditCheckService {
       const response = await firstValueFrom(
         this.httpService.post(`${this.experianApiUrl}/credit-check`, requestBody, {
           headers: {
-            'Authorization': `Bearer ${this.experianApiKey}`,
+            Authorization: `Bearer ${this.experianApiKey}`,
             'Content-Type': 'application/json',
           },
           timeout: 10000, // 10 second timeout
-        })
+        }),
       );
 
       const experianData: ExperianCreditResponse = response.data;
@@ -286,9 +294,13 @@ export class CreditCheckService {
       return {
         approved,
         creditScore,
-        approvedAmount: approved ? request.requestedAmount : Math.min(request.requestedAmount, maxAmount * 0.6),
+        approvedAmount: approved
+          ? request.requestedAmount
+          : Math.min(request.requestedAmount, maxAmount * 0.6),
         riskLevel: this.calculateRiskLevel(creditScore),
-        reason: !approved ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount) : undefined,
+        reason: !approved
+          ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount)
+          : undefined,
         referenceId: experianData.reportId,
       };
     } catch (error) {
@@ -298,7 +310,9 @@ export class CreditCheckService {
     }
   }
 
-  private async performEquifaxCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
+  private async performEquifaxCreditCheck(
+    request: CreditCheckRequest,
+  ): Promise<CreditCheckResponse> {
     try {
       const requestBody = {
         person: {
@@ -313,11 +327,11 @@ export class CreditCheckService {
       const response = await firstValueFrom(
         this.httpService.post(`${this.equifaxApiUrl}/credit-report`, requestBody, {
           headers: {
-            'Authorization': `Bearer ${this.equifaxApiKey}`,
+            Authorization: `Bearer ${this.equifaxApiKey}`,
             'Content-Type': 'application/json',
           },
           timeout: 10000,
-        })
+        }),
       );
 
       const equifaxData: EquifaxCreditResponse = response.data;
@@ -328,9 +342,13 @@ export class CreditCheckService {
       return {
         approved,
         creditScore,
-        approvedAmount: approved ? request.requestedAmount : Math.min(request.requestedAmount, maxAmount * 0.6),
+        approvedAmount: approved
+          ? request.requestedAmount
+          : Math.min(request.requestedAmount, maxAmount * 0.6),
         riskLevel: this.calculateRiskLevel(creditScore),
-        reason: !approved ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount) : undefined,
+        reason: !approved
+          ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount)
+          : undefined,
         referenceId: equifaxData.reportIdentifier,
       };
     } catch (error) {
@@ -357,7 +375,7 @@ export class CreditCheckService {
       const response = await firstValueFrom(
         this.httpService.post('https://production.plaid.com/credit/report/create', requestBody, {
           timeout: 15000, // Plaid can be slower
-        })
+        }),
       );
 
       const plaidData: PlaidCreditResponse = response.data;
@@ -368,9 +386,13 @@ export class CreditCheckService {
       return {
         approved,
         creditScore,
-        approvedAmount: approved ? request.requestedAmount : Math.min(request.requestedAmount, maxAmount * 0.6),
+        approvedAmount: approved
+          ? request.requestedAmount
+          : Math.min(request.requestedAmount, maxAmount * 0.6),
         riskLevel: this.calculateRiskLevel(creditScore),
-        reason: !approved ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount) : undefined,
+        reason: !approved
+          ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount)
+          : undefined,
         referenceId: plaidData.report_id,
       };
     } catch (error) {
@@ -380,17 +402,19 @@ export class CreditCheckService {
     }
   }
 
-  private async performSandboxCreditCheck(request: CreditCheckRequest): Promise<CreditCheckResponse> {
+  private async performSandboxCreditCheck(
+    request: CreditCheckRequest,
+  ): Promise<CreditCheckResponse> {
     // Enhanced sandbox mode with realistic but deterministic behavior
     // Uses email and name patterns for consistent testing
-    
+
     // Generate deterministic credit score based on email hash (for consistent testing)
     const emailHash = this.hashString(request.email);
     const baseScore = 500 + (emailHash % 350); // Range: 500-850
 
     // Apply business logic modifiers
     let creditScore = baseScore;
-    
+
     // Email domain adjustments (for testing different scenarios)
     const emailDomain = request.email.split('@')[1];
     if (emailDomain === 'excellent.test') creditScore = Math.max(creditScore, 800);
@@ -405,9 +429,13 @@ export class CreditCheckService {
     return {
       approved,
       creditScore,
-      approvedAmount: approved ? request.requestedAmount : Math.min(request.requestedAmount, maxAmount * 0.6),
+      approvedAmount: approved
+        ? request.requestedAmount
+        : Math.min(request.requestedAmount, maxAmount * 0.6),
       riskLevel: this.calculateRiskLevel(creditScore),
-      reason: !approved ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount) : undefined,
+      reason: !approved
+        ? this.getDeclineReason(creditScore, request.requestedAmount, maxAmount)
+        : undefined,
       referenceId: this.generateReferenceId(),
     };
   }
@@ -418,15 +446,15 @@ export class CreditCheckService {
     try {
       const response = await firstValueFrom(
         this.httpService.get(`${this.experianApiUrl}/bureau-report/${user.id}`, {
-          headers: { 'Authorization': `Bearer ${this.experianApiKey}` },
-        })
+          headers: { Authorization: `Bearer ${this.experianApiKey}` },
+        }),
       );
 
       const data = response.data;
       return {
         score: data.creditProfile.riskModel.score,
         reportId: data.reportId,
-        factors: data.creditProfile.riskModel.scoreFactors.map(f => f.factor),
+        factors: data.creditProfile.riskModel.scoreFactors.map((f: any) => f.factor),
         lastUpdated: data.dateOfReport,
         provider: 'Experian',
         riskFactors: this.extractRiskFactors(data),
@@ -441,8 +469,8 @@ export class CreditCheckService {
     try {
       const response = await firstValueFrom(
         this.httpService.get(`${this.equifaxApiUrl}/bureau-report/${user.id}`, {
-          headers: { 'Authorization': `Bearer ${this.equifaxApiKey}` },
-        })
+          headers: { Authorization: `Bearer ${this.equifaxApiKey}` },
+        }),
       );
 
       const data = response.data;
@@ -466,14 +494,14 @@ export class CreditCheckService {
           client_id: this.plaidClientId,
           secret: this.plaidSecret,
           user_token: user.id,
-        })
+        }),
       );
 
       const data = response.data;
       return {
         score: data.credit_score,
         reportId: data.report_id,
-        factors: data.accounts.map(acc => `Account: ${acc.account_id}`),
+        factors: data.accounts.map((acc: any) => `Account: ${acc.account_id}`),
         lastUpdated: data.created_at,
         provider: 'Plaid',
       };
@@ -523,7 +551,7 @@ export class CreditCheckService {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
