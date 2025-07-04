@@ -37,7 +37,7 @@ export default function EnterpriseStripePaymentPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { clearCart } = useCartStore();
-  
+
   const [pendingTransaction, setPendingTransaction] = useState<PendingTransaction | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +45,7 @@ export default function EnterpriseStripePaymentPage() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     try {
       // Get transaction details from session storage
       const storedTransaction = sessionStorage.getItem('pendingTransaction');
@@ -56,7 +56,7 @@ export default function EnterpriseStripePaymentPage() {
       }
 
       const transaction = JSON.parse(storedTransaction) as PendingTransaction;
-      
+
       // Validate transaction data
       if (!transaction.clientSecret || !transaction.transactionId) {
         setError('Invalid transaction data. Please start checkout again.');
@@ -76,25 +76,28 @@ export default function EnterpriseStripePaymentPage() {
   const handlePaymentSuccess = async (paymentIntent: any) => {
     try {
       console.log('Payment succeeded:', paymentIntent);
-      
+
       // Clear pending transaction from session storage
       sessionStorage.removeItem('pendingTransaction');
-      
+
       // Clear the cart since payment was successful
       clearCart();
-      
+
       toast({
         title: 'Payment Successful!',
         description: 'Your first installment has been processed successfully.',
       });
-      
+
       // Redirect to success page with transaction details
-      router.push(`/checkout/success?transaction=${pendingTransaction?.transactionId}&payment=${paymentIntent.id}`);
+      router.push(
+        `/checkout/success?transaction=${pendingTransaction?.transactionId}&payment=${paymentIntent.id}`,
+      );
     } catch (error) {
       console.error('Error handling payment success:', error);
       toast({
         title: 'Payment Processed',
-        description: 'Your payment was successful, but there was an issue updating your account. Please contact support if needed.',
+        description:
+          'Your payment was successful, but there was an issue updating your account. Please contact support if needed.',
         variant: 'default',
       });
     }
@@ -134,7 +137,9 @@ export default function EnterpriseStripePaymentPage() {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
-              <h2 className="text-xl font-semibold text-red-700 dark:text-red-400">Payment Error</h2>
+              <h2 className="text-xl font-semibold text-red-700 dark:text-red-400">
+                Payment Error
+              </h2>
               <p className="text-gray-600">{error || 'Unable to load payment details'}</p>
               <Button onClick={handleReturnToCheckout} variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -195,9 +200,7 @@ export default function EnterpriseStripePaymentPage() {
                 <h1 className="text-2xl font-bold gradient-text">Secure Payment</h1>
               </div>
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Step 2 of 2
-            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Step 2 of 2</div>
           </div>
         </div>
       </header>
@@ -240,7 +243,7 @@ export default function EnterpriseStripePaymentPage() {
                           {formatCurrency(pendingTransaction.paymentBreakdown.totalAmount)}
                         </span>
                       </div>
-                      
+
                       {pendingTransaction.paymentBreakdown.creditAmount > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Credit Applied:</span>
@@ -249,7 +252,7 @@ export default function EnterpriseStripePaymentPage() {
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="border-t pt-3">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Card Payment Today:</span>
@@ -269,11 +272,15 @@ export default function EnterpriseStripePaymentPage() {
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span>Total Installments:</span>
-                            <span className="font-medium">{pendingTransaction.installmentInfo.total}</span>
+                            <span className="font-medium">
+                              {pendingTransaction.installmentInfo.total}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Payment Frequency:</span>
-                            <span className="font-medium capitalize">{pendingTransaction.installmentInfo.frequency}</span>
+                            <span className="font-medium capitalize">
+                              {pendingTransaction.installmentInfo.frequency}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span>Remaining Payments:</span>
@@ -323,11 +330,17 @@ export default function EnterpriseStripePaymentPage() {
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription className="text-sm">
                     Having trouble? Contact our support team at{' '}
-                    <a href="mailto:support@scalapay.com" className="font-medium text-purple-600 hover:underline">
+                    <a
+                      href="mailto:support@scalapay.com"
+                      className="font-medium text-purple-600 hover:underline"
+                    >
                       support@scalapay.com
                     </a>{' '}
                     or call{' '}
-                    <a href="tel:+1-555-0123" className="font-medium text-purple-600 hover:underline">
+                    <a
+                      href="tel:+1-555-0123"
+                      className="font-medium text-purple-600 hover:underline"
+                    >
                       +1-555-0123
                     </a>
                   </AlertDescription>

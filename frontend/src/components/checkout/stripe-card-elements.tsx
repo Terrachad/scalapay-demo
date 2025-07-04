@@ -9,7 +9,8 @@ const stripeElementOptions = {
     base: {
       fontSize: '16px',
       color: '#ffffff',
-      fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+      fontFamily:
+        'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
       fontSmoothing: 'antialiased',
       fontWeight: '400',
       '::placeholder': {
@@ -43,9 +44,11 @@ export function StripeCardElements({ onElementChange, errors }: StripeCardElemen
         <Label htmlFor="cardNumber" className="text-sm font-medium">
           Card Number
         </Label>
-        <div className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
-          errors.cardNumber ? 'border-red-500' : ''
-        } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}>
+        <div
+          className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
+            errors.cardNumber ? 'border-red-500' : ''
+          } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}
+        >
           <CardNumberElement
             options={{
               ...stripeElementOptions,
@@ -57,9 +60,7 @@ export function StripeCardElements({ onElementChange, errors }: StripeCardElemen
             className="absolute inset-0 w-full h-full p-3 rounded-md bg-transparent"
           />
         </div>
-        {errors.cardNumber && (
-          <p className="text-sm text-red-500">{errors.cardNumber}</p>
-        )}
+        {errors.cardNumber && <p className="text-sm text-red-500">{errors.cardNumber}</p>}
       </div>
 
       {/* Expiry and CVC */}
@@ -68,9 +69,11 @@ export function StripeCardElements({ onElementChange, errors }: StripeCardElemen
           <Label htmlFor="cardExpiry" className="text-sm font-medium">
             Expiry Date
           </Label>
-          <div className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
-            errors.cardExpiry ? 'border-red-500' : ''
-          } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}>
+          <div
+            className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
+              errors.cardExpiry ? 'border-red-500' : ''
+            } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}
+          >
             <CardExpiryElement
               options={{
                 ...stripeElementOptions,
@@ -82,18 +85,18 @@ export function StripeCardElements({ onElementChange, errors }: StripeCardElemen
               className="absolute inset-0 w-full h-full p-3 rounded-md bg-transparent"
             />
           </div>
-          {errors.cardExpiry && (
-            <p className="text-sm text-red-500">{errors.cardExpiry}</p>
-          )}
+          {errors.cardExpiry && <p className="text-sm text-red-500">{errors.cardExpiry}</p>}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="cardCvc" className="text-sm font-medium">
             CVC
           </Label>
-          <div className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
-            errors.cardCvc ? 'border-red-500' : ''
-          } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}>
+          <div
+            className={`relative h-12 w-full rounded-md border border-input bg-background ring-offset-background ${
+              errors.cardCvc ? 'border-red-500' : ''
+            } focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`}
+          >
             <CardCvcElement
               options={{
                 ...stripeElementOptions,
@@ -105,9 +108,7 @@ export function StripeCardElements({ onElementChange, errors }: StripeCardElemen
               className="absolute inset-0 w-full h-full p-3 rounded-md bg-transparent"
             />
           </div>
-          {errors.cardCvc && (
-            <p className="text-sm text-red-500">{errors.cardCvc}</p>
-          )}
+          {errors.cardCvc && <p className="text-sm text-red-500">{errors.cardCvc}</p>}
         </div>
       </div>
     </>

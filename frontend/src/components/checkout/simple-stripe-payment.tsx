@@ -25,7 +25,7 @@ interface SimpleStripePaymentProps {
   onSuccess: (transaction?: any) => void;
 }
 
-export function SimpleStripePayment({ 
+export function SimpleStripePayment({
   clientSecret,
   cardData,
   postalCode,
@@ -34,11 +34,11 @@ export function SimpleStripePayment({
   cardAmount,
   creditAmount,
   totalAmount,
-  onSuccess
+  onSuccess,
 }: SimpleStripePaymentProps) {
   const stripe = useStripe();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -104,7 +104,7 @@ export function SimpleStripePayment({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      
+
       toast({
         title: 'Payment Failed',
         description: errorMsg,
@@ -210,8 +210,8 @@ export function SimpleStripePayment({
 
       {/* Terms */}
       <p className="text-xs text-gray-500 text-center leading-relaxed">
-        By continuing, you agree to our Terms of Service and Privacy Policy.
-        You will be charged {formatCurrency(cardAmount)} today for your first installment.
+        By continuing, you agree to our Terms of Service and Privacy Policy. You will be charged{' '}
+        {formatCurrency(cardAmount)} today for your first installment.
       </p>
     </div>
   );

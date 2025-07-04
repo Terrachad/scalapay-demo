@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,21 +22,20 @@ interface EarlyPaymentModalProps {
   onPaymentComplete?: () => void;
 }
 
-export function EarlyPaymentModal({ 
-  isOpen, 
-  onClose, 
+export function EarlyPaymentModal({
+  isOpen,
+  onClose,
   transaction,
-  onPaymentComplete 
+  onPaymentComplete,
 }: EarlyPaymentModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const pendingPayments = transaction.payments?.filter(
-    payment => payment.status === 'scheduled'
-  ) || [];
+  const pendingPayments =
+    transaction.payments?.filter((payment) => payment.status === 'scheduled') || [];
 
   const totalRemainingAmount = pendingPayments.reduce(
     (sum, payment) => sum + Number(payment.amount),
-    0
+    0,
   );
 
   const handleEarlyPayment = async () => {
@@ -38,8 +43,8 @@ export function EarlyPaymentModal({
     try {
       // This would integrate with your early payment service
       // For now, just simulate the process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       onPaymentComplete?.();
       onClose();
     } catch (error) {
@@ -93,16 +98,23 @@ export function EarlyPaymentModal({
 
           {/* Pending Payments */}
           <div>
-            <h4 className="text-sm font-medium mb-2">Pending Payments ({pendingPayments.length})</h4>
+            <h4 className="text-sm font-medium mb-2">
+              Pending Payments ({pendingPayments.length})
+            </h4>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {pendingPayments.map((payment, index) => (
-                <div key={payment.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <span className="text-sm">Payment {index + 1}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">{formatCurrency(Number(payment.amount))}</div>
+                    <div className="text-sm font-medium">
+                      {formatCurrency(Number(payment.amount))}
+                    </div>
                     <div className="text-xs text-gray-500">
                       {new Date(payment.dueDate).toLocaleDateString()}
                     </div>
@@ -129,12 +141,7 @@ export function EarlyPaymentModal({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isProcessing}
-            >
+            <Button variant="outline" onClick={onClose} className="flex-1" disabled={isProcessing}>
               Cancel
             </Button>
             <Button

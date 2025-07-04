@@ -1,11 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  PaymentElement, 
-  useStripe, 
-  useElements 
-} from '@stripe/react-stripe-js';
+import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,19 +18,19 @@ interface StripePaymentFormProps {
   onSuccess: (transaction?: any) => void;
 }
 
-export function StripePaymentForm({ 
+export function StripePaymentForm({
   totalAmount,
   cardAmount,
   creditAmount,
   userEmail,
   userName,
   postalCode,
-  onSuccess
+  onSuccess,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentElementReady, setPaymentElementReady] = useState(false);
@@ -45,12 +41,12 @@ export function StripePaymentForm({
     if (!stripe || !elements) return;
 
     const paymentElement = elements.getElement('payment');
-    
+
     if (paymentElement) {
       paymentElement.on('ready', () => {
         setPaymentElementReady(true);
       });
-      
+
       paymentElement.on('change', (event) => {
         if (event.error) {
           setErrorMessage(event.error.message || 'Payment element error');
@@ -63,7 +59,7 @@ export function StripePaymentForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!isReady) {
       setErrorMessage('Payment form is not ready yet. Please wait a moment.');
       return;
@@ -114,7 +110,7 @@ export function StripePaymentForm({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      
+
       toast({
         title: 'Payment Failed',
         description: errorMsg,
@@ -246,8 +242,8 @@ export function StripePaymentForm({
 
         {/* Terms */}
         <p className="text-xs text-gray-500 text-center leading-relaxed">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-          You will be charged {formatCurrency(cardAmount)} today for your first installment.
+          By continuing, you agree to our Terms of Service and Privacy Policy. You will be charged{' '}
+          {formatCurrency(cardAmount)} today for your first installment.
         </p>
       </form>
     </div>

@@ -37,7 +37,7 @@ const paymentMethods: PaymentMethod[] = [
   },
   {
     id: 'card',
-    name: 'Card Only', 
+    name: 'Card Only',
     description: 'Pay with your credit/debit card',
     icon: CreditCard,
   },
@@ -49,7 +49,11 @@ const paymentMethods: PaymentMethod[] = [
   },
 ];
 
-export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }: PaymentMethodSelectorProps) {
+export function PaymentMethodSelector({
+  totalAmount,
+  availableCredit,
+  onSelect,
+}: PaymentMethodSelectorProps) {
   // Determine default method
   const getDefaultMethod = () => {
     if (availableCredit >= totalAmount) {
@@ -68,7 +72,7 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
 
   // Notify parent of initial selection
   useEffect(() => {
-    const method = paymentMethods.find(m => m.id === defaultSelection.method)!;
+    const method = paymentMethods.find((m) => m.id === defaultSelection.method)!;
     const selection = {
       method,
       creditAmount: defaultSelection.credit,
@@ -80,7 +84,7 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
 
   const handleMethodChange = (methodId: string) => {
     setSelectedMethodId(methodId);
-    const method = paymentMethods.find(m => m.id === methodId)!;
+    const method = paymentMethods.find((m) => m.id === methodId)!;
 
     let newCreditAmount: number;
     let newCardAmount: number;
@@ -116,11 +120,11 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
   const handleCreditAmountChange = (value: string) => {
     const amount = Math.min(parseFloat(value) || 0, availableCredit, totalAmount);
     const newCardAmount = totalAmount - amount;
-    
+
     setCreditAmount(amount);
     setCardAmount(newCardAmount);
 
-    const method = paymentMethods.find(m => m.id === selectedMethodId)!;
+    const method = paymentMethods.find((m) => m.id === selectedMethodId)!;
     onSelect({
       method,
       creditAmount: amount,
@@ -134,7 +138,7 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
         <div className="grid gap-4">
           {paymentMethods.map((method, index) => {
             const disabled = method.id === 'credit' && availableCredit === 0;
-            
+
             return (
               <motion.div
                 key={method.id}
@@ -142,10 +146,15 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <Label htmlFor={method.id} className={`cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <Label
+                  htmlFor={method.id}
+                  className={`cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
                   <Card
                     className={`transition-all ${
-                      selectedMethodId === method.id ? 'border-purple-600 shadow-lg' : 'hover:shadow-md'
+                      selectedMethodId === method.id
+                        ? 'border-purple-600 shadow-lg'
+                        : 'hover:shadow-md'
                     } ${disabled ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
                   >
                     <CardContent className="flex items-center justify-between p-4">
@@ -154,7 +163,9 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
                         <method.icon className="w-6 h-6 text-purple-600" />
                         <div>
                           <h3 className="font-semibold">{method.name}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{method.description}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {method.description}
+                          </p>
                           {method.id === 'credit' && (
                             <p className="text-sm text-purple-600 mt-1">
                               Available: {formatCurrency(availableCredit)}
@@ -183,11 +194,15 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
       {/* Payment breakdown */}
       <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
         <CardContent className="p-4">
-          <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-3">Payment Breakdown</h4>
+          <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-3">
+            Payment Breakdown
+          </h4>
           <div className="space-y-2">
             {creditAmount > 0 && (
               <div className="flex justify-between items-center">
-                <span className="text-sm text-purple-700 dark:text-purple-300">Credit Payment:</span>
+                <span className="text-sm text-purple-700 dark:text-purple-300">
+                  Credit Payment:
+                </span>
                 <span className="font-semibold text-purple-900 dark:text-purple-100">
                   {formatCurrency(creditAmount)}
                 </span>
@@ -214,7 +229,10 @@ export function PaymentMethodSelector({ totalAmount, availableCredit, onSelect }
           {/* Custom credit amount input for hybrid */}
           {selectedMethodId === 'hybrid' && availableCredit > 0 && (
             <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
-              <Label htmlFor="credit-amount" className="text-sm font-medium text-purple-900 dark:text-purple-100">
+              <Label
+                htmlFor="credit-amount"
+                className="text-sm font-medium text-purple-900 dark:text-purple-100"
+              >
                 Credit Amount (max {formatCurrency(Math.min(availableCredit, totalAmount))})
               </Label>
               <Input

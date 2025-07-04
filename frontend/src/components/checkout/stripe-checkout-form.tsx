@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  PaymentElement, 
-  AddressElement, 
+import {
+  PaymentElement,
+  AddressElement,
   LinkAuthenticationElement,
-  useStripe, 
-  useElements 
+  useStripe,
+  useElements,
 } from '@stripe/react-stripe-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,17 +23,17 @@ interface StripeCheckoutFormProps {
   onError: (error: string) => void;
 }
 
-export function StripeCheckoutForm({ 
-  clientSecret, 
-  amount, 
-  creditAmount = 0, 
-  onSuccess, 
-  onError 
+export function StripeCheckoutForm({
+  clientSecret,
+  amount,
+  creditAmount = 0,
+  onSuccess,
+  onError,
 }: StripeCheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentElementReady, setPaymentElementReady] = useState(false);
   const [addressElementReady, setAddressElementReady] = useState(false);
@@ -73,7 +73,7 @@ export function StripeCheckoutForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!isReady) {
       setErrorMessage('Payment form is not ready yet. Please wait a moment.');
       return;
@@ -85,8 +85,8 @@ export function StripeCheckoutForm({
     try {
       // Get the address from the AddressElement
       const addressElement = elements.getElement('address');
-      const { error: addressError, value: addressValue } = await addressElement?.getValue() || {};
-      
+      const { error: addressError, value: addressValue } = (await addressElement?.getValue()) || {};
+
       if (addressError) {
         throw new Error(addressError.message || 'Invalid address information');
       }
@@ -144,7 +144,7 @@ export function StripeCheckoutForm({
       const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
       onError(errorMsg);
-      
+
       toast({
         title: 'Payment Failed',
         description: errorMsg,
@@ -198,7 +198,7 @@ export function StripeCheckoutForm({
           <CardHeader>
             <CardTitle className="text-lg">Contact Information</CardTitle>
             <CardDescription>
-              We'll use this email for order confirmations and updates
+              We&apos;ll use this email for order confirmations and updates
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -248,9 +248,7 @@ export function StripeCheckoutForm({
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Payment Method</CardTitle>
-            <CardDescription>
-              Your payment information is encrypted and secure
-            </CardDescription>
+            <CardDescription>Your payment information is encrypted and secure</CardDescription>
           </CardHeader>
           <CardContent>
             <PaymentElement
@@ -323,8 +321,8 @@ export function StripeCheckoutForm({
 
         {/* Terms */}
         <p className="text-xs text-gray-500 text-center leading-relaxed">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-          You will be charged {formatCurrency(cardAmount)} today for your first installment.
+          By continuing, you agree to our Terms of Service and Privacy Policy. You will be charged{' '}
+          {formatCurrency(cardAmount)} today for your first installment.
         </p>
       </form>
     </div>

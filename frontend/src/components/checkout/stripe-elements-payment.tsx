@@ -20,7 +20,7 @@ interface StripeElementsPaymentProps {
   onSuccess: (transaction?: any) => void;
 }
 
-export function StripeElementsPayment({ 
+export function StripeElementsPayment({
   clientSecret,
   cardholderName,
   postalCode,
@@ -29,12 +29,12 @@ export function StripeElementsPayment({
   cardAmount,
   creditAmount,
   totalAmount,
-  onSuccess
+  onSuccess,
 }: StripeElementsPaymentProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -50,7 +50,7 @@ export function StripeElementsPayment({
     try {
       // Get the card element
       const cardNumberElement = elements.getElement(CardNumberElement);
-      
+
       if (!cardNumberElement) {
         throw new Error('Card element not found. Please refresh the page and try again.');
       }
@@ -89,7 +89,7 @@ export function StripeElementsPayment({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      
+
       toast({
         title: 'Payment Failed',
         description: errorMsg,
@@ -191,8 +191,8 @@ export function StripeElementsPayment({
 
       {/* Terms */}
       <p className="text-xs text-gray-500 text-center leading-relaxed">
-        By continuing, you agree to our Terms of Service and Privacy Policy.
-        You will be charged {formatCurrency(cardAmount)} today for your first installment.
+        By continuing, you agree to our Terms of Service and Privacy Policy. You will be charged{' '}
+        {formatCurrency(cardAmount)} today for your first installment.
       </p>
     </div>
   );

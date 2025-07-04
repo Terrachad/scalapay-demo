@@ -27,7 +27,7 @@ interface IntegratedStripeFormProps {
   allElementsReady: boolean;
 }
 
-export function IntegratedStripeForm({ 
+export function IntegratedStripeForm({
   clientSecret,
   cardholderName,
   postalCode,
@@ -38,12 +38,12 @@ export function IntegratedStripeForm({
   onSuccess,
   onElementChange,
   stripeErrors,
-  allElementsReady
+  allElementsReady,
 }: IntegratedStripeFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -59,7 +59,7 @@ export function IntegratedStripeForm({
     try {
       // Get the card element
       const cardNumberElement = elements.getElement(CardNumberElement);
-      
+
       if (!cardNumberElement) {
         throw new Error('Card element not found. Please refresh the page and try again.');
       }
@@ -98,7 +98,7 @@ export function IntegratedStripeForm({
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      
+
       toast({
         title: 'Payment Failed',
         description: errorMsg,
@@ -112,10 +112,7 @@ export function IntegratedStripeForm({
   return (
     <div className="space-y-6">
       {/* Stripe Card Elements */}
-      <StripeCardElements 
-        onElementChange={onElementChange}
-        errors={stripeErrors}
-      />
+      <StripeCardElements onElementChange={onElementChange} errors={stripeErrors} />
 
       {/* Payment Summary */}
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-lg border">
@@ -123,16 +120,12 @@ export function IntegratedStripeForm({
           {creditAmount > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600 dark:text-gray-300">Credit Applied:</span>
-              <span className="font-semibold text-green-600">
-                -{formatCurrency(creditAmount)}
-              </span>
+              <span className="font-semibold text-green-600">-{formatCurrency(creditAmount)}</span>
             </div>
           )}
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600 dark:text-gray-300">Card Payment:</span>
-            <span className="font-bold text-lg text-purple-600">
-              {formatCurrency(cardAmount)}
-            </span>
+            <span className="font-bold text-lg text-purple-600">{formatCurrency(cardAmount)}</span>
           </div>
           <div className="border-t pt-2">
             <div className="flex justify-between items-center">

@@ -39,7 +39,7 @@ function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
   const { clearCart } = useCartStore();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
 
@@ -80,14 +80,17 @@ function PaymentForm() {
       console.log('Client Secret:', pendingTransaction.clientSecret);
 
       // Confirm the payment using Stripe Elements
-      const { error, paymentIntent } = await stripe.confirmCardPayment(pendingTransaction.clientSecret, {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            name: 'Customer', // You can collect this from a form field
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        pendingTransaction.clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: 'Customer', // You can collect this from a form field
+            },
           },
         },
-      });
+      );
 
       if (error) {
         console.error('Payment failed:', error);
@@ -98,18 +101,18 @@ function PaymentForm() {
         });
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('Payment succeeded!', paymentIntent);
-        
+
         // Clear pending transaction
         sessionStorage.removeItem('pendingTransaction');
-        
+
         // Clear the cart now that payment is successful
         clearCart();
-        
+
         toast({
           title: 'Payment Successful!',
           description: 'Your payment has been processed successfully.',
         });
-        
+
         // Redirect to success page
         router.push(`/checkout/success?transaction=${pendingTransaction.transactionId}`);
       } else {
@@ -158,11 +161,16 @@ function PaymentForm() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <Link href="/checkout" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
+            <Link
+              href="/checkout"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Checkout
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Complete Your Payment</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Complete Your Payment
+            </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
               Secure payment processing with Stripe Elements
             </p>
@@ -178,7 +186,9 @@ function PaymentForm() {
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-4 rounded-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">First Installment (Card):</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      First Installment (Card):
+                    </span>
                     <span className="font-bold text-lg text-purple-600">
                       {formatCurrency(pendingTransaction.firstInstallmentCardAmount)}
                     </span>
@@ -187,7 +197,9 @@ function PaymentForm() {
                     <>
                       {pendingTransaction.paymentBreakdown.creditAmount > 0 && (
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-gray-600 dark:text-gray-300">Credit Used:</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300">
+                            Credit Used:
+                          </span>
                           <span className="text-sm text-green-600">
                             {formatCurrency(pendingTransaction.paymentBreakdown.creditAmount)}
                           </span>
@@ -204,7 +216,7 @@ function PaymentForm() {
                     </>
                   )}
                 </div>
-                
+
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   <p>✓ Remaining installments will be automatically scheduled</p>
                   <p>✓ No interest or hidden fees</p>
@@ -238,24 +250,26 @@ function PaymentForm() {
                   </p>
                 </div>
 
-                <Button 
+                <Button
                   type="submit"
                   disabled={!stripe || isProcessing}
                   className="w-full h-12 text-lg font-semibold"
                   size="lg"
                 >
                   <CreditCard className="w-5 h-5 mr-2" />
-                  {isProcessing ? 'Processing Payment...' : `Pay ${formatCurrency(pendingTransaction.firstInstallmentCardAmount)}`}
+                  {isProcessing
+                    ? 'Processing Payment...'
+                    : `Pay ${formatCurrency(pendingTransaction.firstInstallmentCardAmount)}`}
                 </Button>
-                
+
                 <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                   <Lock className="w-4 h-4" />
                   <span>Secured by Stripe • SSL Encrypted • PCI Compliant</span>
                 </div>
-                
+
                 <p className="text-xs text-gray-400 text-center">
-                  By continuing, you agree to our Terms of Service and Privacy Policy.
-                  You will be charged {formatCurrency(pendingTransaction.firstInstallmentCardAmount)} today.
+                  By continuing, you agree to our Terms of Service and Privacy Policy. You will be
+                  charged {formatCurrency(pendingTransaction.firstInstallmentCardAmount)} today.
                 </p>
               </form>
             </CardContent>
