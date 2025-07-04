@@ -101,31 +101,35 @@ export const authService = {
   // Extended Profile Management - NO MORE MOCKING
   async getExtendedProfile(): Promise<UserProfileResponse> {
     const response = await apiClient.get('/users/profile/extended');
-    return response.data;
+    // Handle wrapped response format from TransformInterceptor
+    return response.data.data || response.data;
   },
 
   async updateProfile(updateData: UpdateUserProfileDto): Promise<UserProfileResponse> {
     const response = await apiClient.put('/users/profile/update', updateData);
-    return response.data;
+    // Handle wrapped response format from TransformInterceptor
+    return response.data.data || response.data;
   },
 
   async getNotificationPreferences(): Promise<NotificationPreferences> {
     const response = await apiClient.get('/users/notification-preferences');
-    return response.data;
+    return response.data.data || response.data;
   },
 
-  async updateNotificationPreferences(preferences: NotificationPreferences): Promise<NotificationPreferences> {
+  async updateNotificationPreferences(
+    preferences: NotificationPreferences,
+  ): Promise<NotificationPreferences> {
     const response = await apiClient.put('/users/notification-preferences', { preferences });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   async getSecurityPreferences(): Promise<SecurityPreferences> {
     const response = await apiClient.get('/users/security-preferences');
-    return response.data;
+    return response.data.data || response.data;
   },
 
   async updateSecurityPreferences(preferences: SecurityPreferences): Promise<SecurityPreferences> {
     const response = await apiClient.put('/users/security-preferences', { preferences });
-    return response.data;
+    return response.data.data || response.data;
   },
 };

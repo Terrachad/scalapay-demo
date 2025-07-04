@@ -246,7 +246,7 @@ export default function LoginPage() {
             <CardFooter className="space-y-6">
               <div className="text-center w-full">
                 <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link href="/register" className="text-primary hover:underline font-medium">
                     Create Account
                   </Link>

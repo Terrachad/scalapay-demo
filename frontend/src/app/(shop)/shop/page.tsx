@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import { ShoppingCart, Star, CreditCard, Filter, Search, Heart, ArrowLeft } from
 import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart-store';
+import { useWishlistStore } from '@/store/wishlist-store';
 import Link from 'next/link';
 
 const products = [
@@ -87,9 +89,9 @@ const categories = ['All', 'Electronics', 'Fashion', 'Sports'];
 export default function ShopPage() {
   const router = useRouter();
   const { addItem, getTotalItems, items } = useCartStore();
+  const { toggleItem: toggleWishlist, isInWishlist } = useWishlistStore();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -110,12 +112,6 @@ export default function ShopPage() {
       colors: product.colors,
       merchantId: product.merchantId,
     });
-  };
-
-  const toggleFavorite = (productId: string) => {
-    setFavorites((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
-    );
   };
 
   const filteredProducts = products.filter((product) => {
@@ -220,10 +216,11 @@ export default function ShopPage() {
                 <CardHeader className="p-0 relative">
                   <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {/* Real product image */}
-                    <img
+                    <Image
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => {
                         e.currentTarget.src = '/api/placeholder/300/300';
                       }}
@@ -234,18 +231,28 @@ export default function ShopPage() {
                       <Badge className="absolute top-4 left-4 bg-red-500 text-white">SALE</Badge>
                     )}
 
-                    {/* Favorite button */}
+                    {/* Wishlist button */}
                     <Button
                       size="sm"
                       variant="ghost"
                       className="absolute top-4 right-4 w-8 h-8 p-0 bg-white/80 hover:bg-white"
-                      onClick={() => toggleFavorite(product.id)}
+                      onClick={() =>
+                        toggleWishlist({
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          originalPrice: product.originalPrice,
+                          image: product.image,
+                          category: product.category,
+                          isOnSale: product.isOnSale,
+                          colors: product.colors,
+                        })
+                      }
+                      title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                     >
                       <Heart
                         className={`w-4 h-4 ${
-                          favorites.includes(product.id)
-                            ? 'fill-red-500 text-red-500'
-                            : 'text-gray-600'
+                          isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
                         }`}
                       />
                     </Button>

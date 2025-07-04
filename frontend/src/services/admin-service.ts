@@ -93,17 +93,17 @@ export const adminService = {
         },
       });
       console.log('Admin getAllTransactions response:', response.data);
-      
+
       // The API returns: {data: {transactions: Array, total, page, limit}, statusCode, message}
       if (response.data?.data?.transactions) {
         return response.data.data.transactions;
       }
-      
+
       // Fallback for direct transactions array
       if (response.data?.transactions) {
         return response.data.transactions;
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error fetching admin transactions:', error);
@@ -127,12 +127,12 @@ export const adminService = {
   },
 
   async approveTransaction(id: string): Promise<any> {
-    const response = await apiClient.put<{ data: any }>(`/transactions/${id}/approve`);
+    const response = await apiClient.patch<{ data: any }>(`/transactions/${id}/approve`);
     return response.data.data || response.data;
   },
 
   async rejectTransaction(id: string): Promise<any> {
-    const response = await apiClient.put<{ data: any }>(`/transactions/${id}/reject`);
+    const response = await apiClient.patch<{ data: any }>(`/transactions/${id}/reject`);
     return response.data.data || response.data;
   },
 };

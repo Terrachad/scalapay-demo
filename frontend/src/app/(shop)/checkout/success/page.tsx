@@ -8,16 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  CheckCircle, 
-  Calendar, 
-  CreditCard, 
-  Download, 
-  Mail, 
+import {
+  CheckCircle,
+  Calendar,
+  CreditCard,
+  Download,
+  Mail,
   ArrowRight,
   Home,
   Receipt,
-  Clock
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { transactionService } from '@/services/transaction-service';
@@ -54,7 +54,7 @@ export default function CheckoutSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  
+
   const [transaction, setTransaction] = useState<TransactionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export default function CheckoutSuccessPage() {
       try {
         const transactionDetails = await transactionService.getById(transactionId);
         setTransaction(transactionDetails);
-        
+
         // Show success toast
         toast({
           title: 'Payment Successful!',
@@ -104,10 +104,14 @@ export default function CheckoutSuccessPage() {
 
   const getInstallmentInfo = (paymentPlan: string) => {
     switch (paymentPlan) {
-      case 'pay_in_2': return { count: 2, frequency: 'Bi-weekly' };
-      case 'pay_in_3': return { count: 3, frequency: 'Monthly' };
-      case 'pay_in_4': return { count: 4, frequency: 'Bi-weekly' };
-      default: return { count: 1, frequency: 'One-time' };
+      case 'pay_in_2':
+        return { count: 2, frequency: 'Bi-weekly' };
+      case 'pay_in_3':
+        return { count: 3, frequency: 'Monthly' };
+      case 'pay_in_4':
+        return { count: 4, frequency: 'Bi-weekly' };
+      default:
+        return { count: 1, frequency: 'One-time' };
     }
   };
 
@@ -116,7 +120,7 @@ export default function CheckoutSuccessPage() {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -211,9 +215,7 @@ export default function CheckoutSuccessPage() {
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Order Confirmed!
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Order Confirmed!</h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Thank you for your purchase. Your payment has been processed successfully.
             </p>
@@ -250,7 +252,10 @@ export default function CheckoutSuccessPage() {
               <CardContent>
                 <div className="space-y-4">
                   {transaction.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center py-2 border-b last:border-b-0">
+                    <div
+                      key={index}
+                      className="flex justify-between items-center py-2 border-b last:border-b-0"
+                    >
                       <div>
                         <h4 className="font-medium">{item.name}</h4>
                         <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
@@ -305,18 +310,12 @@ export default function CheckoutSuccessPage() {
                           <Clock className="w-5 h-5 text-gray-400" />
                         )}
                         <div>
-                          <p className="font-medium text-sm">
-                            Payment {payment.installmentNumber}
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            {formatDate(payment.dueDate)}
-                          </p>
+                          <p className="font-medium text-sm">Payment {payment.installmentNumber}</p>
+                          <p className="text-xs text-gray-600">{formatDate(payment.dueDate)}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">
-                          {formatCurrency(payment.amount)}
-                        </p>
+                        <p className="font-semibold">{formatCurrency(payment.amount)}</p>
                         <Badge
                           variant={payment.status === 'COMPLETED' ? 'default' : 'secondary'}
                           className="text-xs"

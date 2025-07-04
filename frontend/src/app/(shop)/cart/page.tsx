@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCartStore } from '@/store/cart-store';
+import { useWishlistStore } from '@/store/wishlist-store';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -29,6 +31,7 @@ export default function CartPage() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } =
     useCartStore();
+  const { addItem: addToWishlist, isInWishlist, toggleItem: toggleWishlist } = useWishlistStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -220,10 +223,11 @@ export default function CartPage() {
                       <div className="flex gap-4 sm:gap-6">
                         {/* Product Image */}
                         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl flex-shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                          <img
+                          <Image
                             src={item.image}
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                             onError={(e) => {
                               e.currentTarget.src = '/api/placeholder/300/300';
                             }}
@@ -246,14 +250,63 @@ export default function CartPage() {
                                 {item.name}
                               </h3>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeItem(item.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2 flex-shrink-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                              {/* Save to Wishlist */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  toggleWishlist({
+                                    id: item.id,
+                                    name: item.name,
+                                    price: item.price,
+                                    originalPrice: item.originalPrice,
+                                    image: item.image,
+                                    category: item.category,
+                                    isOnSale: item.isOnSale,
+                                    colors: item.colors,
+                                    merchantId: item.merchantId,
+                                  });
+                                  toast({
+                                    title: isInWishlist(item.id)
+                                      ? 'Removed from wishlist'
+                                      : 'Added to wishlist',
+                                    description: `${item.name} ${isInWishlist(item.id) ? 'removed from' : 'saved to'} your wishlist.`,
+                                  });
+                                }}
+                                className={`${
+                                  isInWishlist(item.id)
+                                    ? 'text-red-500 hover:text-red-700'
+                                    : 'text-gray-400 hover:text-red-500'
+                                } hover:bg-red-50`}
+                                title="Save to wishlist"
+                              >
+                                <Heart
+                                  className={`w-4 h-4 ${isInWishlist(item.id) ? 'fill-current' : ''}`}
+                                />
+                              </Button>
+
+                              {/* More Options */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                title="More options"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+
+                              {/* Remove Item */}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeItem(item.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                title="Remove from cart"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
 
                           {/* Colors */}
@@ -388,6 +441,7 @@ export default function CartPage() {
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
                       Proceed to Checkout
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
 
                     <Link href="/shop" className="block">

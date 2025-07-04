@@ -185,7 +185,9 @@ export const merchantService = {
     return response.data;
   },
 
-  async updateNotificationSettings(settings: UpdateNotificationSettingsDto): Promise<NotificationSettings> {
+  async updateNotificationSettings(
+    settings: UpdateNotificationSettingsDto,
+  ): Promise<NotificationSettings> {
     const response = await apiClient.put('/merchants/notification-settings', settings);
     return response.data;
   },

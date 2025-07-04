@@ -32,6 +32,8 @@ import {
   LogOut,
   Store,
   Menu,
+  User,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +50,12 @@ const navItems: Record<string, NavItem[]> = {
       title: 'Dashboard',
       href: '/dashboard/customer',
       icon: LayoutDashboard,
+      roles: ['customer'],
+    },
+    {
+      title: 'Profile',
+      href: '/dashboard/customer/profile',
+      icon: User,
       roles: ['customer'],
     },
     {
@@ -68,6 +76,12 @@ const navItems: Record<string, NavItem[]> = {
       title: 'Dashboard',
       href: '/dashboard/merchant',
       icon: LayoutDashboard,
+      roles: ['merchant'],
+    },
+    {
+      title: 'Orders',
+      href: '/dashboard/merchant/orders',
+      icon: Package,
       roles: ['merchant'],
     },
     {

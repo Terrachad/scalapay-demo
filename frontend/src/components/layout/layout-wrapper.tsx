@@ -10,7 +10,7 @@ interface LayoutWrapperProps {
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
 
-  // Don't show MainNav on dashboard pages since they have their own DashboardNav
+  // Don&apos;t show MainNav on dashboard pages since they have their own DashboardNav
   const isDashboard = pathname.startsWith('/dashboard');
 
   return (

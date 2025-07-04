@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { PaymentPlanSelector } from '@/components/features/payment-plan-selector';
-import { PaymentMethodSelector, PaymentMethodSelection } from '@/components/checkout/payment-method-selector';
+import {
+  PaymentMethodSelector,
+  PaymentMethodSelection,
+} from '@/components/checkout/payment-method-selector';
 import { IntegratedStripeForm } from '@/components/checkout/integrated-stripe-form';
 import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -49,7 +53,9 @@ export default function CheckoutPage() {
   const { items: cartItems, getTotalPrice, clearCart } = useCartStore();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodSelection | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodSelection | null>(
+    null,
+  );
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -75,14 +81,14 @@ export default function CheckoutPage() {
   const [stripePromise, setStripePromise] = useState(null);
   const [paymentClientSecret, setPaymentClientSecret] = useState('');
   const [paymentReady, setPaymentReady] = useState(false);
-  
+
   // Stripe Elements state
   const [stripeElements, setStripeElements] = useState({
     cardNumber: false,
     cardExpiry: false,
     cardCvc: false,
   });
-  
+
   const [stripeErrors, setStripeErrors] = useState({
     cardNumber: '',
     cardExpiry: '',
@@ -105,10 +111,10 @@ export default function CheckoutPage() {
 
   // Auto-create payment intent when reaching step 3 with card payment
   useEffect(() => {
-    const shouldCreatePaymentIntent = 
-      currentStep === 3 && 
-      selectedPaymentMethod?.cardAmount > 0 && 
-      !paymentClientSecret && 
+    const shouldCreatePaymentIntent =
+      currentStep === 3 &&
+      selectedPaymentMethod?.cardAmount > 0 &&
+      !paymentClientSecret &&
       selectedPlan;
 
     if (shouldCreatePaymentIntent) {
@@ -122,25 +128,25 @@ export default function CheckoutPage() {
     const usZipRegex = /^\d{5}(-\d{4})?$/; // US ZIP
     const canadaPostalRegex = /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/; // Canada
     const ukPostalRegex = /^[A-Za-z]{1,2}\d[A-Za-z\d]?\s?\d[A-Za-z]{2}$/; // UK
-    
+
     return usZipRegex.test(code) || canadaPostalRegex.test(code) || ukPostalRegex.test(code);
   };
 
   const handleStripeElementChange = (element: string, error: string | null, complete: boolean) => {
-    setStripeElements(prev => ({
+    setStripeElements((prev) => ({
       ...prev,
-      [element]: complete
+      [element]: complete,
     }));
-    
-    setStripeErrors(prev => ({
+
+    setStripeErrors((prev) => ({
       ...prev,
-      [element]: error || ''
+      [element]: error || '',
     }));
   };
 
   const validatePaymentForm = (): boolean => {
     let isValid = true;
-    
+
     // Validate cardholder name
     if (!cardholderName.trim()) {
       setCardholderNameError('Cardholder name is required');
@@ -151,7 +157,7 @@ export default function CheckoutPage() {
     } else {
       setCardholderNameError('');
     }
-    
+
     // Validate postal code
     if (!postalCode.trim()) {
       setPostalCodeError('Postal code is required');
@@ -162,11 +168,11 @@ export default function CheckoutPage() {
     } else {
       setPostalCodeError('');
     }
-    
+
     // Check if all Stripe elements are complete
-    const allElementsReady = Object.values(stripeElements).every(ready => ready);
-    const noStripeErrors = Object.values(stripeErrors).every(error => error === '');
-    
+    const allElementsReady = Object.values(stripeElements).every((ready) => ready);
+    const noStripeErrors = Object.values(stripeErrors).every((error) => error === '');
+
     return isValid && allElementsReady && noStripeErrors;
   };
 
@@ -204,7 +210,7 @@ export default function CheckoutPage() {
       }
       // Credit-only payment - allow navigation to confirmation step
     }
-    
+
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -216,9 +222,28 @@ export default function CheckoutPage() {
     }
   };
 
-  const createPaymentIntent = async () => {
+  const completeTransaction = useCallback(
+    async (transaction?: any) => {
+      // Invalidate and refetch transaction queries
+      await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+      toast({
+        title: 'Success!',
+        description: 'Your order has been placed successfully.',
+      });
+
+      // Clear cart after successful purchase
+      clearCart();
+
+      router.push(`/checkout/success?id=${transaction?.id}`);
+    },
+    [queryClient, toast, clearCart, router],
+  );
+
+  const createPaymentIntent = useCallback(async () => {
     if (!selectedPlan || !selectedPaymentMethod) return;
-    
+
     setIsProcessing(true);
     try {
       // Get demo merchant ID from backend, with fallback
@@ -240,7 +265,10 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
         paymentMethodPreference: {
-          type: selectedPaymentMethod.method.id === 'hybrid' ? 'split' : selectedPaymentMethod.method.id,
+          type:
+            selectedPaymentMethod.method.id === 'hybrid'
+              ? 'split'
+              : selectedPaymentMethod.method.id,
           creditAmount: selectedPaymentMethod.creditAmount,
           cardAmount: selectedPaymentMethod.cardAmount,
         },
@@ -248,11 +276,11 @@ export default function CheckoutPage() {
 
       const transactionResponse = await transactionService.create(transactionData);
       const transaction = transactionResponse.data || transactionResponse;
-      
+
       if (transaction.requiresPayment && transaction.clientSecret) {
         setPaymentClientSecret(transaction.clientSecret);
         setPaymentReady(true);
-        
+
         // Stay on current step - payment will be processed via IntegratedStripeForm
       } else {
         // No payment required, complete directly
@@ -267,23 +295,7 @@ export default function CheckoutPage() {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const completeTransaction = async (transaction?: any) => {
-    // Invalidate and refetch transaction queries
-    await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
-    await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-
-    toast({
-      title: 'Success!',
-      description: 'Your order has been placed successfully.',
-    });
-
-    // Clear cart after successful purchase
-    clearCart();
-    
-    router.push(`/checkout/success?id=${transaction?.id}`);
-  };
+  }, [selectedPlan, selectedPaymentMethod, totalAmount, cartItems, toast, completeTransaction]);
 
   const handleComplete = async () => {
     if (!isAuthenticated) {
@@ -295,6 +307,16 @@ export default function CheckoutPage() {
       toast({
         title: 'Error',
         description: 'Please select payment method and plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Enterprise payment form validation
+    if (!validatePaymentForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please correct the errors in your payment information.',
         variant: 'destructive',
       });
       return;
@@ -322,7 +344,10 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
         paymentMethodPreference: {
-          type: selectedPaymentMethod.method.id === 'hybrid' ? 'split' : selectedPaymentMethod.method.id,
+          type:
+            selectedPaymentMethod.method.id === 'hybrid'
+              ? 'split'
+              : selectedPaymentMethod.method.id,
           creditAmount: selectedPaymentMethod.creditAmount,
           cardAmount: selectedPaymentMethod.cardAmount,
         },
@@ -332,10 +357,10 @@ export default function CheckoutPage() {
 
       const transactionResponse = await transactionService.create(transactionData);
       console.log('✅ Transaction created:', transactionResponse);
-      
+
       // Extract the actual transaction data from the response wrapper
       const transaction = transactionResponse.data || transactionResponse;
-      
+
       console.log('🔍 Checking payment requirements:');
       console.log('  - requiresPayment:', transaction.requiresPayment);
       console.log('  - clientSecret:', transaction.clientSecret ? 'Present' : 'Missing');
@@ -449,10 +474,11 @@ export default function CheckoutPage() {
                             className="flex gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-md transition-shadow"
                           >
                             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex-shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                              <img
+                              <Image
                                 src={item.image}
                                 alt={item.name}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                                 onError={(e) => {
                                   e.currentTarget.src = '/api/placeholder/300/300';
                                 }}
@@ -514,14 +540,14 @@ export default function CheckoutPage() {
                         Select Payment Method
                       </CardTitle>
                       <CardDescription>
-                        Choose how you'd like to pay - use credit, card, or a combination
+                        Choose how you&apos;d like to pay - use credit, card, or a combination
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <PaymentMethodSelector 
-                        totalAmount={totalAmount} 
+                      <PaymentMethodSelector
+                        totalAmount={totalAmount}
                         availableCredit={user?.availableCredit || 0}
-                        onSelect={handlePaymentMethodSelect} 
+                        onSelect={handlePaymentMethodSelect}
                       />
                     </CardContent>
                   </Card>
@@ -543,7 +569,7 @@ export default function CheckoutPage() {
                         Select Payment Plan
                       </CardTitle>
                       <CardDescription>
-                        Choose how you'd like to split your payment - completely interest-free
+                        Choose how you&apos;d like to split your payment - completely interest-free
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -583,7 +609,7 @@ export default function CheckoutPage() {
                     <CardContent>
                       {selectedPaymentMethod?.cardAmount && selectedPaymentMethod.cardAmount > 0 ? (
                         stripePromise && paymentReady && paymentClientSecret ? (
-                          <Elements 
+                          <Elements
                             stripe={stripePromise}
                             options={{
                               clientSecret: paymentClientSecret,
@@ -641,12 +667,13 @@ export default function CheckoutPage() {
                                   <p className="text-sm text-red-500">{postalCodeError}</p>
                                 )}
                                 <p className="text-xs text-gray-500">
-                                  We'll use your account name and email. Only postal code is needed for billing verification.
+                                  We&apos;ll use your account name and email. Only postal code is
+                                  needed for billing verification.
                                 </p>
                               </div>
 
                               {/* Integrated Stripe Form with Payment Processing */}
-                              <IntegratedStripeForm 
+                              <IntegratedStripeForm
                                 clientSecret={paymentClientSecret}
                                 cardholderName={cardholderName}
                                 postalCode={postalCode}
@@ -657,7 +684,9 @@ export default function CheckoutPage() {
                                 onSuccess={completeTransaction}
                                 onElementChange={handleStripeElementChange}
                                 stripeErrors={stripeErrors}
-                                allElementsReady={Object.values(stripeElements).every(ready => ready)}
+                                allElementsReady={Object.values(stripeElements).every(
+                                  (ready) => ready,
+                                )}
                               />
                             </div>
                           </Elements>
@@ -678,7 +707,8 @@ export default function CheckoutPage() {
                           </p>
                           <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                             <p className="text-sm text-green-700 dark:text-green-300">
-                              Credit Amount: {formatCurrency(selectedPaymentMethod?.creditAmount || 0)}
+                              Credit Amount:{' '}
+                              {formatCurrency(selectedPaymentMethod?.creditAmount || 0)}
                             </p>
                           </div>
                         </div>
@@ -768,13 +798,18 @@ export default function CheckoutPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              {currentStep < steps.length - 1 && !(currentStep === 3 && selectedPaymentMethod?.cardAmount > 0) ? (
+              {currentStep < steps.length - 1 &&
+              !(currentStep === 3 && selectedPaymentMethod?.cardAmount > 0) ? (
                 <Button
                   onClick={handleNext}
                   disabled={
                     (currentStep === 1 && !selectedPaymentMethod) ||
                     (currentStep === 2 && !selectedPlan) ||
-                    (currentStep === 3 && selectedPaymentMethod?.cardAmount > 0 && (!postalCode || !cardholderName || !Object.values(stripeElements).every(ready => ready)))
+                    (currentStep === 3 &&
+                      selectedPaymentMethod?.cardAmount > 0 &&
+                      (!postalCode ||
+                        !cardholderName ||
+                        !Object.values(stripeElements).every((ready) => ready)))
                   }
                   className="button-gradient h-10 sm:h-12 px-4 sm:px-6"
                 >
@@ -782,7 +817,8 @@ export default function CheckoutPage() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
-                currentStep === steps.length - 1 && selectedPaymentMethod?.cardAmount === 0 && (
+                currentStep === steps.length - 1 &&
+                selectedPaymentMethod?.cardAmount === 0 && (
                   <Button
                     onClick={handleComplete}
                     disabled={isProcessing}
