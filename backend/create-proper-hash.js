@@ -17,7 +17,7 @@ async function createProperHash() {
       host: 'localhost',
       user: 'scalapay_user',
       password: 'scalapay_pass',
-      database: 'scalapay_demo',
+      database: 'scalapay_demodb',
     });
 
     console.log('🔌 Connected to database');

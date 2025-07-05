@@ -19,7 +19,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EnterpriseAuthGuard } from '../auth/guards/enterprise-auth.guard';
 import { StripeService } from './services/stripe.service';
 import { PaymentWebhookService } from './services/payment-webhook.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -42,7 +42,7 @@ export class PaymentsController {
   ) {}
 
   @Post('intent')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
   @ApiOperation({ summary: 'Create a payment intent' })
@@ -87,7 +87,7 @@ export class PaymentsController {
   }
 
   @Post(':id/confirm')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Confirm a payment intent' })
@@ -107,7 +107,7 @@ export class PaymentsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user payments with pagination' })
   @ApiResponse({ status: 200, description: 'Payments retrieved successfully' })
@@ -154,7 +154,7 @@ export class PaymentsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get payment by ID' })
   @ApiResponse({ status: 200, description: 'Payment retrieved successfully' })
@@ -180,7 +180,7 @@ export class PaymentsController {
   }
 
   @Post('schedule')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
   @ApiOperation({ summary: 'Schedule a payment' })
@@ -211,7 +211,7 @@ export class PaymentsController {
   }
 
   @Post(':id/retry')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(EnterpriseAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retry a failed payment' })

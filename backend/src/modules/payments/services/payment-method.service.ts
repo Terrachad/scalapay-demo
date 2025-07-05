@@ -60,7 +60,7 @@ export class PaymentMethodService {
     paymentMethod.userId = userId;
     paymentMethod.stripePaymentMethodId = paymentMethodId;
     paymentMethod.stripeCustomerId = user.stripeCustomerId!;
-    paymentMethod.type = stripePaymentMethod.type;
+    paymentMethod.type = stripePaymentMethod.type as any; // Map Stripe type to our enum
     paymentMethod.isDefault = makeDefault;
 
     if (stripePaymentMethod.card) {
@@ -69,6 +69,8 @@ export class PaymentMethodService {
         last4: stripePaymentMethod.card.last4,
         exp_month: stripePaymentMethod.card.exp_month,
         exp_year: stripePaymentMethod.card.exp_year,
+        funding: stripePaymentMethod.card.funding || 'credit',
+        country: stripePaymentMethod.card.country || 'US',
       };
     }
 

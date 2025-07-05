@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { HttpModule } from '@nestjs/axios';
 import { Transaction } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
@@ -14,12 +17,13 @@ import { TransactionStateMachineService } from './services/transaction-state-mac
 import { PaymentOrderingFixService } from './services/payment-ordering-fix.service';
 import { WebSocketModule } from '../websocket/websocket.module';
 import { PaymentsModule } from '../payments/payments.module';
-import { EnterprisePaymentSchedulerService } from '../payments/services/enterprise-payment-scheduler.service';
-import { UnifiedPaymentSortingService } from '../payments/services/unified-payment-sorting.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Transaction, User, Merchant, Payment, PaymentConfig]),
+    ConfigModule,
+    ScheduleModule.forRoot(),
+    HttpModule,
     WebSocketModule,
     PaymentsModule,
   ],
@@ -29,8 +33,6 @@ import { UnifiedPaymentSortingService } from '../payments/services/unified-payme
     TransactionRepository,
     BusinessRulesService,
     PaymentSchedulerService,
-    EnterprisePaymentSchedulerService,
-    UnifiedPaymentSortingService,
     TransactionStateMachineService,
     PaymentOrderingFixService,
   ],

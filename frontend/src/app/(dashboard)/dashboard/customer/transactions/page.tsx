@@ -99,17 +99,17 @@ export default function CustomerTransactionsPage() {
 
   // Use enterprise payment sorting utility
   const getTransactionNextPaymentInfo = (transaction: Transaction) => {
-    return getNextPaymentInfo(transaction);
+    return getNextPaymentInfo(transaction.payments || []);
   };
 
   const getNextPaymentDate = (transaction: Transaction) => {
-    const info = getNextPaymentInfo(transaction);
-    return info.exists ? info.formattedDate : 'N/A';
+    const info = getNextPaymentInfo(transaction.payments || []);
+    return info.nextPayment ? new Date(info.nextPayment.dueDate).toLocaleDateString() : 'N/A';
   };
 
   // Use enterprise payment progress utility
   const getTransactionPaymentProgress = (transaction: Transaction) => {
-    return getPaymentProgress(transaction);
+    return getPaymentProgress(transaction.payments || []);
   };
 
   const handleEarlyPayment = (transaction: Transaction, payment: Payment) => {

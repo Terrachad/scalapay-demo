@@ -35,6 +35,7 @@ export interface Payment {
   dueDate: string;
   status: 'scheduled' | 'processing' | 'completed' | 'failed';
   paymentDate?: string;
+  installmentNumber: number;
 }
 
 export interface CreateTransactionDto {

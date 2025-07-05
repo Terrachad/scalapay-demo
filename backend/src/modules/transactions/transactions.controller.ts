@@ -17,7 +17,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EnterpriseAuthGuard } from '../auth/guards/enterprise-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
@@ -31,7 +31,7 @@ import { Serialize } from '../../common/interceptors/serialize.interceptor';
 @ApiTags('transactions')
 @ApiBearerAuth()
 @Controller('transactions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(EnterpriseAuthGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
