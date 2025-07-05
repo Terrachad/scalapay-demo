@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { platformSettingsService } from '@/services/platform-settings-service';
 import {
   Settings,
   CreditCard,
@@ -116,20 +117,9 @@ export default function AdminSettingsPage() {
   const loadSettings = async () => {
     setLoading(true);
     try {
-      // Try to load from API, fallback to defaults
-      const response = await fetch('/api/admin/platform-settings', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSettings({ ...defaultSettings, ...data });
-      } else {
-        setSettings(defaultSettings);
-      }
+      // Load from backend API via service
+      const data = await platformSettingsService.getPlatformSettings();
+      setSettings({ ...defaultSettings, ...data });
     } catch (error) {
       console.warn('Failed to load settings, using defaults:', error);
       setSettings(defaultSettings);
@@ -146,24 +136,13 @@ export default function AdminSettingsPage() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/platform-settings', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings),
+      // Save settings via backend API service
+      await platformSettingsService.updatePlatformSettings(settings);
+      setHasChanges(false);
+      toast({
+        title: 'Settings Saved',
+        description: 'Platform settings have been updated successfully.',
       });
-
-      if (response.ok) {
-        setHasChanges(false);
-        toast({
-          title: 'Settings Saved',
-          description: 'Platform settings have been updated successfully.',
-        });
-      } else {
-        throw new Error('Failed to save settings');
-      }
     } catch (error) {
       toast({
         title: 'Save Failed',
