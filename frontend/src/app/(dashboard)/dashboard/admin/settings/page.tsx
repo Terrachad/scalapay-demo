@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { platformSettingsService } from '@/services/platform-settings-service';
+import { 
+  platformSettingsService, 
+  PlatformSettings,
+  DEFAULT_PLATFORM_SETTINGS,
+} from '@/services/platform-settings-service';
 import {
   Settings,
   CreditCard,
@@ -36,78 +40,14 @@ import {
   Unlock,
 } from 'lucide-react';
 
-interface PlatformSettings {
-  // General Settings
-  platformName: string;
-  supportEmail: string;
-  defaultCurrency: string;
-  timeZone: string;
-
-  // Financial Settings
-  defaultCreditLimit: number;
-  maxCreditLimit: number;
-  maxTransactionAmount: number;
-  merchantFeeRate: number;
-  lateFeeAmount: number;
-
-  // Payment Settings
-  paymentInterval: string;
-  gracePeriodDays: number;
-  maxRetries: number;
-  interestRate: number;
-
-  // Feature Toggles
-  enableAutoApproval: boolean;
-  enableEarlyPayment: boolean;
-  enableFraudDetection: boolean;
-  requireMerchantApproval: boolean;
-  enableEmailNotifications: boolean;
-  enableSMSNotifications: boolean;
-  enableWebhookNotifications: boolean;
-  maintenanceMode: boolean;
-
-  // Security Settings
-  requireTwoFactor: boolean;
-  sessionTimeoutMinutes: number;
-  passwordExpiryDays: number;
-  maxLoginAttempts: number;
-}
-
-const defaultSettings: PlatformSettings = {
-  platformName: 'ScalaPay',
-  supportEmail: 'support@scalapay.com',
-  defaultCurrency: 'USD',
-  timeZone: 'UTC',
-  defaultCreditLimit: 1000,
-  maxCreditLimit: 10000,
-  maxTransactionAmount: 5000,
-  merchantFeeRate: 2.9,
-  lateFeeAmount: 25,
-  paymentInterval: 'biweekly',
-  gracePeriodDays: 7,
-  maxRetries: 3,
-  interestRate: 0.0,
-  enableAutoApproval: true,
-  enableEarlyPayment: true,
-  enableFraudDetection: true,
-  requireMerchantApproval: true,
-  enableEmailNotifications: true,
-  enableSMSNotifications: false,
-  enableWebhookNotifications: true,
-  maintenanceMode: false,
-  requireTwoFactor: true,
-  sessionTimeoutMinutes: 30,
-  passwordExpiryDays: 90,
-  maxLoginAttempts: 5,
-};
-
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useState<PlatformSettings>(defaultSettings);
+  const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_PLATFORM_SETTINGS);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Load settings on mount
   useEffect(() => {
@@ -119,34 +59,89 @@ export default function AdminSettingsPage() {
     try {
       // Load from backend API via service
       const data = await platformSettingsService.getPlatformSettings();
-      setSettings({ ...defaultSettings, ...data });
+      setSettings(data);
+      setValidationErrors([]);
+      
+      console.log('Successfully loaded platform settings:', data);
     } catch (error) {
       console.warn('Failed to load settings, using defaults:', error);
-      setSettings(defaultSettings);
+      setSettings(DEFAULT_PLATFORM_SETTINGS);
+      
+      toast({
+        title: 'Warning',
+        description: 'Failed to load settings from server. Using default values.',
+        variant: 'default',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const updateSetting = (key: keyof PlatformSettings, value: any) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    const newSettings = { ...settings, [key]: value };
+    
+    // Perform client-side validation
+    const errors = platformSettingsService.validateSettingsLocal({ [key]: value });
+    if (errors.length > 0) {
+      setValidationErrors(prev => {
+        const filtered = prev.filter(err => !err.includes(key));
+        return [...filtered, ...errors];
+      });
+    } else {
+      setValidationErrors(prev => 
+        prev.filter(err => !err.includes(key))
+      );
+    }
+    
+    setSettings(newSettings);
     setHasChanges(true);
   };
 
   const saveSettings = async () => {
     setSaving(true);
     try {
+      // Validate all settings before saving
+      const allErrors = platformSettingsService.validateSettingsLocal(settings);
+      if (allErrors.length > 0) {
+        setValidationErrors(allErrors);
+        toast({
+          title: 'Validation Error',
+          description: `Please fix ${allErrors.length} validation error(s) before saving.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Perform server-side validation
+      const validationResult = await platformSettingsService.validateSettings(settings);
+      if (!validationResult.valid) {
+        setValidationErrors(validationResult.errors);
+        toast({
+          title: 'Validation Failed',
+          description: `Server validation failed: ${validationResult.errors.join(', ')}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      
       // Save settings via backend API service
-      await platformSettingsService.updatePlatformSettings(settings);
+      const updatedSettings = await platformSettingsService.updatePlatformSettings(settings);
+      setSettings(updatedSettings);
       setHasChanges(false);
+      setValidationErrors([]);
+      
       toast({
         title: 'Settings Saved',
         description: 'Platform settings have been updated successfully.',
       });
+      
     } catch (error) {
+      console.error('Failed to save settings:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
         title: 'Save Failed',
-        description: 'Failed to save settings. Please try again.',
+        description: `Failed to save settings: ${errorMessage}`,
         variant: 'destructive',
       });
     } finally {
@@ -154,13 +149,30 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const resetToDefaults = () => {
-    setSettings(defaultSettings);
-    setHasChanges(true);
-    toast({
-      title: 'Settings Reset',
-      description: 'All settings have been reset to default values.',
-    });
+  const resetToDefaults = async () => {
+    try {
+      const defaultSettings = await platformSettingsService.resetToDefaults();
+      setSettings(defaultSettings);
+      setHasChanges(false);
+      setValidationErrors([]);
+      
+      toast({
+        title: 'Settings Reset',
+        description: 'All settings have been reset to default values and saved.',
+      });
+    } catch (error) {
+      console.error('Failed to reset settings:', error);
+      
+      // Fallback to local reset
+      setSettings(DEFAULT_PLATFORM_SETTINGS);
+      setHasChanges(true);
+      setValidationErrors([]);
+      
+      toast({
+        title: 'Settings Reset',
+        description: 'Settings reset locally. Save to apply server-side.',
+      });
+    }
   };
 
   if (loading) {
@@ -199,7 +211,7 @@ export default function AdminSettingsPage() {
               </Button>
               <Button
                 onClick={saveSettings}
-                disabled={!hasChanges || saving}
+                disabled={!hasChanges || saving || validationErrors.length > 0}
                 className="bg-primary hover:bg-primary/90"
               >
                 {saving ? (
@@ -216,14 +228,38 @@ export default function AdminSettingsPage() {
               </Button>
             </div>
           </div>
-          {hasChanges && (
-            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                <span className="text-sm text-yellow-800 dark:text-yellow-200">
-                  You have unsaved changes
-                </span>
-              </div>
+          {(hasChanges || validationErrors.length > 0) && (
+            <div className="space-y-3">
+              {hasChanges && (
+                <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                      You have unsaved changes
+                    </span>
+                  </div>
+                </div>
+              )}
+              {validationErrors.length > 0 && (
+                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
+                    <div>
+                      <span className="text-sm font-medium text-red-800 dark:text-red-200">
+                        Validation Errors ({validationErrors.length})
+                      </span>
+                      <ul className="text-sm text-red-700 dark:text-red-300 mt-1 space-y-1">
+                        {validationErrors.slice(0, 5).map((error, index) => (
+                          <li key={index} className="list-disc list-inside">{error}</li>
+                        ))}
+                        {validationErrors.length > 5 && (
+                          <li className="text-xs">... and {validationErrors.length - 5} more</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </motion.div>
@@ -757,6 +793,11 @@ export default function AdminSettingsPage() {
                   {hasChanges && (
                     <Badge variant="outline" className="text-yellow-600 border-yellow-600">
                       Unsaved Changes
+                    </Badge>
+                  )}
+                  {validationErrors.length > 0 && (
+                    <Badge variant="destructive">
+                      {validationErrors.length} Validation Error(s)
                     </Badge>
                   )}
                 </div>
