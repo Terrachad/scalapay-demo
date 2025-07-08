@@ -15,6 +15,8 @@ import { RedisModule } from './modules/redis/redis.module';
 import { DynamoDBModule } from './modules/dynamodb/dynamodb.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
+import { DatabaseModule } from './database/database.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -67,6 +69,8 @@ import configuration from './config/configuration';
     WebSocketModule,
     SettingsModule,
     AdminModule,
+    PlatformSettingsModule,
+    DatabaseModule,
   ],
 })
 export class AppModule {}

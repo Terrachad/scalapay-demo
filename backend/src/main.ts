@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { InitialDataSeeder } from './database/seeders/initial-data.seeder';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -60,7 +61,7 @@ async function bootstrap() {
       origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-environment'],
     });
     logger.log('✅ CORS configuration applied successfully');
 
@@ -73,11 +74,11 @@ async function bootstrap() {
     // });
     logger.log('✅ API versioning disabled (frontend handles routing)');
 
-    // Step 7: Global Prefix (Disabled)
+    // Step 7: Global Prefix
     logger.log('🌍 Global prefix configuration...');
-    // Global prefix - Disabled because frontend rewrite handles /api routing
-    // app.setGlobalPrefix('api');
-    logger.log('✅ Global prefix disabled (frontend rewrite handles /api routing)');
+    // Global prefix - Enable /api for all routes
+    //app.setGlobalPrefix('api');
+    logger.log('✅ Global prefix enabled - all routes prefixed with /api');
 
     // Step 8: Global Pipes
     logger.log('🔧 Setting up global validation pipes...');
@@ -121,7 +122,17 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document);
     logger.log('✅ Swagger documentation configured at /api endpoint');
 
-    // Step 11: Server Startup
+    // Step 11: Database Seeding
+    logger.log('🌱 Running initial data seeding...');
+    try {
+      const seeder = app.get(InitialDataSeeder);
+      await seeder.seed();
+      logger.log('✅ Initial data seeding completed successfully');
+    } catch (error) {
+      logger.warn('⚠️ Database seeding failed (may be normal if DB not ready):', error instanceof Error ? error.message : 'Unknown error');
+    }
+
+    // Step 12: Server Startup
     const port = configService.get('PORT', 3001);
     const host = '0.0.0.0';
     
