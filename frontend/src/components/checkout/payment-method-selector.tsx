@@ -80,7 +80,7 @@ export function PaymentMethodSelector({
     };
     console.log('PaymentMethodSelector: Initial selection:', selection);
     onSelect(selection);
-  }, []); // Only run once on mount
+  }, [defaultSelection.method, defaultSelection.credit, defaultSelection.card, onSelect]); // Include all dependencies
 
   const handleMethodChange = (methodId: string) => {
     setSelectedMethodId(methodId);

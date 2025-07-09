@@ -30,7 +30,6 @@ export function SimpleStripePayment({
   cardData,
   postalCode,
   userEmail,
-  userName,
   cardAmount,
   creditAmount,
   totalAmount,

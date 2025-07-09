@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { CreditCard, Calendar, DollarSign, Clock } from 'lucide-react';
-import { Transaction, Payment } from '@/services/transaction-service';
+import { Transaction } from '@/services/transaction-service';
 
 interface EarlyPaymentModalProps {
   isOpen: boolean;

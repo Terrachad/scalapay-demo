@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,6 @@ import {
   Truck,
   Shield,
   RotateCcw,
-  CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -195,7 +194,6 @@ const products = [
 
 export default function ProductPage() {
   const params = useParams();
-  const router = useRouter();
   const { addItem, getItemQuantity } = useCartStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);

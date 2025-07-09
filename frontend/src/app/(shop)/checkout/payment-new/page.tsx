@@ -232,7 +232,7 @@ export default function EnterpriseStripePaymentPage() {
                       First Installment
                     </CardTitle>
                     <CardDescription>
-                      You're paying the first installment of your BNPL plan
+                      You&apos;re paying the first installment of your BNPL plan
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">

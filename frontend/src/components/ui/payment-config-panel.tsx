@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentConfigService } from '@/services/payment-config-service';
 import { platformSettingsService } from '@/services/platform-settings-service';
-import { API_ENDPOINTS } from '@/lib/constants';
 
 interface PaymentConfigPanelProps {
   merchantId?: string;

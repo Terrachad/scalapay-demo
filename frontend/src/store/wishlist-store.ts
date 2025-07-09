@@ -32,7 +32,7 @@ export const useWishlistStore = create<WishlistStore>()(
       addToWishlist: (item) => {
         const { items } = get();
         const existingItem = items.find((i) => i.id === item.id);
-        
+
         if (!existingItem) {
           set({
             items: [...items, { ...item, addedAt: new Date() }],
@@ -63,13 +63,13 @@ export const useWishlistStore = create<WishlistStore>()(
       moveToCart: (id) => {
         const { items } = get();
         const item = items.find((i) => i.id === id);
-        
+
         if (item) {
           // Remove from wishlist
           set((state) => ({
             items: state.items.filter((i) => i.id !== id),
           }));
-          
+
           // Note: In a real app, you'd also add to cart here
           // For now, we just remove from wishlist
           console.log(`Moving item ${id} to cart`);
@@ -79,6 +79,6 @@ export const useWishlistStore = create<WishlistStore>()(
     {
       name: 'scalapay-wishlist',
       partialize: (state) => ({ items: state.items }),
-    }
-  )
+    },
+  ),
 );

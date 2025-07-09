@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth-store';
-import { authService, NotificationPreferences } from '@/services/auth-service';
+import { authService } from '@/services/auth-service';
 import { transactionService } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {

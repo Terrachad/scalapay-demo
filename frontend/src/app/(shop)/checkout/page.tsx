@@ -16,12 +16,12 @@ import {
   PaymentMethodSelection,
 } from '@/components/checkout/payment-method-selector';
 import { IntegratedStripeForm } from '@/components/checkout/integrated-stripe-form';
-import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useToast } from '@/components/ui/use-toast';
 import { transactionService } from '@/services/transaction-service';
 import { merchantService } from '@/services/merchant-service';
-import { authService } from '@/services/auth-service';
+// import { authService } from '@/services/auth-service';
 import { formatCurrency } from '@/lib/utils';
 import {
   ShoppingCart,
@@ -120,7 +120,7 @@ export default function CheckoutPage() {
     if (shouldCreatePaymentIntent) {
       createPaymentIntent();
     }
-  }, [currentStep, selectedPaymentMethod, selectedPlan, paymentClientSecret]);
+  }, [currentStep, selectedPaymentMethod, selectedPlan, paymentClientSecret, createPaymentIntent]);
 
   // Postal code validation
   const validatePostalCode = (code: string): boolean => {

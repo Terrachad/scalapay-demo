@@ -25,7 +25,6 @@ export function StripeElementsPayment({
   cardholderName,
   postalCode,
   userEmail,
-  userName,
   cardAmount,
   creditAmount,
   totalAmount,

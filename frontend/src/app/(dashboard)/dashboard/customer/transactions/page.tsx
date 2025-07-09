@@ -13,11 +13,7 @@ import { formatCurrency } from '@/lib/utils';
 import {
   getNextPaymentInfo,
   getPaymentProgress,
-  getPaymentScheduleSummary,
   sortTransactionsWithPayments,
-  isNextPayment,
-  isPaymentOverdue,
-  getDaysUntilDue,
 } from '@/lib/payment-sorting';
 import {
   ShoppingBag,
@@ -419,9 +415,10 @@ export default function CustomerTransactionsPage() {
                             <p
                               className={`text-sm font-medium ${(() => {
                                 const nextInfo = getTransactionNextPaymentInfo(transaction);
-                                return nextInfo.isOverdue
+                                const isOverdue = nextInfo.overduePayments.length > 0;
+                                return isOverdue
                                   ? 'text-red-600'
-                                  : nextInfo.daysTillDue <= 3
+                                  : nextInfo.daysUntilNext !== null && nextInfo.daysUntilNext <= 3
                                     ? 'text-yellow-600'
                                     : 'text-gray-900 dark:text-white';
                               })()}`}
@@ -430,23 +427,30 @@ export default function CustomerTransactionsPage() {
                             </p>
                             {(() => {
                               const nextInfo = getTransactionNextPaymentInfo(transaction);
-                              if (nextInfo.exists) {
+                              const isOverdue = nextInfo.overduePayments.length > 0;
+                              const nextPayment = nextInfo.nextPayment;
+
+                              if (nextPayment) {
+                                const daysUntilNext = nextInfo.daysUntilNext || 0;
                                 return (
                                   <p
                                     className={`text-xs ${
-                                      nextInfo.isOverdue
+                                      isOverdue
                                         ? 'text-red-600 font-medium'
-                                        : nextInfo.daysTillDue <= 3
+                                        : daysUntilNext <= 3
                                           ? 'text-yellow-600'
                                           : 'text-gray-500'
                                     }`}
                                   >
-                                    {formatCurrency(nextInfo.amount)} •{' '}
-                                    {nextInfo.isOverdue
-                                      ? `${nextInfo.daysTillDue} days overdue`
-                                      : nextInfo.daysTillDue === 0
+                                    {formatCurrency(
+                                      parseFloat(nextPayment.amount?.toString() || '0'),
+                                    )}{' '}
+                                    •{' '}
+                                    {isOverdue
+                                      ? `${Math.abs(daysUntilNext)} days overdue`
+                                      : daysUntilNext === 0
                                         ? 'Due today'
-                                        : `${nextInfo.daysTillDue} days left`}
+                                        : `${daysUntilNext} days left`}
                                   </p>
                                 );
                               }
@@ -483,9 +487,11 @@ export default function CustomerTransactionsPage() {
                         </div>
                         <div className="flex gap-2">
                           {(() => {
-                            const nextInfo = getNextPaymentInfo(transaction);
+                            const nextInfo = getTransactionNextPaymentInfo(transaction);
+                            const isOverdue = nextInfo.overduePayments.length > 0;
+                            const daysUntilNext = nextInfo.daysUntilNext || 0;
 
-                            if (nextInfo.exists && nextInfo.daysTillDue <= 7) {
+                            if (nextInfo.nextPayment && (isOverdue || daysUntilNext <= 7)) {
                               // Find the actual next payment (earliest scheduled payment)
                               const scheduledPayments =
                                 transaction.payments?.filter((p) => p.status === 'scheduled') || [];
@@ -497,14 +503,12 @@ export default function CustomerTransactionsPage() {
                               if (nextPayment) {
                                 return (
                                   <Button
-                                    variant={nextInfo.isOverdue ? 'destructive' : 'default'}
+                                    variant={isOverdue ? 'destructive' : 'default'}
                                     size="sm"
                                     onClick={() => handleEarlyPayment(transaction, nextPayment)}
-                                    className={
-                                      nextInfo.isOverdue ? '' : 'bg-blue-600 hover:bg-blue-700'
-                                    }
+                                    className={isOverdue ? '' : 'bg-blue-600 hover:bg-blue-700'}
                                   >
-                                    {nextInfo.isOverdue ? 'Pay Overdue' : 'Pay Early'}
+                                    {isOverdue ? 'Pay Overdue' : 'Pay Early'}
                                   </Button>
                                 );
                               }
@@ -613,7 +617,7 @@ export default function CustomerTransactionsPage() {
                   const nextPaymentInfo = getTransactionNextPaymentInfo(selectedTransaction);
                   const paymentProgress = getTransactionPaymentProgress(selectedTransaction);
 
-                  if (!nextPaymentInfo.exists) {
+                  if (!nextPaymentInfo.nextPayment) {
                     return (
                       <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
                         <CardContent className="p-4">
@@ -633,12 +637,15 @@ export default function CustomerTransactionsPage() {
                     );
                   }
 
+                  const isOverdue = nextPaymentInfo.overduePayments.length > 0;
+                  const daysUntilNext = nextPaymentInfo.daysUntilNext || 0;
+
                   return (
                     <Card
                       className={`border-2 ${
-                        nextPaymentInfo.isOverdue
+                        isOverdue
                           ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-300 dark:border-red-700'
-                          : nextPaymentInfo.daysTillDue <= 3
+                          : daysUntilNext <= 3
                             ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-300 dark:border-yellow-700'
                             : 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-300 dark:border-blue-700'
                       }`}
@@ -648,18 +655,18 @@ export default function CustomerTransactionsPage() {
                           <div className="flex items-center gap-3">
                             <div
                               className={`p-3 rounded-full ${
-                                nextPaymentInfo.isOverdue
+                                isOverdue
                                   ? 'bg-red-100 dark:bg-red-900/30'
-                                  : nextPaymentInfo.daysTillDue <= 3
+                                  : daysUntilNext <= 3
                                     ? 'bg-yellow-100 dark:bg-yellow-900/30'
                                     : 'bg-blue-100 dark:bg-blue-900/30'
                               }`}
                             >
                               <CreditCard
                                 className={`w-6 h-6 ${
-                                  nextPaymentInfo.isOverdue
+                                  isOverdue
                                     ? 'text-red-600'
-                                    : nextPaymentInfo.daysTillDue <= 3
+                                    : daysUntilNext <= 3
                                       ? 'text-yellow-600'
                                       : 'text-blue-600'
                                 }`}
@@ -668,46 +675,50 @@ export default function CustomerTransactionsPage() {
                             <div>
                               <h4
                                 className={`text-lg font-semibold ${
-                                  nextPaymentInfo.isOverdue
+                                  isOverdue
                                     ? 'text-red-800 dark:text-red-200'
-                                    : nextPaymentInfo.daysTillDue <= 3
+                                    : daysUntilNext <= 3
                                       ? 'text-yellow-800 dark:text-yellow-200'
                                       : 'text-blue-800 dark:text-blue-200'
                                 }`}
                               >
-                                {nextPaymentInfo.isOverdue ? 'Payment Overdue' : 'Next Payment Due'}
+                                {isOverdue ? 'Payment Overdue' : 'Next Payment Due'}
                               </h4>
                               <p
                                 className={`text-sm ${
-                                  nextPaymentInfo.isOverdue
+                                  isOverdue
                                     ? 'text-red-600 dark:text-red-400'
-                                    : nextPaymentInfo.daysTillDue <= 3
+                                    : daysUntilNext <= 3
                                       ? 'text-yellow-600 dark:text-yellow-400'
                                       : 'text-blue-600 dark:text-blue-400'
                                 }`}
                               >
-                                {nextPaymentInfo.isOverdue
-                                  ? `${nextPaymentInfo.daysTillDue} day${nextPaymentInfo.daysTillDue !== 1 ? 's' : ''} overdue`
-                                  : nextPaymentInfo.daysTillDue === 0
+                                {isOverdue
+                                  ? `${Math.abs(daysUntilNext)} day${Math.abs(daysUntilNext) !== 1 ? 's' : ''} overdue`
+                                  : daysUntilNext === 0
                                     ? 'Due today'
-                                    : `Due in ${nextPaymentInfo.daysTillDue} day${nextPaymentInfo.daysTillDue !== 1 ? 's' : ''}`}
+                                    : `Due in ${daysUntilNext} day${daysUntilNext !== 1 ? 's' : ''}`}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p
                               className={`text-2xl font-bold ${
-                                nextPaymentInfo.isOverdue
+                                isOverdue
                                   ? 'text-red-600'
-                                  : nextPaymentInfo.daysTillDue <= 3
+                                  : daysUntilNext <= 3
                                     ? 'text-yellow-600'
                                     : 'text-blue-600'
                               }`}
                             >
-                              {formatCurrency(nextPaymentInfo.amount)}
+                              {formatCurrency(
+                                parseFloat(nextPaymentInfo.nextPayment?.amount?.toString() || '0'),
+                              )}
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {nextPaymentInfo.formattedDate}
+                              {nextPaymentInfo.nextPayment?.dueDate
+                                ? new Date(nextPaymentInfo.nextPayment.dueDate).toLocaleDateString()
+                                : 'N/A'}
                             </p>
                           </div>
                         </div>
@@ -726,9 +737,9 @@ export default function CustomerTransactionsPage() {
                           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                nextPaymentInfo.isOverdue
+                                isOverdue
                                   ? 'bg-red-500'
-                                  : nextPaymentInfo.daysTillDue <= 3
+                                  : daysUntilNext <= 3
                                     ? 'bg-yellow-500'
                                     : 'bg-blue-500'
                               }`}
@@ -742,13 +753,13 @@ export default function CustomerTransactionsPage() {
                         </div>
 
                         {/* Quick Actions */}
-                        {nextPaymentInfo.daysTillDue <= 7 && (
+                        {(isOverdue || daysUntilNext <= 7) && (
                           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
                                 className={`flex-1 ${
-                                  nextPaymentInfo.isOverdue || nextPaymentInfo.daysTillDue <= 3
+                                  isOverdue || daysUntilNext <= 3
                                     ? 'bg-red-600 hover:bg-red-700'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 }`}
@@ -761,7 +772,7 @@ export default function CustomerTransactionsPage() {
                                   }
                                 }}
                               >
-                                {nextPaymentInfo.isOverdue ? 'Pay Now (Overdue)' : 'Pay Early'}
+                                {isOverdue ? 'Pay Now (Overdue)' : 'Pay Early'}
                               </Button>
                               <Button variant="outline" size="sm">
                                 Set Reminder

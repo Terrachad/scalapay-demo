@@ -11,7 +11,6 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   ShoppingBag,
   Calendar,
-  CreditCard,
   Clock,
   CheckCircle,
   XCircle,
@@ -19,7 +18,6 @@ import {
   Download,
   Filter,
   DollarSign,
-  TrendingUp,
 } from 'lucide-react';
 
 const statusIcons = {
@@ -102,11 +100,6 @@ export default function MerchantTransactionsPage() {
       }),
       remainingPayments,
     };
-  };
-
-  const getNextPaymentDate = (transaction: Transaction) => {
-    const nextPayment = transaction.payments?.find((p) => p.status === 'scheduled');
-    return nextPayment ? new Date(nextPayment.dueDate).toLocaleDateString() : 'Completed';
   };
 
   const filteredTransactions = transactions.filter((transaction) => {

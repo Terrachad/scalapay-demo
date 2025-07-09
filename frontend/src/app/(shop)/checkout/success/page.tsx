@@ -11,7 +11,6 @@ import { formatCurrency } from '@/lib/utils';
 import {
   CheckCircle,
   Calendar,
-  CreditCard,
   Download,
   Mail,
   ArrowRight,
@@ -60,7 +59,6 @@ export default function CheckoutSuccessPage() {
   const [error, setError] = useState<string | null>(null);
 
   const transactionId = searchParams.get('transaction') || searchParams.get('id');
-  const paymentIntentId = searchParams.get('payment');
 
   useEffect(() => {
     // Trigger confetti animation
@@ -294,7 +292,7 @@ export default function CheckoutSuccessPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {transaction.payments.map((payment, index) => (
+                  {transaction.payments.map((payment) => (
                     <div
                       key={payment.id}
                       className={`flex items-center justify-between p-3 rounded-lg border-2 ${

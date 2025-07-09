@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Star, CreditCard, Filter, Search, Heart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Star, CreditCard, Search, Heart, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart-store';
@@ -88,7 +88,7 @@ const categories = ['All', 'Electronics', 'Fashion', 'Sports'];
 
 export default function ShopPage() {
   const router = useRouter();
-  const { addItem, getTotalItems, items } = useCartStore();
+  const { addItem, getTotalItems } = useCartStore();
   const { toggleItem: toggleWishlist, isInWishlist } = useWishlistStore();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');

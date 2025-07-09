@@ -188,8 +188,8 @@ class PlatformSettingsService {
    * Make authenticated HTTP request with proper error handling
    */
   private async makeRequest<T>(
-    endpoint: string, 
-    options: RequestInit = {}
+    endpoint: string,
+    options: RequestInit = {},
   ): Promise<ApiSuccessResponse<T>> {
     const token = useAuthStore.getState().token;
 
@@ -209,7 +209,10 @@ class PlatformSettingsService {
       if (!response.ok) {
         // Handle API error responses
         if (data.success === false || (data.data && data.data.success === false)) {
-          const errorMessage = data.error?.message || data.data?.error?.message || `HTTP error! status: ${response.status}`;
+          const errorMessage =
+            data.error?.message ||
+            data.data?.error?.message ||
+            `HTTP error! status: ${response.status}`;
           throw new Error(errorMessage);
         }
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -228,7 +231,6 @@ class PlatformSettingsService {
       }
 
       return actualData as ApiSuccessResponse<T>;
-      
     } catch (error) {
       console.error(`API request failed for ${endpoint}:`, error);
       throw error instanceof Error ? error : new Error('Unknown API error');
@@ -241,7 +243,7 @@ class PlatformSettingsService {
   async getPlatformSettings(): Promise<PlatformSettings> {
     try {
       const response = await this.makeRequest<any>('/admin/platform-settings');
-      
+
       // Check if response is nested by categories or flat
       if (this.isNestedResponse(response.data)) {
         // Enterprise nested format - flatten it for UI consumption
@@ -265,13 +267,13 @@ class PlatformSettingsService {
       const updates: SettingUpdateRequest[] = Object.entries(settings).map(([key, value]) => ({
         key,
         value,
-        reason: 'Updated via admin panel'
+        reason: 'Updated via admin panel',
       }));
 
       const request: UpdatePlatformSettingsRequest = {
         updates,
         reason: 'Bulk update via admin panel',
-        environment: 'development'
+        environment: 'development',
       };
 
       const response = await this.makeRequest<any>('/admin/platform-settings', {
@@ -290,7 +292,6 @@ class PlatformSettingsService {
 
       // Return updated settings by fetching them again
       return await this.getPlatformSettings();
-      
     } catch (error) {
       console.error('Failed to update platform settings:', error);
       throw error;
@@ -319,13 +320,16 @@ class PlatformSettingsService {
     try {
       const request = {
         settings,
-        environment: 'development'
+        environment: 'development',
       };
 
-      const response = await this.makeRequest<ValidateSettingsResponse>('/admin/platform-settings/validate', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
+      const response = await this.makeRequest<ValidateSettingsResponse>(
+        '/admin/platform-settings/validate',
+        {
+          method: 'POST',
+          body: JSON.stringify(request),
+        },
+      );
 
       return response.data;
     } catch (error) {
@@ -472,11 +476,11 @@ class PlatformSettingsService {
   private isNestedResponse(data: any): boolean {
     // Check if data has category keys that contain setting objects
     if (!data || typeof data !== 'object') return false;
-    
+
     // Look for common category names that contain objects
     const possibleCategories = ['general', 'financial', 'security', 'features', 'notifications'];
-    return possibleCategories.some(category => 
-      data[category] && typeof data[category] === 'object'
+    return possibleCategories.some(
+      (category) => data[category] && typeof data[category] === 'object',
     );
   }
 
@@ -485,14 +489,14 @@ class PlatformSettingsService {
    */
   private flattenNestedSettings(nestedData: any): PlatformSettings {
     const flattened: any = {};
-    
+
     // Iterate through categories and merge all settings into flat structure
-    for (const [category, categorySettings] of Object.entries(nestedData)) {
+    for (const [, categorySettings] of Object.entries(nestedData)) {
       if (categorySettings && typeof categorySettings === 'object') {
         Object.assign(flattened, categorySettings);
       }
     }
-    
+
     // Ensure all default settings are present
     return { ...DEFAULT_PLATFORM_SETTINGS, ...flattened };
   }
@@ -503,7 +507,7 @@ class PlatformSettingsService {
   async getPlatformSettingsByCategory(): Promise<{ [category: string]: { [key: string]: any } }> {
     try {
       const response = await this.makeRequest<any>('/admin/platform-settings');
-      
+
       if (this.isNestedResponse(response.data)) {
         return response.data;
       } else {
@@ -519,26 +523,58 @@ class PlatformSettingsService {
   /**
    * Organize flat settings by category
    */
-  private organizeSettingsByCategory(flatSettings: PlatformSettings): { [category: string]: { [key: string]: any } } {
+  private organizeSettingsByCategory(flatSettings: PlatformSettings): {
+    [category: string]: { [key: string]: any };
+  } {
     const categorized: { [category: string]: { [key: string]: any } } = {
       general: {},
       financial: {},
       security: {},
       features: {},
-      notifications: {}
+      notifications: {},
     };
 
     // Categorize settings based on their names (simple categorization)
     for (const [key, value] of Object.entries(flatSettings)) {
-      if (key.includes('platformName') || key.includes('supportEmail') || key.includes('Currency') || key.includes('timeZone')) {
+      if (
+        key.includes('platformName') ||
+        key.includes('supportEmail') ||
+        key.includes('Currency') ||
+        key.includes('timeZone')
+      ) {
         categorized.general[key] = value;
-      } else if (key.includes('Credit') || key.includes('Amount') || key.includes('Fee') || key.includes('Rate') || key.includes('payment') || key.includes('grace') || key.includes('retries') || key.includes('interest')) {
+      } else if (
+        key.includes('Credit') ||
+        key.includes('Amount') ||
+        key.includes('Fee') ||
+        key.includes('Rate') ||
+        key.includes('payment') ||
+        key.includes('grace') ||
+        key.includes('retries') ||
+        key.includes('interest')
+      ) {
         categorized.financial[key] = value;
-      } else if (key.includes('TwoFactor') || key.includes('session') || key.includes('password') || key.includes('Login') || key.includes('fraud')) {
+      } else if (
+        key.includes('TwoFactor') ||
+        key.includes('session') ||
+        key.includes('password') ||
+        key.includes('Login') ||
+        key.includes('fraud')
+      ) {
         categorized.security[key] = value;
-      } else if (key.includes('enable') || key.includes('require') || key.includes('maintenance') || key.includes('auto')) {
+      } else if (
+        key.includes('enable') ||
+        key.includes('require') ||
+        key.includes('maintenance') ||
+        key.includes('auto')
+      ) {
         categorized.features[key] = value;
-      } else if (key.includes('Notification') || key.includes('Email') || key.includes('SMS') || key.includes('Webhook')) {
+      } else if (
+        key.includes('Notification') ||
+        key.includes('Email') ||
+        key.includes('SMS') ||
+        key.includes('Webhook')
+      ) {
         categorized.notifications[key] = value;
       } else {
         // Default to general if unsure
@@ -562,7 +598,4 @@ class PlatformSettingsService {
 export const platformSettingsService = new PlatformSettingsService();
 
 // Export types for components to use
-export type {
-  ValidateSettingsResponse,
-  PendingMerchant
-};
+export type { ValidateSettingsResponse, PendingMerchant };

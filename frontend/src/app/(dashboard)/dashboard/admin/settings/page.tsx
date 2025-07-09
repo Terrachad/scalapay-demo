@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,8 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  platformSettingsService, 
+import {
+  platformSettingsService,
   PlatformSettings,
   DEFAULT_PLATFORM_SETTINGS,
 } from '@/services/platform-settings-service';
@@ -26,7 +26,6 @@ import {
   Settings,
   CreditCard,
   Shield,
-  Database,
   Save,
   RefreshCw,
   CheckCircle,
@@ -37,7 +36,6 @@ import {
   Clock,
   Mail,
   Lock,
-  Unlock,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -49,24 +47,19 @@ export default function AdminSettingsPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Load settings on mount
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     try {
       // Load from backend API via service
       const data = await platformSettingsService.getPlatformSettings();
       setSettings(data);
       setValidationErrors([]);
-      
+
       console.log('Successfully loaded platform settings:', data);
     } catch (error) {
       console.warn('Failed to load settings, using defaults:', error);
       setSettings(DEFAULT_PLATFORM_SETTINGS);
-      
+
       toast({
         title: 'Warning',
         description: 'Failed to load settings from server. Using default values.',
@@ -75,24 +68,27 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const updateSetting = (key: keyof PlatformSettings, value: any) => {
     const newSettings = { ...settings, [key]: value };
-    
+
     // Perform client-side validation
     const errors = platformSettingsService.validateSettingsLocal({ [key]: value });
     if (errors.length > 0) {
-      setValidationErrors(prev => {
-        const filtered = prev.filter(err => !err.includes(key));
+      setValidationErrors((prev) => {
+        const filtered = prev.filter((err) => !err.includes(key));
         return [...filtered, ...errors];
       });
     } else {
-      setValidationErrors(prev => 
-        prev.filter(err => !err.includes(key))
-      );
+      setValidationErrors((prev) => prev.filter((err) => !err.includes(key)));
     }
-    
+
     setSettings(newSettings);
     setHasChanges(true);
   };
@@ -111,7 +107,7 @@ export default function AdminSettingsPage() {
         });
         return;
       }
-      
+
       // Perform server-side validation
       const validationResult = await platformSettingsService.validateSettings(settings);
       if (!validationResult.valid) {
@@ -123,22 +119,21 @@ export default function AdminSettingsPage() {
         });
         return;
       }
-      
+
       // Save settings via backend API service
       const updatedSettings = await platformSettingsService.updatePlatformSettings(settings);
       setSettings(updatedSettings);
       setHasChanges(false);
       setValidationErrors([]);
-      
+
       toast({
         title: 'Settings Saved',
         description: 'Platform settings have been updated successfully.',
       });
-      
     } catch (error) {
       console.error('Failed to save settings:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       toast({
         title: 'Save Failed',
         description: `Failed to save settings: ${errorMessage}`,
@@ -155,19 +150,19 @@ export default function AdminSettingsPage() {
       setSettings(defaultSettings);
       setHasChanges(false);
       setValidationErrors([]);
-      
+
       toast({
         title: 'Settings Reset',
         description: 'All settings have been reset to default values and saved.',
       });
     } catch (error) {
       console.error('Failed to reset settings:', error);
-      
+
       // Fallback to local reset
       setSettings(DEFAULT_PLATFORM_SETTINGS);
       setHasChanges(true);
       setValidationErrors([]);
-      
+
       toast({
         title: 'Settings Reset',
         description: 'Settings reset locally. Save to apply server-side.',
@@ -250,7 +245,9 @@ export default function AdminSettingsPage() {
                       </span>
                       <ul className="text-sm text-red-700 dark:text-red-300 mt-1 space-y-1">
                         {validationErrors.slice(0, 5).map((error, index) => (
-                          <li key={index} className="list-disc list-inside">{error}</li>
+                          <li key={index} className="list-disc list-inside">
+                            {error}
+                          </li>
                         ))}
                         {validationErrors.length > 5 && (
                           <li className="text-xs">... and {validationErrors.length - 5} more</li>
@@ -806,7 +803,7 @@ export default function AdminSettingsPage() {
                 Last updated: {new Date().toLocaleString()} •
                 {
                   Object.entries(settings).filter(
-                    ([_, value]) => typeof value === 'boolean' && value,
+                    ([, value]) => typeof value === 'boolean' && value,
                   ).length
                 }{' '}
                 features enabled

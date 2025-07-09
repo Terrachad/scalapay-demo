@@ -31,7 +31,7 @@ export default function CartPage() {
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } =
     useCartStore();
-  const { addItem: addToWishlist, isInWishlist, toggleItem: toggleWishlist } = useWishlistStore();
+  const { isInWishlist, toggleItem: toggleWishlist } = useWishlistStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);

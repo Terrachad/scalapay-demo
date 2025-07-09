@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/lib/utils';
-import { CreditCard, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { CreditCard, Lock, AlertCircle } from 'lucide-react';
 
 interface StripeCheckoutFormProps {
   clientSecret: string;
@@ -24,7 +24,6 @@ interface StripeCheckoutFormProps {
 }
 
 export function StripeCheckoutForm({
-  clientSecret,
   amount,
   creditAmount = 0,
   onSuccess,

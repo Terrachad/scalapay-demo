@@ -46,24 +46,26 @@ export interface PaymentScheduleSummary {
  */
 export function sortTransactionsWithPayments(
   transactions: Transaction[],
-  options: SortingOptions = { sortBy: 'hybrid', order: 'ASC' }
+  options: SortingOptions = { sortBy: 'hybrid', order: 'ASC' },
 ): Transaction[] {
-  return transactions.map(transaction => ({
-    ...transaction,
-    payments: sortPayments(transaction.payments || [], options),
-  })).sort((a, b) => {
-    const firstPaymentA = a.payments?.[0];
-    const firstPaymentB = b.payments?.[0];
-    
-    if (!firstPaymentA && !firstPaymentB) return 0;
-    if (!firstPaymentA) return 1;
-    if (!firstPaymentB) return -1;
-    
-    const comparison = new Date(firstPaymentA.dueDate).getTime() - 
-                      new Date(firstPaymentB.dueDate).getTime();
-    
-    return options.order === 'DESC' ? -comparison : comparison;
-  });
+  return transactions
+    .map((transaction) => ({
+      ...transaction,
+      payments: sortPayments(transaction.payments || [], options),
+    }))
+    .sort((a, b) => {
+      const firstPaymentA = a.payments?.[0];
+      const firstPaymentB = b.payments?.[0];
+
+      if (!firstPaymentA && !firstPaymentB) return 0;
+      if (!firstPaymentA) return 1;
+      if (!firstPaymentB) return -1;
+
+      const comparison =
+        new Date(firstPaymentA.dueDate).getTime() - new Date(firstPaymentB.dueDate).getTime();
+
+      return options.order === 'DESC' ? -comparison : comparison;
+    });
 }
 
 /**
@@ -71,16 +73,16 @@ export function sortTransactionsWithPayments(
  */
 export function sortPayments(
   payments: Payment[],
-  options: SortingOptions = { sortBy: 'hybrid', order: 'ASC' }
+  options: SortingOptions = { sortBy: 'hybrid', order: 'ASC' },
 ): Payment[] {
   const { sortBy, order } = options;
-  
+
   // Ensure payments is an array
   const paymentsArray = Array.isArray(payments) ? payments : [];
-  
+
   return [...paymentsArray].sort((a, b) => {
     let comparison = 0;
-    
+
     switch (sortBy) {
       case 'hybrid':
         // Primary: installment number, Secondary: due date
@@ -89,19 +91,19 @@ export function sortPayments(
           comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         }
         break;
-        
+
       case 'installmentNumber':
         comparison = a.installmentNumber - b.installmentNumber;
         break;
-        
+
       case 'dueDate':
         comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         break;
-        
+
       default:
         comparison = a.installmentNumber - b.installmentNumber;
     }
-    
+
     return order === 'DESC' ? -comparison : comparison;
   });
 }
@@ -111,24 +113,24 @@ export function sortPayments(
  */
 export function getNextPaymentInfo(payments: Payment[]): NextPaymentInfo {
   const now = new Date();
-  
+
   // Ensure payments is an array
   const paymentsArray = Array.isArray(payments) ? payments : [];
-  
+
   const scheduledPayments = paymentsArray.filter((p: Payment) => p.status === 'scheduled');
   const overduePayments = scheduledPayments.filter((p: Payment) => new Date(p.dueDate) < now);
   const upcomingPayments = scheduledPayments.filter((p: Payment) => new Date(p.dueDate) >= now);
-  
+
   // Sort upcoming payments by due date
-  const sortedUpcoming = upcomingPayments.sort((a, b) => 
-    new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+  const sortedUpcoming = upcomingPayments.sort(
+    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
   );
-  
+
   const nextPayment = sortedUpcoming[0] || null;
-  const daysUntilNext = nextPayment 
+  const daysUntilNext = nextPayment
     ? Math.ceil((new Date(nextPayment.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     : null;
-  
+
   return {
     nextPayment,
     upcomingPayments: sortedUpcoming,
@@ -143,17 +145,17 @@ export function getNextPaymentInfo(payments: Payment[]): NextPaymentInfo {
 export function getPaymentProgress(payments: Payment[]): PaymentProgress {
   // Ensure payments is an array
   const paymentsArray = Array.isArray(payments) ? payments : [];
-  
+
   const totalAmount = paymentsArray.reduce((sum, p) => sum + Number(p.amount), 0);
   const paidAmount = paymentsArray
-    .filter(p => p.status === 'completed')
+    .filter((p) => p.status === 'completed')
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const remainingAmount = totalAmount - paidAmount;
-  
+
   const totalPayments = paymentsArray.length;
-  const completedPayments = paymentsArray.filter(p => p.status === 'completed').length;
+  const completedPayments = paymentsArray.filter((p) => p.status === 'completed').length;
   const progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
-  
+
   return {
     totalAmount,
     paidAmount,
@@ -171,7 +173,7 @@ export function getPaymentScheduleSummary(transaction: Transaction): PaymentSche
   const payments = transaction.payments || [];
   const progress = getPaymentProgress(payments);
   const nextInfo = getNextPaymentInfo(payments);
-  
+
   return {
     totalAmount: progress.totalAmount,
     paidAmount: progress.paidAmount,
@@ -179,7 +181,7 @@ export function getPaymentScheduleSummary(transaction: Transaction): PaymentSche
     totalInstallments: progress.totalPayments,
     completedInstallments: progress.completedPayments,
     nextPayment: nextInfo.nextPayment,
-    schedule: payments.map(p => ({
+    schedule: payments.map((p) => ({
       installmentNumber: p.installmentNumber,
       amount: Number(p.amount),
       dueDate: new Date(p.dueDate),
@@ -224,41 +226,43 @@ export function validatePaymentSequence(payments: Payment[]): {
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-  
+
   // Ensure payments is an array
   const paymentsArray = Array.isArray(payments) ? payments : [];
-  
+
   if (paymentsArray.length === 0) {
     return { isValid: true, errors, warnings };
   }
-  
+
   // Check installment number sequence
-  const installmentNumbers = paymentsArray.map(p => p.installmentNumber).sort((a, b) => a - b);
+  const installmentNumbers = paymentsArray.map((p) => p.installmentNumber).sort((a, b) => a - b);
   const expectedNumbers = Array.from({ length: paymentsArray.length }, (_, i) => i + 1);
-  
+
   if (JSON.stringify(installmentNumbers) !== JSON.stringify(expectedNumbers)) {
     errors.push('Installment numbers are not sequential or have duplicates');
   }
-  
+
   // Check date progression
-  const sortedByInstallment = paymentsArray.sort((a, b) => a.installmentNumber - b.installmentNumber);
+  const sortedByInstallment = paymentsArray.sort(
+    (a, b) => a.installmentNumber - b.installmentNumber,
+  );
   for (let i = 1; i < sortedByInstallment.length; i++) {
     const current = sortedByInstallment[i];
     const previous = sortedByInstallment[i - 1];
-    
+
     if (new Date(current.dueDate).getTime() <= new Date(previous.dueDate).getTime()) {
       warnings.push(
-        `Payment ${current.installmentNumber} due date is not after payment ${previous.installmentNumber}`
+        `Payment ${current.installmentNumber} due date is not after payment ${previous.installmentNumber}`,
       );
     }
   }
-  
+
   // Check for zero amounts
-  const zeroAmountPayments = paymentsArray.filter(p => Number(p.amount) <= 0);
+  const zeroAmountPayments = paymentsArray.filter((p) => Number(p.amount) <= 0);
   if (zeroAmountPayments.length > 0) {
     errors.push('Some payments have zero or negative amounts');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,

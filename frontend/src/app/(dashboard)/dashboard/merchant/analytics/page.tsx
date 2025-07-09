@@ -16,7 +16,6 @@ import {
   ShoppingCart,
   Users,
   Download,
-  Filter,
   Target,
   Clock,
 } from 'lucide-react';
