@@ -3,17 +3,17 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../../../modules/users/entities/user.entity';
 
 export class LoginDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
-    description: 'User email address'
+    description: 'User email address',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'password123',
-    description: 'User password (minimum 6 characters)'
+    description: 'User password (minimum 6 characters)',
   })
   @IsString()
   @IsNotEmpty()
@@ -22,7 +22,7 @@ export class LoginDto {
 
   @ApiPropertyOptional({
     example: 'true',
-    description: 'Remember this device for extended session'
+    description: 'Remember this device for extended session',
   })
   @IsOptional()
   @IsString()
@@ -30,36 +30,36 @@ export class LoginDto {
 }
 
 export class RegisterDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
-    description: 'User email address'
+    description: 'User email address',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'password123',
-    description: 'User password (minimum 6 characters)'
+    description: 'User password (minimum 6 characters)',
   })
   @IsString()
   @IsNotEmpty()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password!: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'John Doe',
-    description: 'User full name'
+    description: 'User full name',
   })
   @IsString()
   @IsNotEmpty()
   @MinLength(2, { message: 'Name must be at least 2 characters long' })
   name!: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'customer',
     description: 'User role (defaults to customer if not provided)',
-    enum: UserRole
+    enum: UserRole,
   })
   @IsOptional()
   @IsEnum(UserRole)
@@ -69,7 +69,7 @@ export class RegisterDto {
 export class RefreshTokenDto {
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'Refresh token to generate new access token'
+    description: 'Refresh token to generate new access token',
   })
   @IsString()
   @IsNotEmpty()
@@ -79,18 +79,18 @@ export class RefreshTokenDto {
 export class AuthResponseDto {
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT access token'
+    description: 'JWT access token',
   })
   accessToken!: string;
 
   @ApiPropertyOptional({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT refresh token for renewing access'
+    description: 'JWT refresh token for renewing access',
   })
   refreshToken?: string;
 
   @ApiProperty({
-    description: 'Authenticated user information'
+    description: 'Authenticated user information',
   })
   user!: {
     id: string;
@@ -102,7 +102,7 @@ export class AuthResponseDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Session information'
+    description: 'Session information',
   })
   session?: {
     sessionId: string;
@@ -120,7 +120,7 @@ export class AuthResponseDto {
 export class TokenRefreshResponseDto {
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'New JWT access token'
+    description: 'New JWT access token',
   })
   accessToken!: string;
 }
@@ -128,7 +128,7 @@ export class TokenRefreshResponseDto {
 export class LogoutResponseDto {
   @ApiProperty({
     example: 'Logout successful',
-    description: 'Logout confirmation message'
+    description: 'Logout confirmation message',
   })
   message!: string;
 }
@@ -136,60 +136,60 @@ export class LogoutResponseDto {
 export class UserInfoResponseDto {
   @ApiProperty({
     example: 'uuid-string',
-    description: 'User unique identifier'
+    description: 'User unique identifier',
   })
   id!: string;
 
   @ApiProperty({
     example: 'user@example.com',
-    description: 'User email address'
+    description: 'User email address',
   })
   email!: string;
 
   @ApiProperty({
     example: 'John Doe',
-    description: 'User full name'
+    description: 'User full name',
   })
   name!: string;
 
   @ApiProperty({
     example: 'customer',
     description: 'User role',
-    enum: UserRole
+    enum: UserRole,
   })
   role!: string;
 
   @ApiProperty({
     example: 5000,
-    description: 'User credit limit'
+    description: 'User credit limit',
   })
   creditLimit!: number;
 
   @ApiProperty({
     example: 4500,
-    description: 'Available credit amount'
+    description: 'Available credit amount',
   })
   availableCredit!: number;
 
   @ApiProperty({
     example: true,
-    description: 'Whether user account is active'
+    description: 'Whether user account is active',
   })
   isActive!: boolean;
 
   @ApiPropertyOptional({
     example: 'session-uuid',
-    description: 'Current session identifier'
+    description: 'Current session identifier',
   })
   sessionId?: string;
 
   @ApiPropertyOptional({
-    description: 'User permissions array'
+    description: 'User permissions array',
   })
   permissions?: string[];
 
   @ApiProperty({
-    description: 'Authentication context information'
+    description: 'Authentication context information',
   })
   authContext!: {
     requestId: string;
@@ -199,7 +199,7 @@ export class UserInfoResponseDto {
   };
 
   @ApiPropertyOptional({
-    description: 'Security flags and risk assessment'
+    description: 'Security flags and risk assessment',
   })
   securityFlags?: {
     isSuspicious: boolean;

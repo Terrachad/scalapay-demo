@@ -41,9 +41,11 @@ export class AdminController {
   @Post('merchants/:id/approve')
   @ApiOperation({ summary: 'Approve merchant account (admin only)' })
   @ApiResponse({ status: 200, description: 'Merchant approved successfully' })
-  async approveMerchant(@Param('id') merchantId: string): Promise<{ success: boolean; message: string }> {
+  async approveMerchant(
+    @Param('id') merchantId: string,
+  ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Approving merchant: ${merchantId}`);
-    
+
     // In a real implementation, this would update the merchant status in database
     return {
       success: true,
@@ -59,7 +61,7 @@ export class AdminController {
     @Body() rejectionData: { reason?: string },
   ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Rejecting merchant: ${merchantId}`, rejectionData);
-    
+
     // In a real implementation, this would update the merchant status in database
     return {
       success: true,

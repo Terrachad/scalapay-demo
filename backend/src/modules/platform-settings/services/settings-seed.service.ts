@@ -1,9 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PlatformSetting, SettingCategory, SettingDataType, Environment } from '../entities/platform-setting.entity';
+import {
+  PlatformSetting,
+  SettingCategory,
+  SettingDataType,
+  Environment,
+} from '../entities/platform-setting.entity';
 import { PlatformSettingSchema } from '../entities/platform-setting-schema.entity';
-import { DEFAULT_PLATFORM_SETTINGS, SETTING_FIELD_METADATA } from '../../../shared/platform-settings.types';
+import {
+  DEFAULT_PLATFORM_SETTINGS,
+  SETTING_FIELD_METADATA,
+} from '../../../shared/platform-settings.types';
 
 @Injectable()
 export class SettingsSeedService {
@@ -48,7 +56,7 @@ export class SettingsSeedService {
       try {
         // Check if setting already exists
         const existingSetting = await this.settingsRepository.findOne({
-          where: { key, environment }
+          where: { key, environment },
         });
 
         const metadata = SETTING_FIELD_METADATA.find((m: any) => m.key === key);
@@ -59,7 +67,11 @@ export class SettingsSeedService {
 
         if (existingSetting) {
           // Update existing setting if value is empty or null
-          if (!existingSetting.value || existingSetting.value === '' || existingSetting.value === 'null') {
+          if (
+            !existingSetting.value ||
+            existingSetting.value === '' ||
+            existingSetting.value === 'null'
+          ) {
             existingSetting.value = this.serializeValue(defaultValue, metadata.dataType);
             existingSetting.category = metadata.category;
             existingSetting.dataType = metadata.dataType;
@@ -84,7 +96,7 @@ export class SettingsSeedService {
             environment,
             isActive: true,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           });
 
           await this.settingsRepository.save(newSetting);
@@ -106,7 +118,7 @@ export class SettingsSeedService {
       try {
         // Check if schema already exists
         const existingSchema = await this.schemaRepository.findOne({
-          where: { key: metadata.key }
+          where: { key: metadata.key },
         });
 
         if (!existingSchema) {
@@ -114,8 +126,15 @@ export class SettingsSeedService {
             key: metadata.key,
             category: metadata.category,
             dataType: metadata.dataType,
-            validationRules: [{ type: 'custom', message: 'Validation rules', customValidator: JSON.stringify(metadata.validation) }],
-            defaultValue: DEFAULT_PLATFORM_SETTINGS[metadata.key as keyof typeof DEFAULT_PLATFORM_SETTINGS],
+            validationRules: [
+              {
+                type: 'custom',
+                message: 'Validation rules',
+                customValidator: JSON.stringify(metadata.validation),
+              },
+            ],
+            defaultValue:
+              DEFAULT_PLATFORM_SETTINGS[metadata.key as keyof typeof DEFAULT_PLATFORM_SETTINGS],
             description: metadata.description,
             isRequired: metadata.required,
             isEncrypted: metadata.dataType === SettingDataType.ENCRYPTED_STRING,
@@ -123,7 +142,7 @@ export class SettingsSeedService {
             isUserConfigurable: true,
             minimumRole: 'ADMIN' as any,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           });
 
           await this.schemaRepository.save(newSchema);
@@ -165,12 +184,14 @@ export class SettingsSeedService {
 
       const expectedKeys = Object.keys(DEFAULT_PLATFORM_SETTINGS);
       const existingSettings = await this.settingsRepository.find({
-        where: { environment, isActive: true }
+        where: { environment, isActive: true },
       });
 
-      const existingKeys = existingSettings.map(s => s.key);
-      const missingKeys = expectedKeys.filter(key => !existingKeys.includes(key));
-      const emptySettings = existingSettings.filter(s => !s.value || s.value === '' || s.value === 'null');
+      const existingKeys = existingSettings.map((s) => s.key);
+      const missingKeys = expectedKeys.filter((key) => !existingKeys.includes(key));
+      const emptySettings = existingSettings.filter(
+        (s) => !s.value || s.value === '' || s.value === 'null',
+      );
 
       if (missingKeys.length > 0) {
         this.logger.warn(`Missing settings: ${missingKeys.join(', ')}`);
@@ -178,7 +199,7 @@ export class SettingsSeedService {
       }
 
       if (emptySettings.length > 0) {
-        this.logger.warn(`Empty settings: ${emptySettings.map(s => s.key).join(', ')}`);
+        this.logger.warn(`Empty settings: ${emptySettings.map((s) => s.key).join(', ')}`);
         return false;
       }
 

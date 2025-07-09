@@ -16,11 +16,14 @@ import { DynamoDBModule } from './modules/dynamodb/dynamodb.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PlatformSettingsModule } from './modules/platform-settings/platform-settings.module';
+import { ComplianceModule } from './modules/compliance/compliance.module';
+import { SharedModule } from './modules/shared/shared.module';
 import { DatabaseModule } from './database/database.module';
 import configuration from './config/configuration';
 
 @Module({
   imports: [
+    SharedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -70,6 +73,7 @@ import configuration from './config/configuration';
     SettingsModule,
     AdminModule,
     PlatformSettingsModule,
+    ComplianceModule,
     DatabaseModule,
   ],
 })

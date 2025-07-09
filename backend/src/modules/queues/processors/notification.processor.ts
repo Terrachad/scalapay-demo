@@ -1,7 +1,7 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
-import { NotificationService } from '../../payments/services/notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { NotificationJob } from '../services/queue.service';
 
 @Processor('notifications')

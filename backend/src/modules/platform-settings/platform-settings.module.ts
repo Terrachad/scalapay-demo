@@ -16,11 +16,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      PlatformSetting,
-      PlatformSettingHistory,
-      PlatformSettingSchema,
-    ]),
+    TypeOrmModule.forFeature([PlatformSetting, PlatformSettingHistory, PlatformSettingSchema]),
     EventEmitterModule,
     ConfigModule,
     AuthModule,

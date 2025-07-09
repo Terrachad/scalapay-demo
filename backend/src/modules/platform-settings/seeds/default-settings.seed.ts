@@ -1,5 +1,10 @@
 import { DataSource } from 'typeorm';
-import { PlatformSetting, SettingCategory, SettingDataType, Environment } from '../entities/platform-setting.entity';
+import {
+  PlatformSetting,
+  SettingCategory,
+  SettingDataType,
+  Environment,
+} from '../entities/platform-setting.entity';
 import { PlatformSettingSchema, ValidationRule } from '../entities/platform-setting-schema.entity';
 import { UserRole } from '../../users/entities/user.entity';
 
@@ -18,9 +23,17 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       isRequired: true,
       validationRules: [
         { type: 'required', message: 'Platform name is required' } as ValidationRule,
-        { type: 'min', value: 3, message: 'Platform name must be at least 3 characters' } as ValidationRule,
-        { type: 'max', value: 50, message: 'Platform name must be at most 50 characters' } as ValidationRule
-      ]
+        {
+          type: 'min',
+          value: 3,
+          message: 'Platform name must be at least 3 characters',
+        } as ValidationRule,
+        {
+          type: 'max',
+          value: 50,
+          message: 'Platform name must be at most 50 characters',
+        } as ValidationRule,
+      ],
     },
     {
       key: 'supportEmail',
@@ -30,8 +43,8 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       defaultValue: 'support@scalapay.com',
       isRequired: true,
       validationRules: [
-        { type: 'required', message: 'Support email is required' } as ValidationRule
-      ]
+        { type: 'required', message: 'Support email is required' } as ValidationRule,
+      ],
     },
     {
       key: 'defaultCurrency',
@@ -42,9 +55,13 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       isRequired: true,
       validationRules: [
         { type: 'required', message: 'Default currency is required' } as ValidationRule,
-        { type: 'enum', value: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'], message: 'Invalid currency code' } as ValidationRule
+        {
+          type: 'enum',
+          value: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD'],
+          message: 'Invalid currency code',
+        } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'defaultCreditLimit',
@@ -55,10 +72,18 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       isRequired: true,
       validationRules: [
         { type: 'required', message: 'Default credit limit is required' } as ValidationRule,
-        { type: 'min', value: 100, message: 'Credit limit must be at least $100' } as ValidationRule,
-        { type: 'max', value: 50000, message: 'Credit limit cannot exceed $50,000' } as ValidationRule
+        {
+          type: 'min',
+          value: 100,
+          message: 'Credit limit must be at least $100',
+        } as ValidationRule,
+        {
+          type: 'max',
+          value: 50000,
+          message: 'Credit limit cannot exceed $50,000',
+        } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'maxCreditLimit',
@@ -69,10 +94,18 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       isRequired: true,
       validationRules: [
         { type: 'required', message: 'Maximum credit limit is required' } as ValidationRule,
-        { type: 'min', value: 1000, message: 'Max credit limit must be at least $1,000' } as ValidationRule,
-        { type: 'max', value: 100000, message: 'Max credit limit cannot exceed $100,000' } as ValidationRule
+        {
+          type: 'min',
+          value: 1000,
+          message: 'Max credit limit must be at least $1,000',
+        } as ValidationRule,
+        {
+          type: 'max',
+          value: 100000,
+          message: 'Max credit limit cannot exceed $100,000',
+        } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'merchantFeeRate',
@@ -84,9 +117,9 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       validationRules: [
         { type: 'required', message: 'Merchant fee rate is required' } as ValidationRule,
         { type: 'min', value: 0.1, message: 'Fee rate must be at least 0.1%' } as ValidationRule,
-        { type: 'max', value: 10, message: 'Fee rate cannot exceed 10%' } as ValidationRule
+        { type: 'max', value: 10, message: 'Fee rate cannot exceed 10%' } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'requireTwoFactor',
@@ -95,7 +128,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Require two-factor authentication for admin users',
       defaultValue: true,
       isRequired: true,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'sessionTimeoutMinutes',
@@ -106,10 +139,18 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       isRequired: true,
       validationRules: [
         { type: 'required', message: 'Session timeout is required' } as ValidationRule,
-        { type: 'min', value: 5, message: 'Session timeout must be at least 5 minutes' } as ValidationRule,
-        { type: 'max', value: 480, message: 'Session timeout cannot exceed 8 hours' } as ValidationRule
+        {
+          type: 'min',
+          value: 5,
+          message: 'Session timeout must be at least 5 minutes',
+        } as ValidationRule,
+        {
+          type: 'max',
+          value: 480,
+          message: 'Session timeout cannot exceed 8 hours',
+        } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'maxLoginAttempts',
@@ -121,9 +162,9 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       validationRules: [
         { type: 'required', message: 'Max login attempts is required' } as ValidationRule,
         { type: 'min', value: 1, message: 'Must allow at least 1 login attempt' } as ValidationRule,
-        { type: 'max', value: 20, message: 'Cannot exceed 20 login attempts' } as ValidationRule
+        { type: 'max', value: 20, message: 'Cannot exceed 20 login attempts' } as ValidationRule,
       ],
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'enableEmailNotifications',
@@ -132,7 +173,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Enable email notifications for users',
       defaultValue: true,
       isRequired: false,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'enableSMSNotifications',
@@ -141,7 +182,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Enable SMS notifications for users',
       defaultValue: false,
       isRequired: false,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'enableAutoApproval',
@@ -150,7 +191,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Enable automatic approval for low-risk transactions',
       defaultValue: true,
       isRequired: false,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'enableEarlyPayment',
@@ -159,7 +200,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Allow users to make early payments',
       defaultValue: true,
       isRequired: false,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'enableFraudDetection',
@@ -168,7 +209,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Enable fraud detection for transactions',
       defaultValue: true,
       isRequired: true,
-      minimumRole: UserRole.ADMIN
+      minimumRole: UserRole.ADMIN,
     },
     {
       key: 'maintenanceMode',
@@ -177,8 +218,8 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
       description: 'Enable maintenance mode to disable user access',
       defaultValue: false,
       isRequired: false,
-      minimumRole: UserRole.ADMIN
-    }
+      minimumRole: UserRole.ADMIN,
+    },
   ];
 
   // Create schema records
@@ -194,36 +235,161 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
 
   for (const environment of environments) {
     const defaultSettings = [
-      { key: 'platformName', value: 'ScalaPay', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
-      { key: 'supportEmail', value: 'support@scalapay.com', category: SettingCategory.GENERAL, dataType: SettingDataType.EMAIL },
-      { key: 'defaultCurrency', value: 'USD', category: SettingCategory.FINANCIAL, dataType: SettingDataType.CURRENCY },
-      { key: 'defaultCreditLimit', value: environment === Environment.PRODUCTION ? 1000 : 500, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'maxCreditLimit', value: environment === Environment.PRODUCTION ? 10000 : 5000, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'maxTransactionAmount', value: environment === Environment.PRODUCTION ? 5000 : 2500, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'merchantFeeRate', value: 2.9, category: SettingCategory.FINANCIAL, dataType: SettingDataType.PERCENTAGE },
-      { key: 'lateFeeAmount', value: 25, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'paymentInterval', value: 'biweekly', category: SettingCategory.FINANCIAL, dataType: SettingDataType.STRING },
-      { key: 'gracePeriodDays', value: 7, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'maxRetries', value: 3, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-      { key: 'interestRate', value: 0.0, category: SettingCategory.FINANCIAL, dataType: SettingDataType.PERCENTAGE },
-      { key: 'requireTwoFactor', value: environment === Environment.PRODUCTION, category: SettingCategory.SECURITY, dataType: SettingDataType.BOOLEAN },
-      { key: 'sessionTimeoutMinutes', value: environment === Environment.PRODUCTION ? 30 : 60, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-      { key: 'passwordExpiryDays', value: 90, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-      { key: 'maxLoginAttempts', value: 5, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-      { key: 'enableEmailNotifications', value: true, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-      { key: 'enableSMSNotifications', value: false, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-      { key: 'enableWebhookNotifications', value: true, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-      { key: 'enableAutoApproval', value: environment !== Environment.PRODUCTION, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-      { key: 'enableEarlyPayment', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-      { key: 'enableFraudDetection', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-      { key: 'requireMerchantApproval', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-      { key: 'maintenanceMode', value: false, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-      { key: 'timeZone', value: 'UTC', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING }
+      {
+        key: 'platformName',
+        value: 'ScalaPay',
+        category: SettingCategory.GENERAL,
+        dataType: SettingDataType.STRING,
+      },
+      {
+        key: 'supportEmail',
+        value: 'support@scalapay.com',
+        category: SettingCategory.GENERAL,
+        dataType: SettingDataType.EMAIL,
+      },
+      {
+        key: 'defaultCurrency',
+        value: 'USD',
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.CURRENCY,
+      },
+      {
+        key: 'defaultCreditLimit',
+        value: environment === Environment.PRODUCTION ? 1000 : 500,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'maxCreditLimit',
+        value: environment === Environment.PRODUCTION ? 10000 : 5000,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'maxTransactionAmount',
+        value: environment === Environment.PRODUCTION ? 5000 : 2500,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'merchantFeeRate',
+        value: 2.9,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.PERCENTAGE,
+      },
+      {
+        key: 'lateFeeAmount',
+        value: 25,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'paymentInterval',
+        value: 'biweekly',
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.STRING,
+      },
+      {
+        key: 'gracePeriodDays',
+        value: 7,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'maxRetries',
+        value: 3,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'interestRate',
+        value: 0.0,
+        category: SettingCategory.FINANCIAL,
+        dataType: SettingDataType.PERCENTAGE,
+      },
+      {
+        key: 'requireTwoFactor',
+        value: environment === Environment.PRODUCTION,
+        category: SettingCategory.SECURITY,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'sessionTimeoutMinutes',
+        value: environment === Environment.PRODUCTION ? 30 : 60,
+        category: SettingCategory.SECURITY,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'passwordExpiryDays',
+        value: 90,
+        category: SettingCategory.SECURITY,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'maxLoginAttempts',
+        value: 5,
+        category: SettingCategory.SECURITY,
+        dataType: SettingDataType.NUMBER,
+      },
+      {
+        key: 'enableEmailNotifications',
+        value: true,
+        category: SettingCategory.NOTIFICATIONS,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'enableSMSNotifications',
+        value: false,
+        category: SettingCategory.NOTIFICATIONS,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'enableWebhookNotifications',
+        value: true,
+        category: SettingCategory.NOTIFICATIONS,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'enableAutoApproval',
+        value: environment !== Environment.PRODUCTION,
+        category: SettingCategory.FEATURES,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'enableEarlyPayment',
+        value: true,
+        category: SettingCategory.FEATURES,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'enableFraudDetection',
+        value: true,
+        category: SettingCategory.FEATURES,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'requireMerchantApproval',
+        value: true,
+        category: SettingCategory.FEATURES,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'maintenanceMode',
+        value: false,
+        category: SettingCategory.FEATURES,
+        dataType: SettingDataType.BOOLEAN,
+      },
+      {
+        key: 'timeZone',
+        value: 'UTC',
+        category: SettingCategory.GENERAL,
+        dataType: SettingDataType.STRING,
+      },
     ];
 
     for (const settingData of defaultSettings) {
       const existingSetting = await settingsRepository.findOne({
-        where: { key: settingData.key, environment }
+        where: { key: settingData.key, environment },
       });
 
       if (!existingSetting) {
@@ -233,7 +399,7 @@ export async function seedDefaultPlatformSettings(dataSource: DataSource): Promi
           description: `Default ${settingData.key} setting for ${environment}`,
           isEncrypted: false,
           requiresRestart: false,
-          isActive: true
+          isActive: true,
         });
 
         await settingsRepository.save(setting);

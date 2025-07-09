@@ -248,13 +248,16 @@ export class TransactionsService {
     });
 
     // Use enterprise-grade unified payment sorting for consistent results
-    const sortingResult = await this.unifiedPaymentSortingService.sortTransactionsWithPayments(transactions, {
-      sortBy: 'hybrid',
-      order: 'ASC',
-      validateSequence: true,
-      repairSequence: false, // Don't auto-repair in read operations
-    });
-    
+    const sortingResult = await this.unifiedPaymentSortingService.sortTransactionsWithPayments(
+      transactions,
+      {
+        sortBy: 'hybrid',
+        order: 'ASC',
+        validateSequence: true,
+        repairSequence: false, // Don't auto-repair in read operations
+      },
+    );
+
     return sortingResult.items;
   }
 
@@ -266,13 +269,16 @@ export class TransactionsService {
     });
 
     // Use enterprise-grade unified payment sorting for consistent results
-    const sortingResult = await this.unifiedPaymentSortingService.sortTransactionsWithPayments(transactions, {
-      sortBy: 'hybrid',
-      order: 'ASC',
-      validateSequence: true,
-      repairSequence: false, // Don't auto-repair in read operations
-    });
-    
+    const sortingResult = await this.unifiedPaymentSortingService.sortTransactionsWithPayments(
+      transactions,
+      {
+        sortBy: 'hybrid',
+        order: 'ASC',
+        validateSequence: true,
+        repairSequence: false, // Don't auto-repair in read operations
+      },
+    );
+
     return sortingResult.items;
   }
 

@@ -5,9 +5,7 @@ import { PlatformSetting } from '../modules/platform-settings/entities/platform-
 import { InitialDataSeeder } from './seeders/initial-data.seeder';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, PlatformSetting])
-  ],
+  imports: [TypeOrmModule.forFeature([User, PlatformSetting])],
   providers: [InitialDataSeeder],
   exports: [InitialDataSeeder],
 })

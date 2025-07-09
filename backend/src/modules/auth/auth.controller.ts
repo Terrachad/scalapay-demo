@@ -16,7 +16,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { EnterpriseAuthService, LoginContext, DeviceInfo } from './services/enterprise-auth.service';
+import {
+  EnterpriseAuthService,
+  LoginContext,
+  DeviceInfo,
+} from './services/enterprise-auth.service';
 import { EnterpriseAuthGuard } from './guards/enterprise-auth.guard';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto/login.dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -56,7 +60,7 @@ export class AuthController {
 
     try {
       const result = await this.enterpriseAuthService.login(loginDto, context);
-      
+
       this.debugLog('✅ Enterprise Login Successful', {
         requestId,
         userId: result.user.id,
@@ -72,11 +76,10 @@ export class AuthController {
       }
 
       return result;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      
+
       this.logger.error('❌ Enterprise Login Failed', {
         requestId,
         email: loginDto.email,
@@ -96,7 +99,10 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'User already exists' })
   @ApiResponse({ status: 400, description: 'Invalid registration data' })
   @ApiResponse({ status: 429, description: 'Too many registration attempts' })
-  async register(@Body() registerDto: RegisterDto, @Req() request: Request): Promise<AuthResponseDto> {
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Req() request: Request,
+  ): Promise<AuthResponseDto> {
     const requestId = uuidv4();
     const context = this.createLoginContext(request, requestId);
 
@@ -110,7 +116,7 @@ export class AuthController {
 
     try {
       const result = await this.enterpriseAuthService.register(registerDto, context);
-      
+
       this.debugLog('✅ Enterprise Registration Successful', {
         requestId,
         userId: result.user.id,
@@ -126,11 +132,10 @@ export class AuthController {
       }
 
       return result;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      
+
       this.logger.error('❌ Enterprise Registration Failed', {
         requestId,
         email: registerDto.email,
@@ -160,7 +165,7 @@ export class AuthController {
 
     try {
       await this.enterpriseAuthService.logout(user.sessionId, user.id);
-      
+
       this.debugLog('✅ Enterprise Logout Successful', {
         requestId,
         userId: user.id,
@@ -168,10 +173,9 @@ export class AuthController {
       });
 
       return { message: 'Logout successful' };
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       this.logger.error('❌ Enterprise Logout Failed', {
         requestId,
         userId: user.id,
@@ -196,16 +200,15 @@ export class AuthController {
 
     try {
       const result = await this.enterpriseAuthService.refreshToken(body.refreshToken);
-      
+
       this.debugLog('✅ Token Refresh Successful', {
         requestId,
       });
 
       return result;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       this.logger.error('❌ Token Refresh Failed', {
         requestId,
         error: errorMessage,

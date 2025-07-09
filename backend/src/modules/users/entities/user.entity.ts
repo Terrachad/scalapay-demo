@@ -24,6 +24,12 @@ export class User {
   @Column()
   name!: string;
 
+  @Column({ nullable: true })
+  firstName?: string;
+
+  @Column({ nullable: true })
+  lastName?: string;
+
   @Column({ unique: true })
   email!: string;
 
@@ -36,6 +42,9 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role!: UserRole;
+
+  @Column({ default: 'standard' })
+  tier!: string;
 
   @Column({ default: true })
   isActive!: boolean;

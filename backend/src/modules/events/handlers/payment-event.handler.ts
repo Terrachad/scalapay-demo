@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { User } from '../../users/entities/user.entity';
-import { NotificationService } from '../../payments/services/notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 export interface PaymentCompletedEvent {
   paymentId: string;

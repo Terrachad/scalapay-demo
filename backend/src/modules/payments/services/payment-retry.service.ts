@@ -5,7 +5,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { PaymentConfigService } from './payment-config.service';
 import { StripeService } from './stripe.service';
-import { NotificationService } from './notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Injectable()
 export class PaymentRetryService {

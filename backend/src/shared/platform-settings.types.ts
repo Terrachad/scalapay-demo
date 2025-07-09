@@ -1,7 +1,7 @@
 /**
  * Shared type definitions for Platform Settings
  * Enterprise-grade type safety for admin settings system
- * 
+ *
  * This file must be accessible to both frontend and backend.
  * Path: /shared-types/platform-settings.types.ts
  */
@@ -261,7 +261,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'The display name of the platform',
     required: true,
     validation: { min: 2, max: 50 },
-    ui: { component: 'input', placeholder: 'Enter platform name' }
+    ui: { component: 'input', placeholder: 'Enter platform name' },
   },
   {
     key: 'supportEmail',
@@ -271,7 +271,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Primary support contact email',
     required: true,
     validation: { pattern: '^[^@]+@[^@]+\\.[^@]+$' },
-    ui: { component: 'input', placeholder: 'support@example.com' }
+    ui: { component: 'input', placeholder: 'support@example.com' },
   },
   {
     key: 'defaultCurrency',
@@ -281,15 +281,15 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Default currency for transactions',
     required: true,
     validation: { enum: ['USD', 'EUR', 'GBP', 'CAD'] },
-    ui: { 
-      component: 'select', 
+    ui: {
+      component: 'select',
       options: [
         { value: 'USD', label: 'USD - US Dollar' },
         { value: 'EUR', label: 'EUR - Euro' },
         { value: 'GBP', label: 'GBP - British Pound' },
-        { value: 'CAD', label: 'CAD - Canadian Dollar' }
-      ]
-    }
+        { value: 'CAD', label: 'CAD - Canadian Dollar' },
+      ],
+    },
   },
   {
     key: 'timeZone',
@@ -298,17 +298,19 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     label: 'Time Zone',
     description: 'Default timezone for the platform',
     required: true,
-    validation: { enum: ['UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'] },
-    ui: { 
+    validation: {
+      enum: ['UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'],
+    },
+    ui: {
       component: 'select',
       options: [
         { value: 'UTC', label: 'UTC' },
         { value: 'America/New_York', label: 'Eastern Time' },
         { value: 'America/Chicago', label: 'Central Time' },
         { value: 'America/Denver', label: 'Mountain Time' },
-        { value: 'America/Los_Angeles', label: 'Pacific Time' }
-      ]
-    }
+        { value: 'America/Los_Angeles', label: 'Pacific Time' },
+      ],
+    },
   },
 
   // Financial Settings
@@ -320,7 +322,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Default credit limit for new customer accounts',
     required: true,
     validation: { min: 100, max: 50000 },
-    ui: { component: 'input', placeholder: '1000' }
+    ui: { component: 'input', placeholder: '1000' },
   },
   {
     key: 'maxCreditLimit',
@@ -330,7 +332,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Maximum allowable credit limit',
     required: true,
     validation: { min: 1000, max: 100000 },
-    ui: { component: 'input', placeholder: '10000' }
+    ui: { component: 'input', placeholder: '10000' },
   },
   {
     key: 'maxTransactionAmount',
@@ -340,7 +342,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Maximum single transaction limit',
     required: true,
     validation: { min: 100, max: 50000 },
-    ui: { component: 'input', placeholder: '5000' }
+    ui: { component: 'input', placeholder: '5000' },
   },
   {
     key: 'merchantFeeRate',
@@ -350,7 +352,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Percentage fee charged to merchants per transaction',
     required: true,
     validation: { min: 0, max: 10 },
-    ui: { component: 'input', placeholder: '2.9' }
+    ui: { component: 'input', placeholder: '2.9' },
   },
   {
     key: 'lateFeeAmount',
@@ -360,7 +362,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Fixed fee applied after grace period',
     required: true,
     validation: { min: 0, max: 100 },
-    ui: { component: 'input', placeholder: '25' }
+    ui: { component: 'input', placeholder: '25' },
   },
 
   // Payment Settings
@@ -372,14 +374,14 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Default payment schedule interval',
     required: true,
     validation: { enum: ['weekly', 'biweekly', 'monthly'] },
-    ui: { 
+    ui: {
       component: 'select',
       options: [
         { value: 'weekly', label: 'Weekly' },
         { value: 'biweekly', label: 'Bi-weekly' },
-        { value: 'monthly', label: 'Monthly' }
-      ]
-    }
+        { value: 'monthly', label: 'Monthly' },
+      ],
+    },
   },
   {
     key: 'gracePeriodDays',
@@ -389,7 +391,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Days before late fees are applied',
     required: true,
     validation: { min: 0, max: 30 },
-    ui: { component: 'input', placeholder: '7' }
+    ui: { component: 'input', placeholder: '7' },
   },
   {
     key: 'maxRetries',
@@ -399,7 +401,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Maximum automatic payment retry attempts',
     required: true,
     validation: { min: 1, max: 10 },
-    ui: { component: 'input', placeholder: '3' }
+    ui: { component: 'input', placeholder: '3' },
   },
   {
     key: 'interestRate',
@@ -409,7 +411,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Annual interest rate for outstanding balances',
     required: true,
     validation: { min: 0, max: 25 },
-    ui: { component: 'input', placeholder: '0.0' }
+    ui: { component: 'input', placeholder: '0.0' },
   },
 
   // Feature Toggles
@@ -421,7 +423,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Automatically approve qualifying transactions',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'enableEarlyPayment',
@@ -431,7 +433,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Allow customers to pay early with potential discounts',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'enableFraudDetection',
@@ -441,7 +443,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Enable automated fraud screening for transactions',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'requireMerchantApproval',
@@ -451,7 +453,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'New merchant accounts require admin approval',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
 
   // Notification Settings
@@ -463,7 +465,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Send notifications via email',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'enableSMSNotifications',
@@ -473,7 +475,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Send notifications via SMS',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'enableWebhookNotifications',
@@ -483,7 +485,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Send notifications via webhooks to merchants',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'maintenanceMode',
@@ -493,7 +495,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Disable new transactions for system maintenance',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
 
   // Security Settings
@@ -505,7 +507,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Require 2FA for all admin accounts',
     required: false,
     validation: {},
-    ui: { component: 'switch' }
+    ui: { component: 'switch' },
   },
   {
     key: 'sessionTimeoutMinutes',
@@ -515,7 +517,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Automatic logout after inactivity',
     required: true,
     validation: { min: 5, max: 480 },
-    ui: { component: 'input', placeholder: '30' }
+    ui: { component: 'input', placeholder: '30' },
   },
   {
     key: 'passwordExpiryDays',
@@ -525,7 +527,7 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Days before passwords must be changed',
     required: true,
     validation: { min: 30, max: 365 },
-    ui: { component: 'input', placeholder: '90' }
+    ui: { component: 'input', placeholder: '90' },
   },
   {
     key: 'maxLoginAttempts',
@@ -535,6 +537,6 @@ export const SETTING_FIELD_METADATA: SettingFieldMetadata[] = [
     description: 'Failed login attempts before account lockout',
     required: true,
     validation: { min: 3, max: 10 },
-    ui: { component: 'input', placeholder: '5' }
-  }
+    ui: { component: 'input', placeholder: '5' },
+  },
 ];

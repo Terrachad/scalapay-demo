@@ -2,7 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../../modules/users/entities/user.entity';
-import { PlatformSetting, SettingCategory, SettingDataType, Environment } from '../../modules/platform-settings/entities/platform-setting.entity';
+import {
+  PlatformSetting,
+  SettingCategory,
+  SettingDataType,
+  Environment,
+} from '../../modules/platform-settings/entities/platform-setting.entity';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
@@ -24,14 +29,17 @@ export class InitialDataSeeder {
       const userCount = await this.userRepository.count();
       if (userCount > 0) {
         this.logger.log('Users already exist, skipping user seeding');
-        
+
         // Still try to seed platform settings if they don't exist
         this.logger.log('⚙️ Checking platform settings...');
         try {
           await this.seedPlatformSettings();
           this.logger.log('✅ Platform settings check/seeding completed');
         } catch (error) {
-          this.logger.warn('⚠️ Platform settings seeding failed:', error instanceof Error ? error.message : 'Unknown error');
+          this.logger.warn(
+            '⚠️ Platform settings seeding failed:',
+            error instanceof Error ? error.message : 'Unknown error',
+          );
         }
         return;
       }
@@ -147,9 +155,11 @@ export class InitialDataSeeder {
         await this.seedPlatformSettings();
         this.logger.log('✅ Platform settings seeded successfully');
       } catch (error) {
-        this.logger.warn('⚠️ Platform settings seeding failed (may be normal):', error instanceof Error ? error.message : 'Unknown error');
+        this.logger.warn(
+          '⚠️ Platform settings seeding failed (may be normal):',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
       }
-
     } catch (error) {
       this.logger.error('❌ Initial data seeding failed:', error);
       throw error;
@@ -164,10 +174,13 @@ export class InitialDataSeeder {
         this.logger.log('Platform settings already exist, skipping seeding');
         return;
       }
-      
+
       this.logger.log(`Found ${settingsCount} existing settings, proceeding with seeding...`);
     } catch (error) {
-      this.logger.error('Platform settings table access error:', error instanceof Error ? error.message : 'Unknown error');
+      this.logger.error(
+        'Platform settings table access error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       // Don't return here - try to seed anyway in case table exists but query failed
       this.logger.log('Attempting to seed settings despite error...');
     }
@@ -177,31 +190,156 @@ export class InitialDataSeeder {
 
     for (const environment of environments) {
       const defaultSettings = [
-        { key: 'platformName', value: 'ScalaPay', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
-        { key: 'supportEmail', value: 'support@scalapay.com', category: SettingCategory.GENERAL, dataType: SettingDataType.EMAIL },
-        { key: 'defaultCurrency', value: 'USD', category: SettingCategory.FINANCIAL, dataType: SettingDataType.CURRENCY },
-        { key: 'timeZone', value: 'UTC', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
-        { key: 'defaultCreditLimit', value: environment === Environment.PRODUCTION ? 1000 : 500, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'maxCreditLimit', value: environment === Environment.PRODUCTION ? 10000 : 5000, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'maxTransactionAmount', value: environment === Environment.PRODUCTION ? 5000 : 2500, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'merchantFeeRate', value: 2.9, category: SettingCategory.FINANCIAL, dataType: SettingDataType.PERCENTAGE },
-        { key: 'lateFeeAmount', value: 25, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'paymentInterval', value: 'biweekly', category: SettingCategory.FINANCIAL, dataType: SettingDataType.STRING },
-        { key: 'gracePeriodDays', value: 7, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'maxRetries', value: 3, category: SettingCategory.FINANCIAL, dataType: SettingDataType.NUMBER },
-        { key: 'interestRate', value: 0.0, category: SettingCategory.FINANCIAL, dataType: SettingDataType.PERCENTAGE },
-        { key: 'requireTwoFactor', value: environment === Environment.PRODUCTION, category: SettingCategory.SECURITY, dataType: SettingDataType.BOOLEAN },
-        { key: 'sessionTimeoutMinutes', value: environment === Environment.PRODUCTION ? 30 : 60, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-        { key: 'passwordExpiryDays', value: 90, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-        { key: 'maxLoginAttempts', value: 5, category: SettingCategory.SECURITY, dataType: SettingDataType.NUMBER },
-        { key: 'enableEmailNotifications', value: true, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-        { key: 'enableSMSNotifications', value: false, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-        { key: 'enableWebhookNotifications', value: true, category: SettingCategory.NOTIFICATIONS, dataType: SettingDataType.BOOLEAN },
-        { key: 'enableAutoApproval', value: environment !== Environment.PRODUCTION, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-        { key: 'enableEarlyPayment', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-        { key: 'enableFraudDetection', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-        { key: 'requireMerchantApproval', value: true, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
-        { key: 'maintenanceMode', value: false, category: SettingCategory.FEATURES, dataType: SettingDataType.BOOLEAN },
+        {
+          key: 'platformName',
+          value: 'ScalaPay',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
+        {
+          key: 'supportEmail',
+          value: 'support@scalapay.com',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.EMAIL,
+        },
+        {
+          key: 'defaultCurrency',
+          value: 'USD',
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.CURRENCY,
+        },
+        {
+          key: 'timeZone',
+          value: 'UTC',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
+        {
+          key: 'defaultCreditLimit',
+          value: environment === Environment.PRODUCTION ? 1000 : 500,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'maxCreditLimit',
+          value: environment === Environment.PRODUCTION ? 10000 : 5000,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'maxTransactionAmount',
+          value: environment === Environment.PRODUCTION ? 5000 : 2500,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'merchantFeeRate',
+          value: 2.9,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.PERCENTAGE,
+        },
+        {
+          key: 'lateFeeAmount',
+          value: 25,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'paymentInterval',
+          value: 'biweekly',
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.STRING,
+        },
+        {
+          key: 'gracePeriodDays',
+          value: 7,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'maxRetries',
+          value: 3,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'interestRate',
+          value: 0.0,
+          category: SettingCategory.FINANCIAL,
+          dataType: SettingDataType.PERCENTAGE,
+        },
+        {
+          key: 'requireTwoFactor',
+          value: environment === Environment.PRODUCTION,
+          category: SettingCategory.SECURITY,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'sessionTimeoutMinutes',
+          value: environment === Environment.PRODUCTION ? 30 : 60,
+          category: SettingCategory.SECURITY,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'passwordExpiryDays',
+          value: 90,
+          category: SettingCategory.SECURITY,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'maxLoginAttempts',
+          value: 5,
+          category: SettingCategory.SECURITY,
+          dataType: SettingDataType.NUMBER,
+        },
+        {
+          key: 'enableEmailNotifications',
+          value: true,
+          category: SettingCategory.NOTIFICATIONS,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'enableSMSNotifications',
+          value: false,
+          category: SettingCategory.NOTIFICATIONS,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'enableWebhookNotifications',
+          value: true,
+          category: SettingCategory.NOTIFICATIONS,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'enableAutoApproval',
+          value: environment !== Environment.PRODUCTION,
+          category: SettingCategory.FEATURES,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'enableEarlyPayment',
+          value: true,
+          category: SettingCategory.FEATURES,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'enableFraudDetection',
+          value: true,
+          category: SettingCategory.FEATURES,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'requireMerchantApproval',
+          value: true,
+          category: SettingCategory.FEATURES,
+          dataType: SettingDataType.BOOLEAN,
+        },
+        {
+          key: 'maintenanceMode',
+          value: false,
+          category: SettingCategory.FEATURES,
+          dataType: SettingDataType.BOOLEAN,
+        },
       ];
 
       for (const settingData of defaultSettings) {
@@ -216,9 +354,14 @@ export class InitialDataSeeder {
           });
 
           await this.settingsRepository.save(setting);
-          this.logger.log(`✅ Created setting: ${settingData.key} = ${settingData.value} (${environment})`);
+          this.logger.log(
+            `✅ Created setting: ${settingData.key} = ${settingData.value} (${environment})`,
+          );
         } catch (error) {
-          this.logger.error(`❌ Failed to create setting ${settingData.key} for ${environment}:`, error instanceof Error ? error.message : 'Unknown error');
+          this.logger.error(
+            `❌ Failed to create setting ${settingData.key} for ${environment}:`,
+            error instanceof Error ? error.message : 'Unknown error',
+          );
         }
       }
     }

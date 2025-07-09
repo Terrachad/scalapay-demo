@@ -6,9 +6,7 @@ export class SettingsCacheService {
   private readonly logger = new Logger(SettingsCacheService.name);
   private readonly localCache = new Map<string, { value: any; expiry: number }>();
 
-  constructor(
-    private readonly configService: ConfigService
-  ) {
+  constructor(private readonly configService: ConfigService) {
     // Clean up expired local cache entries every minute
     setInterval(() => this.cleanupLocalCache(), 60000);
   }
@@ -28,7 +26,7 @@ export class SettingsCacheService {
   async set(key: string, value: any, ttlSeconds: number = 300): Promise<void> {
     // Set in local cache
     this.setLocalCache(key, value, Math.min(ttlSeconds, 300)); // Max 5 minutes local
-    
+
     // In production, this would also set in Redis
     this.logger.debug(`Cached setting: ${key} for ${ttlSeconds} seconds`);
   }
@@ -46,7 +44,7 @@ export class SettingsCacheService {
         }
       }
     }
-    
+
     this.logger.debug(`Invalidated cache for: ${key}`);
   }
 
@@ -57,7 +55,7 @@ export class SettingsCacheService {
         this.localCache.delete(localKey);
       }
     }
-    
+
     this.logger.debug(`Invalidated cache pattern: ${pattern}`);
   }
 
@@ -66,16 +64,16 @@ export class SettingsCacheService {
     if (entry && entry.expiry > Date.now()) {
       return entry.value;
     }
-    
+
     if (entry) {
       this.localCache.delete(key); // Remove expired entry
     }
-    
+
     return null;
   }
 
   private setLocalCache(key: string, value: any, ttlSeconds: number): void {
-    const expiry = Date.now() + (ttlSeconds * 1000);
+    const expiry = Date.now() + ttlSeconds * 1000;
     this.localCache.set(key, { value, expiry });
   }
 
@@ -94,11 +92,11 @@ export class SettingsCacheService {
       // Test cache functionality
       const testKey = 'health-check-test';
       const testValue = { timestamp: Date.now() };
-      
+
       await this.set(testKey, testValue, 5);
       const retrieved = await this.get(testKey);
       await this.del(testKey);
-      
+
       return retrieved !== null;
     } catch {
       return false;

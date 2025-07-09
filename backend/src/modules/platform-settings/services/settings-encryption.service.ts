@@ -16,20 +16,16 @@ export class SettingsEncryptionService {
       const key = await this.getEncryptionKey();
       const iv = crypto.randomBytes(16);
       const salt = crypto.randomBytes(32);
-      
+
       const derivedKey = crypto.pbkdf2Sync(key, salt, this.keyDerivationIterations, 32, 'sha256');
       const cipher = crypto.createCipher('aes-256-cbc', derivedKey);
-      
+
       let encrypted = cipher.update(data, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
+
       // Combine salt, iv, and encrypted data
-      const combined = Buffer.concat([
-        salt,
-        iv,
-        Buffer.from(encrypted, 'hex')
-      ]);
-      
+      const combined = Buffer.concat([salt, iv, Buffer.from(encrypted, 'hex')]);
+
       return combined.toString('base64');
     } catch (error) {
       this.logger.error('Encryption failed:', error);
@@ -43,15 +39,15 @@ export class SettingsEncryptionService {
       const salt = combined.slice(0, 32);
       const iv = combined.slice(32, 48);
       const encrypted = combined.slice(48);
-      
+
       const key = await this.getEncryptionKey();
       const derivedKey = crypto.pbkdf2Sync(key, salt, this.keyDerivationIterations, 32, 'sha256');
-      
+
       const decipher = crypto.createDecipher('aes-256-cbc', derivedKey);
-      
+
       let decrypted = decipher.update(encrypted, undefined, 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return JSON.parse(decrypted);
     } catch (error) {
       this.logger.error('Decryption failed:', error);
@@ -60,7 +56,9 @@ export class SettingsEncryptionService {
   }
 
   private async getEncryptionKey(): Promise<string> {
-    const key = this.configService.get<string>('SETTINGS_ENCRYPTION_KEY') || 'default-encryption-key-for-development-only';
+    const key =
+      this.configService.get<string>('SETTINGS_ENCRYPTION_KEY') ||
+      'default-encryption-key-for-development-only';
     if (!key || key === 'default-encryption-key-for-development-only') {
       this.logger.warn('Using default encryption key - not suitable for production');
     }

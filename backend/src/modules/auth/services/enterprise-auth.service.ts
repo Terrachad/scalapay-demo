@@ -47,7 +47,13 @@ export interface AuthSession {
 
 export interface AuthAuditEvent {
   eventId: string;
-  eventType: 'LOGIN' | 'LOGOUT' | 'REGISTER' | 'TOKEN_REFRESH' | 'SESSION_EXPIRED' | 'SUSPICIOUS_ACTIVITY';
+  eventType:
+    | 'LOGIN'
+    | 'LOGOUT'
+    | 'REGISTER'
+    | 'TOKEN_REFRESH'
+    | 'SESSION_EXPIRED'
+    | 'SUSPICIOUS_ACTIVITY';
   userId?: string;
   sessionId?: string;
   ipAddress: string;
@@ -84,7 +90,7 @@ export class EnterpriseAuthService {
 
   async login(loginDto: LoginDto, context: LoginContext): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
-    
+
     this.debugLog('🔑 Login Attempt Started', {
       requestId: context.requestId,
       email,
@@ -142,7 +148,6 @@ export class EnterpriseAuthService {
       });
 
       return response;
-
     } catch (error) {
       // Log failed authentication attempt
       await this.logAuthEvent('LOGIN', {
@@ -240,7 +245,6 @@ export class EnterpriseAuthService {
       });
 
       return response;
-
     } catch (error) {
       // Log failed registration attempt
       await this.logAuthEvent('REGISTER', {
@@ -281,7 +285,6 @@ export class EnterpriseAuthService {
         sessionId,
         userId,
       });
-
     } catch (error) {
       this.logger.error('❌ Logout Failed', {
         sessionId,
@@ -300,7 +303,7 @@ export class EnterpriseAuthService {
     try {
       // Verify refresh token
       const payload = this.jwtService.verify(refreshToken);
-      
+
       // Get user and session
       const user = await this.usersService.findById(payload.sub);
       if (!user) {
@@ -331,7 +334,6 @@ export class EnterpriseAuthService {
       });
 
       return { accessToken: newAccessToken };
-
     } catch (error) {
       this.logger.error('❌ Token Refresh Failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -346,8 +348,14 @@ export class EnterpriseAuthService {
     }
   }
 
-  async validateUserCredentials(email: string, password: string, context: LoginContext): Promise<User> {
-    this.logger.log(`🔍 ⬇️  USER VALIDATION START [${context.requestId}] ═══════════════════════════════`);
+  async validateUserCredentials(
+    email: string,
+    password: string,
+    context: LoginContext,
+  ): Promise<User> {
+    this.logger.log(
+      `🔍 ⬇️  USER VALIDATION START [${context.requestId}] ═══════════════════════════════`,
+    );
     this.debugLog('🔍 Validating User Credentials', {
       requestId: context.requestId,
       email,
@@ -360,7 +368,7 @@ export class EnterpriseAuthService {
       this.logger.log(`🔍 Step 1: Checking failed login attempts for ${email}...`);
       const recentFailures = await this.getFailedLoginAttempts(email, context.ipAddress);
       this.logger.log(`🔍 Failed attempts count: ${recentFailures}/5`);
-      
+
       if (recentFailures >= 5) {
         this.logger.warn(`🔍 ❌ Rate limit exceeded for ${email} from ${context.ipAddress}`);
         throw new UnauthorizedException('Too many failed login attempts. Please try again later.');
@@ -370,7 +378,7 @@ export class EnterpriseAuthService {
       // Step 2: Find user by email
       this.logger.log(`🔍 Step 2: Looking up user by email: ${email}...`);
       const user = await this.usersService.findByEmail(email);
-      
+
       if (!user) {
         this.logger.warn(`🔍 ❌ User not found: ${email}`);
         this.debugLog('❌ User Not Found', {
@@ -380,9 +388,11 @@ export class EnterpriseAuthService {
         });
         throw new UnauthorizedException('Invalid credentials');
       }
-      
+
       this.logger.log(`🔍 ✅ User found: ${user.id} (${user.email})`);
-      this.logger.log(`🔍 User details: Role=${user.role}, Active=${user.isActive}, Credit=${user.availableCredit}/${user.creditLimit}`);
+      this.logger.log(
+        `🔍 User details: Role=${user.role}, Active=${user.isActive}, Credit=${user.availableCredit}/${user.creditLimit}`,
+      );
 
       // Step 3: Validate password
       this.logger.log('🔍 Step 3: Validating password...');
@@ -415,7 +425,9 @@ export class EnterpriseAuthService {
       this.logger.log('🔍 ✅ Account status check passed');
 
       // Success
-      this.logger.log(`🔍 ⬆️  USER VALIDATION SUCCESS [${context.requestId}] ═══════════════════════════════`);
+      this.logger.log(
+        `🔍 ⬆️  USER VALIDATION SUCCESS [${context.requestId}] ═══════════════════════════════`,
+      );
       this.logger.log(`🔍 ✅ User ${user.email} (${user.id}) validated successfully`);
       this.debugLog('✅ Credentials Valid', {
         requestId: context.requestId,
@@ -425,15 +437,16 @@ export class EnterpriseAuthService {
       });
 
       return user;
-
     } catch (error) {
-      this.logger.error(`🔍 💥 USER VALIDATION FAILED [${context.requestId}] ══════════════════════════════`);
-      
+      this.logger.error(
+        `🔍 💥 USER VALIDATION FAILED [${context.requestId}] ══════════════════════════════`,
+      );
+
       if (error instanceof UnauthorizedException) {
         this.logger.error(`🔍 ❌ Authorization error: ${error.message}`);
         throw error;
       }
-      
+
       this.logger.error('🔍 ❌ Unexpected password validation error', {
         requestId: context.requestId,
         email,
@@ -485,7 +498,7 @@ export class EnterpriseAuthService {
     await this.redisService.setex(
       sessionKey,
       7 * 24 * 60 * 60, // 7 days in seconds
-      JSON.stringify(session)
+      JSON.stringify(session),
     );
 
     this.debugLog('💾 Session Created', {
@@ -497,19 +510,24 @@ export class EnterpriseAuthService {
     return session;
   }
 
-  private async generateTokens(user: User, session: AuthSession): Promise<{
+  private async generateTokens(
+    user: User,
+    session: AuthSession,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
-    this.logger.log(`🎫 ⬇️  TOKEN GENERATION START [${session.sessionId}] ═══════════════════════════════`);
+    this.logger.log(
+      `🎫 ⬇️  TOKEN GENERATION START [${session.sessionId}] ═══════════════════════════════`,
+    );
     this.logger.log(`🎫 Generating tokens for user: ${user.email} (${user.id})`);
 
     try {
       // Step 1: Create JWT payload
       this.logger.log('🎫 Step 1: Creating JWT payload...');
       const currentTime = Math.floor(Date.now() / 1000);
-      const accessTokenExpiry = currentTime + (60 * 60); // 1 hour
-      
+      const accessTokenExpiry = currentTime + 60 * 60; // 1 hour
+
       const payload: EnterpriseJWTPayload = {
         sub: user.id,
         email: user.email,
@@ -538,7 +556,7 @@ export class EnterpriseAuthService {
       this.logger.log('🎫 Step 3: Generating refresh token...');
       const refreshToken = this.jwtService.sign(
         { sub: user.id, sessionId: session.sessionId, type: 'refresh' },
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
       this.logger.log(`🎫 ✅ Refresh token generated (length: ${refreshToken.length})`);
 
@@ -546,16 +564,18 @@ export class EnterpriseAuthService {
       this.logger.log('🎫 Step 4: Updating session in Redis...');
       session.accessToken = accessToken;
       const sessionKey = `session:${session.sessionId}`;
-      
+
       await this.redisService.setex(
         sessionKey,
         7 * 24 * 60 * 60, // 7 days
-        JSON.stringify(session)
+        JSON.stringify(session),
       );
       this.logger.log(`🎫 ✅ Session updated in Redis with key: ${sessionKey}`);
 
       // Success
-      this.logger.log(`🎫 ⬆️  TOKEN GENERATION SUCCESS [${session.sessionId}] ═══════════════════════════════`);
+      this.logger.log(
+        `🎫 ⬆️  TOKEN GENERATION SUCCESS [${session.sessionId}] ═══════════════════════════════`,
+      );
       this.debugLog('🎫 Tokens Generated Successfully', {
         sessionId: session.sessionId,
         userId: user.id,
@@ -567,9 +587,10 @@ export class EnterpriseAuthService {
       });
 
       return { accessToken, refreshToken };
-
     } catch (error) {
-      this.logger.error(`🎫 💥 TOKEN GENERATION FAILED [${session.sessionId}] ════════════════════════════════`);
+      this.logger.error(
+        `🎫 💥 TOKEN GENERATION FAILED [${session.sessionId}] ════════════════════════════════`,
+      );
       this.logger.error('🎫 ❌ Error generating tokens:', {
         userId: user.id,
         sessionId: session.sessionId,
@@ -587,7 +608,7 @@ export class EnterpriseAuthService {
       role: user.role,
       sessionId: session.sessionId,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
     };
 
     // Don't use expiresIn option since we're setting exp manually
@@ -605,7 +626,6 @@ export class EnterpriseAuthService {
 
       // Clear failed login attempts
       await this.clearFailedLoginAttempts(user.email, context.ipAddress);
-
     } catch (error) {
       this.logger.error('Failed to update user login tracking', {
         userId: user.id,
@@ -619,7 +639,7 @@ export class EnterpriseAuthService {
     try {
       const sessionKey = `session:${sessionId}`;
       const sessionData = await this.redisService.get(sessionKey);
-      
+
       if (!sessionData) {
         return null;
       }
@@ -637,13 +657,9 @@ export class EnterpriseAuthService {
   private async updateSessionActivity(session: AuthSession): Promise<void> {
     try {
       session.lastActivity = new Date();
-      
+
       const sessionKey = `session:${session.sessionId}`;
-      await this.redisService.setex(
-        sessionKey,
-        7 * 24 * 60 * 60,
-        JSON.stringify(session)
-      );
+      await this.redisService.setex(sessionKey, 7 * 24 * 60 * 60, JSON.stringify(session));
     } catch (error) {
       this.logger.error('Failed to update session activity', {
         sessionId: session.sessionId,
@@ -657,13 +673,9 @@ export class EnterpriseAuthService {
       const session = await this.getSession(sessionId);
       if (session) {
         session.isActive = false;
-        
+
         const sessionKey = `session:${sessionId}`;
-        await this.redisService.setex(
-          sessionKey,
-          7 * 24 * 60 * 60,
-          JSON.stringify(session)
-        );
+        await this.redisService.setex(sessionKey, 7 * 24 * 60 * 60, JSON.stringify(session));
       }
     } catch (error) {
       this.logger.error('Failed to deactivate session', {
@@ -694,7 +706,6 @@ export class EnterpriseAuthService {
 
       // Log to application logs
       this.logger.log(`AUTH_AUDIT: ${eventType}`, event);
-
     } catch (error) {
       this.logger.error('Failed to log auth event', error);
     }
@@ -734,7 +745,7 @@ export class EnterpriseAuthService {
     try {
       const key = `registration_rate:${ipAddress}`;
       const attempts = await this.redisService.incr(key);
-      
+
       if (attempts === 1) {
         await this.redisService.expire(key, 60 * 60); // 1 hour
       }
@@ -769,8 +780,16 @@ export class EnterpriseAuthService {
 
     // Check for common weak passwords
     const weakPasswords = [
-      'password', 'password123', '123456', '123456789', 'qwerty',
-      'abc123', 'password1', 'admin', 'letmein', 'welcome'
+      'password',
+      'password123',
+      '123456',
+      '123456789',
+      'qwerty',
+      'abc123',
+      'password1',
+      'admin',
+      'letmein',
+      'welcome',
     ];
 
     if (weakPasswords.includes(password.toLowerCase())) {

@@ -7,7 +7,7 @@ import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { Transaction, TransactionStatus } from '../../transactions/entities/transaction.entity';
 import { User } from '../../users/entities/user.entity';
 import { StripeService } from './stripe.service';
-import { NotificationService } from './notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Injectable()
 export class PaymentWebhookService {

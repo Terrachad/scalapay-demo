@@ -11,26 +11,28 @@ export class SettingsValidationService {
 
   constructor(
     @InjectRepository(PlatformSettingSchema)
-    private readonly schemaRepository: Repository<PlatformSettingSchema>
+    private readonly schemaRepository: Repository<PlatformSettingSchema>,
   ) {}
 
   async validateSetting(key: string, value: any): Promise<void> {
     try {
       this.logger.debug(`Testing database query for: ${key}`);
-      
+
       let schema;
       try {
         schema = await this.schemaRepository.findOne({ where: { key } });
       } catch (dbError) {
         this.logger.error(`Database error loading schema for ${key}:`, dbError);
         if (dbError instanceof Error && dbError.message.includes('JSON')) {
-          this.logger.error(`JSON parsing error in database query - skipping schema validation for ${key}`);
+          this.logger.error(
+            `JSON parsing error in database query - skipping schema validation for ${key}`,
+          );
           // For now, skip schema validation if there's a JSON parsing error
           return;
         }
         throw dbError;
       }
-      
+
       if (!schema) {
         // For settings without schema, perform basic type validation
         this.logger.warn(`No schema found for setting '${key}' - performing basic validation only`);
@@ -65,7 +67,7 @@ export class SettingsValidationService {
 
       // // Business rule validation
       // await this.validateBusinessRules(key, value);
-      
+
       // this.logger.debug(`Validation completed successfully for ${key}`);
     } catch (error) {
       this.logger.error(`Validation failed for ${key}:`, error);
@@ -76,12 +78,12 @@ export class SettingsValidationService {
   async validateNewSetting(createRequest: CreateSettingRequest): Promise<void> {
     // Validate the setting value against its data type
     this.validateDataType(createRequest.value, createRequest.dataType);
-    
+
     // Additional business rules for new settings
     if (!createRequest.key || createRequest.key.trim().length === 0) {
       throw new BadRequestException('Setting key cannot be empty');
     }
-    
+
     if (createRequest.key.includes(' ')) {
       throw new BadRequestException('Setting key cannot contain spaces');
     }
@@ -143,7 +145,9 @@ export class SettingsValidationService {
             throw new BadRequestException(rule.message || `Value must be at least ${rule.value}`);
           }
           if (typeof value === 'string' && value.length < rule.value) {
-            throw new BadRequestException(rule.message || `Value must be at least ${rule.value} characters`);
+            throw new BadRequestException(
+              rule.message || `Value must be at least ${rule.value} characters`,
+            );
           }
           break;
         case 'max':
@@ -151,7 +155,9 @@ export class SettingsValidationService {
             throw new BadRequestException(rule.message || `Value must be at most ${rule.value}`);
           }
           if (typeof value === 'string' && value.length > rule.value) {
-            throw new BadRequestException(rule.message || `Value must be at most ${rule.value} characters`);
+            throw new BadRequestException(
+              rule.message || `Value must be at most ${rule.value} characters`,
+            );
           }
           break;
         case 'pattern':
@@ -161,7 +167,9 @@ export class SettingsValidationService {
           break;
         case 'enum':
           if (!rule.value.includes(value)) {
-            throw new BadRequestException(rule.message || `Value must be one of: ${rule.value.join(', ')}`);
+            throw new BadRequestException(
+              rule.message || `Value must be one of: ${rule.value.join(', ')}`,
+            );
           }
           break;
         case 'custom':

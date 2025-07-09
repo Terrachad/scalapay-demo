@@ -10,7 +10,7 @@ import { User } from '../../users/entities/user.entity';
 import { MerchantSettings } from '../../merchants/entities/merchant-settings.entity';
 import { StripeService } from './stripe.service';
 import { PaymentRetryService } from './payment-retry.service';
-import { NotificationService } from './notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { PaymentConfigService } from './payment-config.service';
 import { CreditCheckService } from '../../integrations/services/credit-check.service';
 import { FraudDetectionService } from '../../integrations/services/fraud-detection.service';
@@ -86,23 +86,16 @@ export class AutomatedPaymentProcessorService {
   /**
    * Process all due payments
    */
-  async processDuePayments(
-    options: PaymentProcessingOptions = {}
-  ): Promise<BatchProcessingResult> {
+  async processDuePayments(options: PaymentProcessingOptions = {}): Promise<BatchProcessingResult> {
     const startTime = Date.now();
     this.isProcessing = true;
-    
-    const {
-      maxRetries = 3,
-      enableNotifications = true,
-      dryRun = false,
-      batchSize = 100,
-    } = options;
+
+    const { maxRetries = 3, enableNotifications = true, dryRun = false, batchSize = 100 } = options;
 
     try {
       // Get all due payments
       const duePayments = await this.getDuePayments();
-      
+
       if (duePayments.length === 0) {
         this.logger.log('No due payments found');
         return this.createEmptyResult();
@@ -111,18 +104,15 @@ export class AutomatedPaymentProcessorService {
       this.logger.log(`Found ${duePayments.length} due payments to process`);
 
       // Process payments in batches
-      const results = await this.processBatchPayments(
-        duePayments,
-        {
-          maxRetries,
-          enableNotifications,
-          dryRun,
-          batchSize,
-        }
-      );
+      const results = await this.processBatchPayments(duePayments, {
+        maxRetries,
+        enableNotifications,
+        dryRun,
+        batchSize,
+      });
 
       const processingTime = Date.now() - startTime;
-      
+
       // Emit batch processing event
       this.eventEmitter.emit('payment.batch.completed', {
         results,
@@ -132,11 +122,10 @@ export class AutomatedPaymentProcessorService {
 
       this.logger.log(
         `Completed payment processing: ${results.successCount} successful, ` +
-        `${results.failureCount} failed, ${results.retryCount} scheduled for retry`
+          `${results.failureCount} failed, ${results.retryCount} scheduled for retry`,
       );
 
       return results;
-
     } catch (error) {
       this.logger.error('Error during payment processing', error);
       throw error;
@@ -150,7 +139,7 @@ export class AutomatedPaymentProcessorService {
    */
   async processPayment(
     paymentId: string,
-    options: PaymentProcessingOptions = {}
+    options: PaymentProcessingOptions = {},
   ): Promise<PaymentProcessingResult> {
     const { enableNotifications = true, dryRun = false } = options;
 
@@ -207,16 +196,19 @@ export class AutomatedPaymentProcessorService {
       }
 
       const result = await this.chargePaymentMethod(payment, paymentMethod);
-      
+
       // Update payment status
       if (result.success) {
-        await this.handleSuccessfulPayment(payment, result.stripePaymentIntentId!, enableNotifications);
+        await this.handleSuccessfulPayment(
+          payment,
+          result.stripePaymentIntentId!,
+          enableNotifications,
+        );
       } else {
         await this.handleFailedPayment(payment, result.error!, enableNotifications);
       }
 
       return result;
-
     } catch (error) {
       this.logger.error(`Error processing payment ${paymentId}`, error);
       return {
@@ -235,7 +227,7 @@ export class AutomatedPaymentProcessorService {
    */
   private async getDuePayments(): Promise<Payment[]> {
     const now = new Date();
-    
+
     return await this.paymentRepository.find({
       where: {
         status: PaymentStatus.SCHEDULED,
@@ -251,7 +243,7 @@ export class AutomatedPaymentProcessorService {
    */
   private async processBatchPayments(
     payments: Payment[],
-    options: PaymentProcessingOptions
+    options: PaymentProcessingOptions,
   ): Promise<BatchProcessingResult> {
     const { batchSize = 10 } = options;
     let successCount = 0;
@@ -262,12 +254,10 @@ export class AutomatedPaymentProcessorService {
     // Process in batches to avoid overwhelming the system
     for (let i = 0; i < payments.length; i += batchSize) {
       const batch = payments.slice(i, i + batchSize);
-      const batchPromises = batch.map(payment => 
-        this.processPayment(payment.id, options)
-      );
+      const batchPromises = batch.map((payment) => this.processPayment(payment.id, options));
 
       const batchResults = await Promise.allSettled(batchPromises);
-      
+
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
           const paymentResult = result.value;
@@ -278,7 +268,7 @@ export class AutomatedPaymentProcessorService {
           } else {
             failureCount++;
           }
-          
+
           if (paymentResult.error) {
             errors.push({
               paymentId: paymentResult.paymentId,
@@ -296,7 +286,7 @@ export class AutomatedPaymentProcessorService {
 
       // Add delay between batches
       if (i + batchSize < payments.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
@@ -337,7 +327,7 @@ export class AutomatedPaymentProcessorService {
    */
   private async chargePaymentMethod(
     payment: Payment,
-    paymentMethod: PaymentMethod
+    paymentMethod: PaymentMethod,
   ): Promise<PaymentProcessingResult> {
     try {
       const paymentIntent = await this.stripeService.chargeStoredPaymentMethod(
@@ -350,7 +340,7 @@ export class AutomatedPaymentProcessorService {
           installmentNumber: payment.installmentNumber,
           automaticCharge: true,
           processedAt: new Date().toISOString(),
-        }
+        },
       );
 
       // Update payment method usage
@@ -364,16 +354,15 @@ export class AutomatedPaymentProcessorService {
         requiresRetry: false,
         stripePaymentIntentId: paymentIntent.id,
       };
-
     } catch (error) {
       this.logger.error(`Failed to charge payment method for payment ${payment.id}`, error);
-      
+
       // Update payment method failure count
       paymentMethod.incrementFailure();
       await this.paymentMethodRepository.save(paymentMethod);
 
       const isRetryable = this.isRetryableError(error);
-      
+
       return {
         success: false,
         paymentId: payment.id,
@@ -391,7 +380,7 @@ export class AutomatedPaymentProcessorService {
   private async handleSuccessfulPayment(
     payment: Payment,
     stripePaymentIntentId: string,
-    enableNotifications: boolean
+    enableNotifications: boolean,
   ): Promise<void> {
     // Update payment status
     payment.status = PaymentStatus.COMPLETED;
@@ -399,7 +388,7 @@ export class AutomatedPaymentProcessorService {
     payment.stripePaymentIntentId = stripePaymentIntentId;
     payment.retryCount = 0;
     payment.failureReason = undefined;
-    
+
     await this.paymentRepository.save(payment);
 
     // Send success notification
@@ -424,7 +413,7 @@ export class AutomatedPaymentProcessorService {
   private async handleFailedPayment(
     payment: Payment,
     error: string,
-    enableNotifications: boolean
+    enableNotifications: boolean,
   ): Promise<void> {
     const retryCount = payment.retryCount + 1;
     const maxRetries = 3;
@@ -436,9 +425,9 @@ export class AutomatedPaymentProcessorService {
       payment.lastRetryAt = new Date();
       payment.nextRetryAt = new Date(Date.now() + this.calculateRetryDelay(retryCount));
       payment.failureReason = error;
-      
+
       await this.paymentRepository.save(payment);
-      
+
       // Payment retry will be handled by the scheduled retry service
       this.logger.log(`Payment ${payment.id} will be retried automatically by scheduled job`);
 
@@ -446,15 +435,16 @@ export class AutomatedPaymentProcessorService {
         await this.notificationService.sendPaymentFailureNotification(payment);
       }
 
-      this.logger.warn(`Payment ${payment.id} failed, scheduled for retry ${retryCount}/${maxRetries}`);
-
+      this.logger.warn(
+        `Payment ${payment.id} failed, scheduled for retry ${retryCount}/${maxRetries}`,
+      );
     } else {
       // Final failure
       payment.status = PaymentStatus.FAILED;
       payment.retryCount = retryCount;
       payment.lastRetryAt = new Date();
       payment.failureReason = error;
-      
+
       await this.paymentRepository.save(payment);
 
       if (enableNotifications) {
@@ -479,7 +469,7 @@ export class AutomatedPaymentProcessorService {
    */
   private async handleNoPaymentMethod(
     payment: Payment,
-    enableNotifications: boolean
+    enableNotifications: boolean,
   ): Promise<PaymentProcessingResult> {
     payment.status = PaymentStatus.FAILED;
     payment.failureReason = 'No valid payment method available';
@@ -503,15 +493,19 @@ export class AutomatedPaymentProcessorService {
    */
   private isRetryableError(error: any): boolean {
     if (typeof error === 'string') {
-      return error.includes('insufficient_funds') || 
-             error.includes('card_declined') ||
-             error.includes('processing_error');
+      return (
+        error.includes('insufficient_funds') ||
+        error.includes('card_declined') ||
+        error.includes('processing_error')
+      );
     }
-    
+
     if (error instanceof Error) {
-      return error.message.includes('insufficient_funds') ||
-             error.message.includes('card_declined') ||
-             error.message.includes('processing_error');
+      return (
+        error.message.includes('insufficient_funds') ||
+        error.message.includes('card_declined') ||
+        error.message.includes('processing_error')
+      );
     }
 
     return false;
@@ -551,7 +545,7 @@ export class AutomatedPaymentProcessorService {
     averageAmount: number;
   }> {
     const now = new Date();
-    
+
     const [scheduledPayments, overduePayments, failedPayments] = await Promise.all([
       this.paymentRepository.count({
         where: { status: PaymentStatus.SCHEDULED },

@@ -34,7 +34,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // Determine error type and extract details
     let errorType = 'UNKNOWN_ERROR';
     let errorDetails: any = {};
-    
+
     if (exception instanceof HttpException) {
       errorType = 'HTTP_EXCEPTION';
       errorDetails = {
@@ -84,11 +84,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (this.debugEnabled) {
       this.logger.error(`💥 Error Details: ${JSON.stringify(errorDetails, null, 2)}`);
-      
+
       if (request.body && Object.keys(request.body).length > 0) {
-        this.logger.error(`💥 Request Body: ${JSON.stringify(this.sanitizeBody(request.body), null, 2)}`);
+        this.logger.error(
+          `💥 Request Body: ${JSON.stringify(this.sanitizeBody(request.body), null, 2)}`,
+        );
       }
-      
+
       if (errorDetails.stack) {
         this.logger.error(`💥 Stack Trace:\n${errorDetails.stack}`);
       }
@@ -111,7 +113,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private sanitizeHeaders(headers: any): any {
     const sanitized = { ...headers };
-    
+
     // Remove sensitive headers
     if (sanitized.authorization) {
       sanitized.authorization = 'Bearer ***';
@@ -119,7 +121,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (sanitized.cookie) {
       sanitized.cookie = '***';
     }
-    
+
     // Keep only relevant headers for debugging
     const relevantHeaders = [
       'content-type',
@@ -130,14 +132,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       'referer',
       'origin',
     ];
-    
+
     const filtered: any = {};
-    relevantHeaders.forEach(header => {
+    relevantHeaders.forEach((header) => {
       if (sanitized[header]) {
         filtered[header] = sanitized[header];
       }
     });
-    
+
     return filtered;
   }
 
@@ -147,15 +149,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     const sanitized = { ...body };
-    
+
     // Remove sensitive fields
     const sensitiveFields = ['password', 'confirmPassword', 'token', 'refreshToken', 'secret'];
-    sensitiveFields.forEach(field => {
+    sensitiveFields.forEach((field) => {
       if (sanitized[field]) {
         sanitized[field] = '***';
       }
     });
-    
+
     return sanitized;
   }
 }

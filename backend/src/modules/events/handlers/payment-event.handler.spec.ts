@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { PaymentEventHandler } from './payment-event.handler';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { User, UserRole } from '../../users/entities/user.entity';
-import { NotificationService } from '../../payments/services/notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 describe('PaymentEventHandler', () => {
   let handler: PaymentEventHandler;

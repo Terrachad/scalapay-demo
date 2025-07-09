@@ -1,4 +1,17 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsArray, ValidateNested, IsNumber, Min, Max, IsEmail, IsObject, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
+  IsEmail,
+  IsObject,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SettingCategory, SettingDataType, Environment } from '../entities/platform-setting.entity';
@@ -19,7 +32,7 @@ import {
   ApiResponse as SharedApiResponse,
   ApiSuccessResponse as SharedApiSuccessResponse,
   ApiErrorResponse as SharedApiErrorResponse,
-  DEFAULT_PLATFORM_SETTINGS
+  DEFAULT_PLATFORM_SETTINGS,
 } from '../../../shared/platform-settings.types';
 
 export class CreateSettingRequest {

@@ -6,7 +6,7 @@ import { PaymentRetryService } from './payment-retry.service';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { StripeService } from './stripe.service';
-import { NotificationService } from './notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 describe('PaymentRetryService', () => {
   let service: PaymentRetryService;

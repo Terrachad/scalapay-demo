@@ -57,10 +57,10 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    
+
     // Create request context
     const requestContext = this.createRequestContext(request);
-    
+
     // Add request context to request object for downstream use
     (request as any).authContext = requestContext;
 
@@ -92,12 +92,12 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
 
       // Execute authentication
       const result = await super.canActivate(context);
-      
+
       if (result) {
         // Authentication successful
         const authTime = Date.now() - requestContext.authStartTime;
         await this.handleAuthSuccess(request, requestContext, authTime);
-        
+
         // Add auth timing to response headers (for debugging)
         if (this.debugEnabled) {
           response.setHeader('X-Auth-Time', `${authTime}ms`);
@@ -106,7 +106,6 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
       }
 
       return result as boolean;
-
     } catch (error) {
       // Authentication failed
       const authTime = Date.now() - requestContext.authStartTime;
@@ -141,11 +140,13 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
         message: 'Authentication required',
         requestId: requestContext.requestId,
         timestamp: new Date(),
-        debugInfo: this.debugEnabled ? {
-          info: info?.message,
-          path: requestContext.path,
-          method: requestContext.method,
-        } : undefined,
+        debugInfo: this.debugEnabled
+          ? {
+              info: info?.message,
+              path: requestContext.path,
+              method: requestContext.method,
+            }
+          : undefined,
       });
 
       this.logger.warn('Authentication failed - no user returned', {
@@ -178,7 +179,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
   private createRequestContext(request: Request): RequestContext {
     const requestId = uuidv4();
     const ipAddress = this.extractIpAddress(request);
-    
+
     return {
       requestId,
       ipAddress,
@@ -201,7 +202,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
       // IP-based rate limiting
       const ipKey = `rate_limit:ip:${context.ipAddress}`;
       const ipRequests = await this.redisService.incr(ipKey);
-      
+
       if (ipRequests === 1) {
         // Set expiration on first request
         await this.redisService.expire(ipKey, 60); // 1 minute window
@@ -214,7 +215,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
           ipAddress: context.ipAddress,
           requests: ipRequests,
         });
-        
+
         throw new ForbiddenException({
           message: 'Rate limit exceeded',
           requestId: context.requestId,
@@ -226,7 +227,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
       if (this.isSensitiveEndpoint(context.path)) {
         const pathKey = `rate_limit:path:${context.ipAddress}:${context.path}`;
         const pathRequests = await this.redisService.incr(pathKey);
-        
+
         if (pathRequests === 1) {
           await this.redisService.expire(pathKey, 300); // 5 minute window
         }
@@ -242,7 +243,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
             limit: sensitiveEndpointLimit,
             environment: this.debugEnabled ? 'development' : 'production',
           });
-          
+
           throw new ForbiddenException({
             message: 'Sensitive endpoint rate limit exceeded',
             requestId: context.requestId,
@@ -255,12 +256,11 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
         requestId: context.requestId,
         ipRequests,
       });
-
     } catch (error) {
       if (error instanceof ForbiddenException) {
         throw error;
       }
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error('Rate limiting check failed', {
         requestId: context.requestId,
@@ -288,8 +288,7 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
     this.authMetrics.successfulAuth++;
     this.authMetrics.uniqueUsers.add(user.id);
     this.authMetrics.uniqueIPs.add(context.ipAddress);
-    this.authMetrics.averageAuthTime = 
-      (this.authMetrics.averageAuthTime + authTime) / 2;
+    this.authMetrics.averageAuthTime = (this.authMetrics.averageAuthTime + authTime) / 2;
 
     // Log successful authentication
     await this.logAuthEvent('AUTH_SUCCESS', {
@@ -367,9 +366,9 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
         timestamp: new Date(),
         ...data,
       };
-      
+
       await this.redisService.setex(eventKey, 24 * 60 * 60, JSON.stringify(eventData)); // 24 hours
-      
+
       // Also log to application logs
       this.logger.log(`AUTH_EVENT: ${eventType}`, eventData);
     } catch (error) {
@@ -386,8 +385,8 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
       '/admin',
       '/users',
     ];
-    
-    return sensitivePatterns.some(pattern => path.startsWith(pattern));
+
+    return sensitivePatterns.some((pattern) => path.startsWith(pattern));
   }
 
   private extractIpAddress(request: Request): string {
@@ -409,8 +408,8 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
   }
 
   // Public method to get authentication metrics (for admin dashboard)
-  getAuthMetrics(): AuthMetrics & { 
-    uniqueUsersCount: number; 
+  getAuthMetrics(): AuthMetrics & {
+    uniqueUsersCount: number;
     uniqueIPsCount: number;
     successRate: number;
   } {
@@ -418,9 +417,10 @@ export class EnterpriseAuthGuard extends AuthGuard('enterprise-jwt') {
       ...this.authMetrics,
       uniqueUsersCount: this.authMetrics.uniqueUsers.size,
       uniqueIPsCount: this.authMetrics.uniqueIPs.size,
-      successRate: this.authMetrics.totalRequests > 0 
-        ? (this.authMetrics.successfulAuth / this.authMetrics.totalRequests) * 100 
-        : 0,
+      successRate:
+        this.authMetrics.totalRequests > 0
+          ? (this.authMetrics.successfulAuth / this.authMetrics.totalRequests) * 100
+          : 0,
     };
   }
 }

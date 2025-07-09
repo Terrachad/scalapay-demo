@@ -16,7 +16,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     const host = this.configService.get('database.redis.host');
     const port = this.configService.get('database.redis.port');
-    
+
     this.logger.log('🔴 ═══════════════════════════════════════════════════════');
     this.logger.log('🔴 🚀 Redis Service Initialization Started');
     this.logger.log(`🔴 📍 Redis host: ${host}`);
@@ -78,19 +78,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async get(key: string): Promise<string | null> {
     const startTime = Date.now();
-    
+
     try {
       this.debugLog('🔴 GET operation started', { key });
       const result = await this.redis.get(key);
       const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ GET operation completed', { 
-        key, 
-        hasValue: !!result, 
+
+      this.debugLog('🔴 ✅ GET operation completed', {
+        key,
+        hasValue: !!result,
         valueLength: result?.length || 0,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -105,26 +105,26 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
-      this.debugLog('🔴 SET operation started', { 
-        key, 
-        valueLength: value.length, 
-        ttl: ttl || 'none' 
+      this.debugLog('🔴 SET operation started', {
+        key,
+        valueLength: value.length,
+        ttl: ttl || 'none',
       });
-      
+
       if (ttl) {
         await this.redis.set(key, value, 'EX', ttl);
       } else {
         await this.redis.set(key, value);
       }
-      
+
       const duration = Date.now() - startTime;
-      this.debugLog('🔴 ✅ SET operation completed', { 
-        key, 
-        valueLength: value.length, 
+      this.debugLog('🔴 ✅ SET operation completed', {
+        key,
+        valueLength: value.length,
         ttl: ttl || 'none',
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -141,15 +141,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async del(key: string): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       this.debugLog('🔴 DEL operation started', { key });
       await this.redis.del(key);
       const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ DEL operation completed', { 
+
+      this.debugLog('🔴 ✅ DEL operation completed', {
         key,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -164,20 +164,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async hget(key: string, field: string): Promise<string | null> {
     const startTime = Date.now();
-    
+
     try {
       this.debugLog('🔴 HGET operation started', { key, field });
       const result = await this.redis.hget(key, field);
       const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ HGET operation completed', { 
-        key, 
+
+      this.debugLog('🔴 ✅ HGET operation completed', {
+        key,
         field,
         hasValue: !!result,
         valueLength: result?.length || 0,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -193,22 +193,22 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async hset(key: string, field: string, value: string): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
-      this.debugLog('🔴 HSET operation started', { 
-        key, 
-        field, 
-        valueLength: value.length 
-      });
-      
-      await this.redis.hset(key, field, value);
-      const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ HSET operation completed', { 
-        key, 
+      this.debugLog('🔴 HSET operation started', {
+        key,
         field,
         valueLength: value.length,
-        duration: `${duration}ms`
+      });
+
+      await this.redis.hset(key, field, value);
+      const duration = Date.now() - startTime;
+
+      this.debugLog('🔴 ✅ HSET operation completed', {
+        key,
+        field,
+        valueLength: value.length,
+        duration: `${duration}ms`,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -225,18 +225,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async incr(key: string): Promise<number> {
     const startTime = Date.now();
-    
+
     try {
       this.debugLog('🔴 INCR operation started', { key });
       const result = await this.redis.incr(key);
       const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ INCR operation completed', { 
+
+      this.debugLog('🔴 ✅ INCR operation completed', {
         key,
         newValue: result,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -251,22 +251,22 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async setex(key: string, seconds: number, value: string): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
-      this.debugLog('🔴 SETEX operation started', { 
-        key, 
-        seconds, 
-        valueLength: value.length 
-      });
-      
-      await this.redis.setex(key, seconds, value);
-      const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ SETEX operation completed', { 
-        key, 
+      this.debugLog('🔴 SETEX operation started', {
+        key,
         seconds,
         valueLength: value.length,
-        duration: `${duration}ms`
+      });
+
+      await this.redis.setex(key, seconds, value);
+      const duration = Date.now() - startTime;
+
+      this.debugLog('🔴 ✅ SETEX operation completed', {
+        key,
+        seconds,
+        valueLength: value.length,
+        duration: `${duration}ms`,
       });
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -283,16 +283,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async expire(key: string, seconds: number): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       this.debugLog('🔴 EXPIRE operation started', { key, seconds });
       await this.redis.expire(key, seconds);
       const duration = Date.now() - startTime;
-      
-      this.debugLog('🔴 ✅ EXPIRE operation completed', { 
-        key, 
+
+      this.debugLog('🔴 ✅ EXPIRE operation completed', {
+        key,
         seconds,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
       });
     } catch (error) {
       const duration = Date.now() - startTime;

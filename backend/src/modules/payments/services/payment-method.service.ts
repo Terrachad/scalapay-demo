@@ -125,4 +125,21 @@ export class PaymentMethodService {
       where: { userId, isDefault: true },
     });
   }
+
+  async updatePaymentMethodPosition(
+    id: string,
+    userId: string,
+    position: number,
+  ): Promise<PaymentMethod> {
+    const paymentMethod = await this.paymentMethodRepository.findOne({
+      where: { id, userId },
+    });
+
+    if (!paymentMethod) {
+      throw new NotFoundException('Payment method not found');
+    }
+
+    paymentMethod.updateCardPosition(position);
+    return this.paymentMethodRepository.save(paymentMethod);
+  }
 }

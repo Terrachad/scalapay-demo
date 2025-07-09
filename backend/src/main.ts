@@ -30,8 +30,12 @@ async function bootstrap() {
     logger.log('⚙️ Initializing configuration service...');
     const configService = app.get(ConfigService);
     logger.log(`✅ Configuration loaded - JWT secret exists: ${!!configService.get('jwt.secret')}`);
-    logger.log(`✅ Database config - MySQL host: ${configService.get('database.mysql.host')}:${configService.get('database.mysql.port')}`);
-    logger.log(`✅ Redis config - Host: ${configService.get('database.redis.host')}:${configService.get('database.redis.port')}`);
+    logger.log(
+      `✅ Database config - MySQL host: ${configService.get('database.mysql.host')}:${configService.get('database.mysql.port')}`,
+    );
+    logger.log(
+      `✅ Redis config - Host: ${configService.get('database.redis.host')}:${configService.get('database.redis.port')}`,
+    );
     logger.log(`✅ Frontend URL: ${configService.get('frontend.url')}`);
     logger.log(`✅ Port configuration: ${configService.get('PORT', 3001)}`);
 
@@ -55,8 +59,10 @@ async function bootstrap() {
       /\.vlady\.website$/,
       /\.trycloudflare\.com$/, // Allow all Cloudflare tunnel URLs
     ];
-    logger.log(`✅ CORS origins: ${JSON.stringify(allowedOrigins.filter(o => typeof o === 'string'))}`);
-    
+    logger.log(
+      `✅ CORS origins: ${JSON.stringify(allowedOrigins.filter((o) => typeof o === 'string'))}`,
+    );
+
     app.enableCors({
       origin: allowedOrigins,
       credentials: true,
@@ -99,7 +105,7 @@ async function bootstrap() {
     const httpExceptionFilter = new HttpExceptionFilter();
     const loggingInterceptor = new LoggingInterceptor();
     const transformInterceptor = new TransformInterceptor();
-    
+
     app.useGlobalFilters(httpExceptionFilter);
     app.useGlobalInterceptors(loggingInterceptor, transformInterceptor);
     logger.log('✅ Global filters and interceptors configured successfully');
@@ -129,16 +135,19 @@ async function bootstrap() {
       await seeder.seed();
       logger.log('✅ Initial data seeding completed successfully');
     } catch (error) {
-      logger.warn('⚠️ Database seeding failed (may be normal if DB not ready):', error instanceof Error ? error.message : 'Unknown error');
+      logger.warn(
+        '⚠️ Database seeding failed (may be normal if DB not ready):',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
 
     // Step 12: Server Startup
     const port = configService.get('PORT', 3001);
     const host = '0.0.0.0';
-    
+
     logger.log(`🚀 Starting server on ${host}:${port}...`);
     await app.listen(port, host);
-    
+
     const bootTime = Date.now() - startTime;
     logger.log('🎉 ═══════════════════════════════════════════════════════════');
     logger.log(`🎉 🚀 Scalapay Backend is running successfully! 🚀`);
@@ -148,7 +157,6 @@ async function bootstrap() {
     logger.log(`🎉 🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.log(`🎉 📦 Process ID: ${process.pid}`);
     logger.log('🎉 ═══════════════════════════════════════════════════════════');
-
   } catch (error) {
     logger.error('❌ ═══════════════════════════════════════════════════════════');
     logger.error('❌ 💥 BOOTSTRAP FAILED! 💥');

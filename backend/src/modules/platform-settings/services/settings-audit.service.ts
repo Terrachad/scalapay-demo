@@ -2,8 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PlatformSettingHistory, SettingOperation } from '../entities/platform-setting-history.entity';
-import { SettingChangeData, AuditReport, AuditReportFilters, AuditSummary, PlatformSettingHistoryResponse } from '../dto/platform-settings.dto';
+import {
+  PlatformSettingHistory,
+  SettingOperation,
+} from '../entities/platform-setting-history.entity';
+import {
+  SettingChangeData,
+  AuditReport,
+  AuditReportFilters,
+  AuditSummary,
+  PlatformSettingHistoryResponse,
+} from '../dto/platform-settings.dto';
 import { User } from '../../users/entities/user.entity';
 
 export class SettingAuditEvent {
@@ -12,7 +21,7 @@ export class SettingAuditEvent {
     public readonly key: string,
     public readonly operation: SettingOperation,
     public readonly changedBy: string,
-    public readonly timestamp: Date
+    public readonly timestamp: Date,
   ) {}
 }
 
@@ -23,7 +32,7 @@ export class SettingsAuditService {
   constructor(
     @InjectRepository(PlatformSettingHistory)
     private readonly historyRepository: Repository<PlatformSettingHistory>,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async logSettingChange(changeData: SettingChangeData): Promise<void> {
@@ -38,17 +47,20 @@ export class SettingsAuditService {
         changedBy: { id: changeData.changedBy } as User,
         ipAddress: changeData.context.ipAddress,
         userAgent: changeData.context.userAgent,
-        requestId: changeData.context.requestId
+        requestId: changeData.context.requestId,
       });
 
       // Emit audit event for real-time monitoring
-      this.eventEmitter.emit('setting.audit', new SettingAuditEvent(
-        auditRecord.id,
-        changeData.key,
-        changeData.operation,
-        changeData.changedBy,
-        new Date()
-      ));
+      this.eventEmitter.emit(
+        'setting.audit',
+        new SettingAuditEvent(
+          auditRecord.id,
+          changeData.key,
+          changeData.operation,
+          changeData.changedBy,
+          new Date(),
+        ),
+      );
 
       // Log critical changes for immediate alerting
       if (this.isCriticalChange(changeData.key, changeData.oldValue, changeData.newValue)) {
@@ -57,10 +69,9 @@ export class SettingsAuditService {
           oldValue: changeData.oldValue,
           newValue: changeData.newValue,
           reason: changeData.reason,
-          requestId: changeData.context.requestId
+          requestId: changeData.context.requestId,
         });
       }
-
     } catch (error) {
       this.logger.error('Failed to log setting change:', error);
       // Don't throw - audit logging should not break the main flow
@@ -70,7 +81,7 @@ export class SettingsAuditService {
   async getAuditReport(
     startDate: Date,
     endDate: Date,
-    filters?: AuditReportFilters
+    filters?: AuditReportFilters,
   ): Promise<AuditReport> {
     const queryBuilder = this.historyRepository
       .createQueryBuilder('history')
@@ -100,37 +111,39 @@ export class SettingsAuditService {
       changes,
       totalCount,
       period: { startDate, endDate },
-      summary: await this.generateAuditSummary(changes)
+      summary: await this.generateAuditSummary(changes),
     };
   }
 
   async getSettingHistory(
     key: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<PlatformSettingHistoryResponse> {
     const [history, total] = await this.historyRepository.findAndCount({
       where: { key },
       order: { changedAt: 'DESC' },
       take: limit,
       skip: offset,
-      relations: ['changedBy']
+      relations: ['changedBy'],
     });
 
     return {
-      history: history.map(h => ({
+      history: history.map((h) => ({
         ...h,
-        changedBy: h.changedBy ? {
-          id: h.changedBy.id,
-          email: h.changedBy.email,
-          // Note: firstName and lastName might not exist on User entity
-          // firstName: h.changedBy.firstName,
-          // lastName: h.changedBy.lastName
-        } : null
+        changedBy: h.changedBy
+          ? {
+              id: h.changedBy.id,
+              email: h.changedBy.email,
+              // Note: firstName and lastName might not exist on User entity
+              // firstName: h.changedBy.firstName,
+              // lastName: h.changedBy.lastName
+            }
+          : null,
       })),
       total,
       limit,
-      offset
+      offset,
     };
   }
 
@@ -142,40 +155,45 @@ export class SettingsAuditService {
       'requireTwoFactor',
       'sessionTimeoutMinutes',
       'maxLoginAttempts',
-      'maintenanceMode'
+      'maintenanceMode',
     ];
 
-    return criticalSettings.includes(key) || 
-           (typeof oldValue === 'number' && typeof newValue === 'number' && 
-            Math.abs(newValue - oldValue) / oldValue > 0.5); // 50% change threshold
+    return (
+      criticalSettings.includes(key) ||
+      (typeof oldValue === 'number' &&
+        typeof newValue === 'number' &&
+        Math.abs(newValue - oldValue) / oldValue > 0.5)
+    ); // 50% change threshold
   }
 
   private async generateAuditSummary(changes: PlatformSettingHistory[]): Promise<AuditSummary> {
     const summary: AuditSummary = {
       totalChanges: changes.length,
-      uniqueUsers: new Set(changes.map(c => c.changedBy?.id).filter(Boolean)).size,
+      uniqueUsers: new Set(changes.map((c) => c.changedBy?.id).filter(Boolean)).size,
       operationCounts: {
-        CREATE: changes.filter(c => c.operation === SettingOperation.CREATE).length,
-        UPDATE: changes.filter(c => c.operation === SettingOperation.UPDATE).length,
-        DELETE: changes.filter(c => c.operation === SettingOperation.DELETE).length
+        CREATE: changes.filter((c) => c.operation === SettingOperation.CREATE).length,
+        UPDATE: changes.filter((c) => c.operation === SettingOperation.UPDATE).length,
+        DELETE: changes.filter((c) => c.operation === SettingOperation.DELETE).length,
       },
-      criticalChanges: changes.filter(c => 
-        this.isCriticalChange(c.key, c.oldValue, c.newValue)
-      ).length,
-      mostChangedSettings: this.getMostChangedSettings(changes, 10)
+      criticalChanges: changes.filter((c) => this.isCriticalChange(c.key, c.oldValue, c.newValue))
+        .length,
+      mostChangedSettings: this.getMostChangedSettings(changes, 10),
     };
 
     return summary;
   }
 
   private getMostChangedSettings(
-    changes: PlatformSettingHistory[], 
-    limit: number
+    changes: PlatformSettingHistory[],
+    limit: number,
   ): { key: string; count: number }[] {
-    const counts = changes.reduce((acc, change) => {
-      acc[change.key] = (acc[change.key] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const counts = changes.reduce(
+      (acc, change) => {
+        acc[change.key] = (acc[change.key] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)

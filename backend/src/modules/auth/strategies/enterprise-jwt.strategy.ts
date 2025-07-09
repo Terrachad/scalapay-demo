@@ -8,15 +8,15 @@ import { RedisService } from '../../redis/redis.service';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface EnterpriseJWTPayload {
-  sub: string;           // User ID
-  email: string;         // User email
-  role: string;          // User role
+  sub: string; // User ID
+  email: string; // User email
+  role: string; // User role
   permissions?: string[]; // User permissions
-  sessionId?: string;    // Session identifier
-  deviceId?: string;     // Device fingerprint
-  ipAddress?: string;    // Request IP
-  iat: number;          // Issued at
-  exp: number;          // Expires at
+  sessionId?: string; // Session identifier
+  deviceId?: string; // Device fingerprint
+  ipAddress?: string; // Request IP
+  iat: number; // Issued at
+  exp: number; // Expires at
 }
 
 export interface AuthContext {
@@ -64,7 +64,7 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       secretOrKey: configService.get('jwt.secret'),
       passReqToCallback: true, // Enable request context
     });
-    
+
     this.logger.log('🔐 ═══════════════════════════════════════════════════════');
     this.logger.log('🔐 🚀 Enterprise JWT Strategy Initialization Started');
     this.logger.log('🔐 ⚙️ Dependencies injected successfully:');
@@ -91,7 +91,9 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       method: request.method,
     };
 
-    this.logger.log(`🔍 ⬇️  JWT VALIDATION START [${requestId}] ═══════════════════════════════════════`);
+    this.logger.log(
+      `🔍 ⬇️  JWT VALIDATION START [${requestId}] ═══════════════════════════════════════`,
+    );
     this.logger.log(`🔍 Request: ${authContext.method} ${authContext.path}`);
     this.logger.log(`🔍 IP: ${authContext.ipAddress}`);
     this.logger.log(`🔍 User-Agent: ${authContext.userAgent}`);
@@ -102,7 +104,7 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     this.logger.log(`🔍   - Session ID: ${payload.sessionId || 'None'}`);
     this.logger.log(`🔍   - Issued At: ${new Date(payload.iat * 1000).toISOString()}`);
     this.logger.log(`🔍   - Expires At: ${new Date(payload.exp * 1000).toISOString()}`);
-    
+
     this.debugLog('🔍 JWT Validation Started', {
       requestId,
       userId: payload.sub,
@@ -129,7 +131,9 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       // Step 3: Validate session if session management is enabled
       this.logger.log('🔍 Step 3: Validating session...');
       const session = await this.validateSession(payload, authContext);
-      this.logger.log(`🔍 ✅ Step 3 complete: Session validation ${session ? 'passed' : 'skipped (no session)'}`);
+      this.logger.log(
+        `🔍 ✅ Step 3 complete: Session validation ${session ? 'passed' : 'skipped (no session)'}`,
+      );
 
       // Step 4: Check security flags and rate limits
       this.logger.log('🔍 Step 4: Performing security checks...');
@@ -144,15 +148,21 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       // Step 6: Prepare enhanced user context
       this.logger.log('🔍 Step 6: Preparing enhanced user context...');
       const enhancedUser = await this.prepareUserContext(user, session, authContext);
-      this.logger.log(`🔍 ✅ Step 6 complete: Enhanced user context prepared (${enhancedUser.permissions?.length || 0} permissions)`);
+      this.logger.log(
+        `🔍 ✅ Step 6 complete: Enhanced user context prepared (${enhancedUser.permissions?.length || 0} permissions)`,
+      );
 
       // Success logging
-      this.logger.log(`🔍 ⬆️  JWT VALIDATION SUCCESS [${requestId}] ═══════════════════════════════════════`);
+      this.logger.log(
+        `🔍 ⬆️  JWT VALIDATION SUCCESS [${requestId}] ═══════════════════════════════════════`,
+      );
       this.logger.log(`🔍 ✅ User ${user.email} (${user.id}) authenticated successfully`);
       this.logger.log(`🔍 ✅ Session: ${session?.sessionId || 'None'}`);
       this.logger.log(`🔍 ✅ Permissions: ${enhancedUser.permissions?.length || 0}`);
-      this.logger.log(`🔍 ✅ Security level: ${enhancedUser.securityFlags?.riskLevel || 'unknown'}`);
-      
+      this.logger.log(
+        `🔍 ✅ Security level: ${enhancedUser.securityFlags?.riskLevel || 'unknown'}`,
+      );
+
       this.debugLog('✅ JWT Validation Successful', {
         requestId,
         userId: user.id,
@@ -170,21 +180,24 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       });
 
       return enhancedUser;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      this.logger.error(`🔍 💥 JWT VALIDATION FAILED [${requestId}] ════════════════════════════════════════`);
+
+      this.logger.error(
+        `🔍 💥 JWT VALIDATION FAILED [${requestId}] ════════════════════════════════════════`,
+      );
       this.logger.error(`🔍 ❌ Request: ${authContext.method} ${authContext.path}`);
-      this.logger.error(`🔍 ❌ User: ${payload?.email || 'Unknown'} (${payload?.sub || 'Unknown'})`);
+      this.logger.error(
+        `🔍 ❌ User: ${payload?.email || 'Unknown'} (${payload?.sub || 'Unknown'})`,
+      );
       this.logger.error(`🔍 ❌ IP: ${authContext.ipAddress}`);
       this.logger.error(`🔍 ❌ Error: ${errorMessage}`);
       this.logger.error(`🔍 ❌ Error Type: ${error?.constructor?.name || 'Unknown'}`);
-      
+
       if (this.debugEnabled && error instanceof Error && error.stack) {
         this.logger.error(`🔍 ❌ Stack Trace:\n${error.stack}`);
       }
-      
+
       this.logger.error(`🔍 ❌ JWT Payload Debug:`, {
         hasUserId: !!payload?.sub,
         hasEmail: !!payload?.email,
@@ -192,8 +205,10 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
         hasSessionId: !!payload?.sessionId,
         tokenExpired: payload?.exp ? payload.exp < Math.floor(Date.now() / 1000) : 'unknown',
       });
-      
-      this.logger.error('🔍 ═══════════════════════════════════════════════════════════════════════');
+
+      this.logger.error(
+        '🔍 ═══════════════════════════════════════════════════════════════════════',
+      );
 
       this.logger.error(`❌ JWT Validation Failed - ${errorMessage}`, {
         requestId,
@@ -215,17 +230,22 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
         message: 'Authentication failed',
         requestId,
         timestamp: authContext.timestamp,
-        debugInfo: this.debugEnabled ? {
-          originalError: errorMessage,
-          userId: payload?.sub,
-          email: payload?.email,
-          authContext,
-        } : undefined,
+        debugInfo: this.debugEnabled
+          ? {
+              originalError: errorMessage,
+              userId: payload?.sub,
+              email: payload?.email,
+              authContext,
+            }
+          : undefined,
       });
     }
   }
 
-  private async validateJWTPayload(payload: EnterpriseJWTPayload, context: AuthContext): Promise<void> {
+  private async validateJWTPayload(
+    payload: EnterpriseJWTPayload,
+    context: AuthContext,
+  ): Promise<void> {
     this.debugLog('🔎 Validating JWT Payload Structure', {
       requestId: context.requestId,
       hasUserId: !!payload.sub,
@@ -255,7 +275,10 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     this.debugLog('✅ JWT Payload Structure Valid', { requestId: context.requestId });
   }
 
-  private async resolveAndValidateUser(payload: EnterpriseJWTPayload, context: AuthContext): Promise<any> {
+  private async resolveAndValidateUser(
+    payload: EnterpriseJWTPayload,
+    context: AuthContext,
+  ): Promise<any> {
     this.debugLog('👤 Resolving User from Database', {
       requestId: context.requestId,
       userId: payload.sub,
@@ -265,7 +288,7 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     try {
       // First try to find by ID
       let user = await this.usersService.findById(payload.sub);
-      
+
       if (!user) {
         this.debugLog('⚠️ User not found by ID, trying email lookup', {
           requestId: context.requestId,
@@ -275,11 +298,11 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
 
         // Fallback to email lookup
         const userByEmail = await this.usersService.findByEmail(payload.email);
-        
+
         if (!userByEmail) {
           throw new Error(`User not found: ID=${payload.sub}, Email=${payload.email}`);
         }
-        
+
         user = userByEmail;
 
         this.logger.warn(`User found by email but not by ID - possible data inconsistency`, {
@@ -319,7 +342,6 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       });
 
       return user;
-
     } catch (error) {
       this.debugLog('❌ User Resolution Failed', {
         requestId: context.requestId,
@@ -331,7 +353,10 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     }
   }
 
-  private async validateSession(payload: EnterpriseJWTPayload, context: AuthContext): Promise<UserSession | null> {
+  private async validateSession(
+    payload: EnterpriseJWTPayload,
+    context: AuthContext,
+  ): Promise<UserSession | null> {
     if (!payload.sessionId) {
       this.debugLog('📋 No session ID in JWT payload - skipping session validation', {
         requestId: context.requestId,
@@ -384,7 +409,6 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
       });
 
       return session;
-
     } catch (error) {
       this.logger.error('Session validation failed', {
         sessionId: payload.sessionId,
@@ -422,7 +446,10 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     });
   }
 
-  private async updateSessionActivity(session: UserSession | null, context: AuthContext): Promise<void> {
+  private async updateSessionActivity(
+    session: UserSession | null,
+    context: AuthContext,
+  ): Promise<void> {
     if (!session) {
       return;
     }
@@ -452,7 +479,11 @@ export class EnterpriseJwtStrategy extends PassportStrategy(Strategy, 'enterpris
     }
   }
 
-  private async prepareUserContext(user: any, session: UserSession | null, context: AuthContext): Promise<any> {
+  private async prepareUserContext(
+    user: any,
+    session: UserSession | null,
+    context: AuthContext,
+  ): Promise<any> {
     this.debugLog('🔧 Preparing Enhanced User Context', {
       requestId: context.requestId,
       userId: user.id,

@@ -67,6 +67,9 @@ export class Transaction {
   @Column({ type: 'varchar', default: 'credit' })
   paymentMethod!: string;
 
+  @Column({ type: 'varchar', default: 'card' })
+  paymentMethodType!: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   creditAmount!: number;
 

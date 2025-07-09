@@ -11,7 +11,7 @@ import { Payment } from '../payments/entities/payment.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
 import { StripeService } from '../payments/services/stripe.service';
-import { NotificationService } from '../payments/services/notification.service';
+import { NotificationService } from '../shared/services/notification.service';
 import { CreditCheckService } from '../integrations/services/credit-check.service';
 import { FraudDetectionService } from '../integrations/services/fraud-detection.service';
 import { HttpModule } from '@nestjs/axios';

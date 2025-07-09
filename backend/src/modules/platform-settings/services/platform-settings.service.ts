@@ -1,10 +1,24 @@
-import { Injectable, Logger, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
-import { PlatformSetting, SettingCategory, SettingDataType } from '../entities/platform-setting.entity';
-import { PlatformSettingHistory, SettingOperation } from '../entities/platform-setting-history.entity';
+import {
+  PlatformSetting,
+  SettingCategory,
+  SettingDataType,
+} from '../entities/platform-setting.entity';
+import {
+  PlatformSettingHistory,
+  SettingOperation,
+} from '../entities/platform-setting-history.entity';
 import { PlatformSettingSchema } from '../entities/platform-setting-schema.entity';
 import { User, UserRole } from '../../users/entities/user.entity';
 import { SettingsCacheService } from './settings-cache.service';
@@ -18,7 +32,7 @@ import {
   PlatformSettingsResponse,
   RequestContext,
   SettingChangeData,
-  PlatformSettingHistoryResponse
+  PlatformSettingHistoryResponse,
 } from '../dto/platform-settings.dto';
 import { PlatformSettings } from '../../../shared/platform-settings.types';
 
@@ -29,14 +43,14 @@ export class SettingChangedEvent {
     public readonly newValue: any,
     public readonly category: SettingCategory,
     public readonly changedBy: string,
-    public readonly timestamp: Date
+    public readonly timestamp: Date,
   ) {}
 }
 
 @Injectable()
 export class PlatformSettingsService {
   private readonly logger = new Logger(PlatformSettingsService.name);
-  
+
   constructor(
     @InjectRepository(PlatformSetting)
     private readonly settingsRepository: Repository<PlatformSetting>,
@@ -49,13 +63,13 @@ export class PlatformSettingsService {
     private readonly auditService: SettingsAuditService,
     private readonly encryptionService: SettingsEncryptionService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async getAllSettings(environment?: string): Promise<PlatformSettingsResponse> {
     const env = environment || process.env.NODE_ENV || 'production';
     const cacheKey = `platform_settings:${env}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get<PlatformSettingsResponse>(cacheKey);
     if (cached) {
@@ -67,17 +81,17 @@ export class PlatformSettingsService {
     const settings = await this.settingsRepository.find({
       where: {
         environment: env as any,
-        isActive: true
+        isActive: true,
       },
-      order: { category: 'ASC', key: 'ASC' }
+      order: { category: 'ASC', key: 'ASC' },
     });
 
     // Decrypt encrypted values
     const processedSettings = await this.processSettingsForResponse(settings);
-    
+
     // Cache the result
     await this.cacheService.set(cacheKey, processedSettings, 300); // 5 minutes
-    
+
     this.logger.log(`Retrieved ${settings.length} platform settings`);
     return processedSettings;
   }
@@ -85,7 +99,7 @@ export class PlatformSettingsService {
   async getSettingByKey(key: string, environment?: string): Promise<any> {
     const env = environment || process.env.NODE_ENV || 'production';
     const cacheKey = `setting:${key}:${env}`;
-    
+
     // Try cache first
     const cached = await this.cacheService.get(cacheKey);
     if (cached !== null) {
@@ -93,7 +107,7 @@ export class PlatformSettingsService {
     }
 
     const setting = await this.settingsRepository.findOne({
-      where: { key, environment: env as any, isActive: true }
+      where: { key, environment: env as any, isActive: true },
     });
 
     if (!setting) {
@@ -105,7 +119,7 @@ export class PlatformSettingsService {
       throw new NotFoundException(`Setting with key '${key}' not found`);
     }
 
-    let rawValue = setting.isEncrypted 
+    const rawValue = setting.isEncrypted
       ? await this.encryptionService.decrypt(setting.value)
       : setting.value;
 
@@ -133,13 +147,15 @@ export class PlatformSettingsService {
             break;
         }
       } catch (error) {
-        this.logger.warn(`Failed to parse value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.logger.warn(
+          `Failed to parse value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
     // Cache the result
     await this.cacheService.set(cacheKey, value, 600); // 10 minutes
-    
+
     return value;
   }
 
@@ -148,41 +164,62 @@ export class PlatformSettingsService {
     value: any,
     userId: string,
     reason: string,
-    context: RequestContext
+    context: RequestContext,
   ): Promise<PlatformSetting> {
-    const environment = context.environment as any || process.env.NODE_ENV || 'production';
+    const environment = (context.environment as any) || process.env.NODE_ENV || 'production';
     let existingSetting = await this.settingsRepository.findOne({
-      where: { key, environment }
+      where: { key, environment },
     });
 
     // If setting doesn't exist, create it with sensible defaults
     if (!existingSetting) {
       this.logger.warn(`Setting '${key}' not found, creating it automatically`);
-      
+
       // Auto-detect category and data type based on key name and value
       let category = SettingCategory.GENERAL;
       let dataType = SettingDataType.STRING;
-      
-      if (key.includes('Credit') || key.includes('Amount') || key.includes('Fee') || key.includes('Rate') || key.includes('Retries') || key.includes('Days') || key.includes('Minutes') || key.includes('Attempts')) {
+
+      if (
+        key.includes('Credit') ||
+        key.includes('Amount') ||
+        key.includes('Fee') ||
+        key.includes('Rate') ||
+        key.includes('Retries') ||
+        key.includes('Days') ||
+        key.includes('Minutes') ||
+        key.includes('Attempts')
+      ) {
         category = SettingCategory.FINANCIAL;
         dataType = typeof value === 'number' ? SettingDataType.NUMBER : SettingDataType.STRING;
-      } else if (key.includes('Security') || key.includes('Password') || key.includes('Session') || key.includes('TwoFactor') || key.includes('Login')) {
+      } else if (
+        key.includes('Security') ||
+        key.includes('Password') ||
+        key.includes('Session') ||
+        key.includes('TwoFactor') ||
+        key.includes('Login')
+      ) {
         category = SettingCategory.SECURITY;
         dataType = typeof value === 'boolean' ? SettingDataType.BOOLEAN : SettingDataType.NUMBER;
-      } else if (key.includes('Notification') || key.includes('Email') || key.includes('SMS') || key.includes('Webhook')) {
+      } else if (
+        key.includes('Notification') ||
+        key.includes('Email') ||
+        key.includes('SMS') ||
+        key.includes('Webhook')
+      ) {
         category = SettingCategory.NOTIFICATIONS;
         dataType = SettingDataType.BOOLEAN;
       } else if (key.includes('enable') || key.includes('require') || key.includes('maintenance')) {
         category = SettingCategory.FEATURES;
         dataType = SettingDataType.BOOLEAN;
       }
-      
+
       if (typeof value === 'boolean') dataType = SettingDataType.BOOLEAN;
       else if (typeof value === 'number') dataType = SettingDataType.NUMBER;
       else if (key.includes('Email')) dataType = SettingDataType.EMAIL;
       else if (key.includes('Currency')) dataType = SettingDataType.CURRENCY;
-      else if (key.includes('Rate') || key.includes('Percentage')) dataType = SettingDataType.PERCENTAGE;
-      
+      else if (key.includes('Rate') || key.includes('Percentage'))
+        dataType = SettingDataType.PERCENTAGE;
+
       existingSetting = await this.settingsRepository.save({
         key,
         value: typeof value === 'string' ? value : String(value),
@@ -194,10 +231,12 @@ export class PlatformSettingsService {
         environment,
         isActive: true,
         createdBy: { id: userId } as User,
-        updatedBy: { id: userId } as User
+        updatedBy: { id: userId } as User,
       });
-      
-      this.logger.log(`Created missing setting '${key}' with category ${category} and dataType ${dataType}`);
+
+      this.logger.log(
+        `Created missing setting '${key}' with category ${category} and dataType ${dataType}`,
+      );
     }
 
     // Validate the new value
@@ -206,7 +245,7 @@ export class PlatformSettingsService {
     // Check permissions
     await this.validateUserPermissions(userId, existingSetting.category);
 
-    let rawOldValue = existingSetting.isEncrypted
+    const rawOldValue = existingSetting.isEncrypted
       ? await this.encryptionService.decrypt(existingSetting.value)
       : existingSetting.value;
 
@@ -234,7 +273,9 @@ export class PlatformSettingsService {
             break;
         }
       } catch (error) {
-        this.logger.warn(`Failed to parse old value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.logger.warn(
+          `Failed to parse old value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
@@ -254,7 +295,8 @@ export class PlatformSettingsService {
           serializedValue = value.toString();
           break;
         case 'date':
-          serializedValue = value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+          serializedValue =
+            value instanceof Date ? value.toISOString() : new Date(value).toISOString();
           break;
         default:
           // For string, email, url, currency, encrypted_string
@@ -262,7 +304,9 @@ export class PlatformSettingsService {
           break;
       }
     } catch (error) {
-      this.logger.warn(`Failed to serialize value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `Failed to serialize value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       serializedValue = String(value);
     }
 
@@ -276,7 +320,7 @@ export class PlatformSettingsService {
       ...existingSetting,
       value: processedValue,
       updatedBy: { id: userId } as User,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Create audit record
@@ -288,21 +332,17 @@ export class PlatformSettingsService {
       operation: SettingOperation.UPDATE,
       reason,
       changedBy: userId,
-      context
+      context,
     });
 
     // Invalidate cache
     await this.invalidateSettingCache(key, context.environment);
 
     // Emit event for real-time updates
-    this.eventEmitter.emit('setting.changed', new SettingChangedEvent(
-      key,
-      oldValue,
-      value,
-      existingSetting.category,
-      userId,
-      new Date()
-    ));
+    this.eventEmitter.emit(
+      'setting.changed',
+      new SettingChangedEvent(key, oldValue, value, existingSetting.category, userId, new Date()),
+    );
 
     this.logger.log(`Setting '${key}' updated by user ${userId}`);
     return updatedSetting;
@@ -312,10 +352,10 @@ export class PlatformSettingsService {
     updates: SettingUpdateRequest[],
     userId: string,
     reason: string,
-    context: RequestContext
+    context: RequestContext,
   ): Promise<SettingUpdateResponse[]> {
     const results: SettingUpdateResponse[] = [];
-    
+
     // Use database transaction for atomicity
     await this.settingsRepository.manager.transaction(async (entityManager) => {
       for (const update of updates) {
@@ -325,21 +365,21 @@ export class PlatformSettingsService {
             update.value,
             userId,
             reason,
-            context
+            context,
           );
-          results.push({ 
-            key: update.key, 
-            success: true, 
+          results.push({
+            key: update.key,
+            success: true,
             previousValue: null,
             newValue: update.value,
-            timestamp: new Date()
+            timestamp: new Date(),
           });
         } catch (error) {
-          results.push({ 
-            key: update.key, 
-            success: false, 
+          results.push({
+            key: update.key,
+            success: false,
             error: error instanceof Error ? error.message : 'Unknown error',
-            timestamp: new Date()
+            timestamp: new Date(),
           });
         }
       }
@@ -351,7 +391,7 @@ export class PlatformSettingsService {
   async createSetting(
     createRequest: CreateSettingRequest,
     userId: string,
-    context: RequestContext
+    context: RequestContext,
   ): Promise<PlatformSetting> {
     // Validate against schema
     await this.validationService.validateNewSetting(createRequest);
@@ -361,7 +401,7 @@ export class PlatformSettingsService {
 
     // Check if key already exists
     const existing = await this.settingsRepository.findOne({
-      where: { key: createRequest.key, environment: context.environment as any || 'production' }
+      where: { key: createRequest.key, environment: (context.environment as any) || 'production' },
     });
 
     if (existing) {
@@ -384,15 +424,23 @@ export class PlatformSettingsService {
           serializedValue = createRequest.value.toString();
           break;
         case 'date':
-          serializedValue = createRequest.value instanceof Date ? createRequest.value.toISOString() : new Date(createRequest.value).toISOString();
+          serializedValue =
+            createRequest.value instanceof Date
+              ? createRequest.value.toISOString()
+              : new Date(createRequest.value).toISOString();
           break;
         default:
           // For string, email, url, currency, encrypted_string
-          serializedValue = typeof createRequest.value === 'string' ? createRequest.value : String(createRequest.value);
+          serializedValue =
+            typeof createRequest.value === 'string'
+              ? createRequest.value
+              : String(createRequest.value);
           break;
       }
     } catch (error) {
-      this.logger.warn(`Failed to serialize value for new setting ${createRequest.key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.warn(
+        `Failed to serialize value for new setting ${createRequest.key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       serializedValue = String(createRequest.value);
     }
 
@@ -409,9 +457,9 @@ export class PlatformSettingsService {
       description: createRequest.description,
       isEncrypted: createRequest.isEncrypted || false,
       requiresRestart: createRequest.requiresRestart || false,
-      environment: context.environment as any || process.env.NODE_ENV || 'production',
+      environment: (context.environment as any) || process.env.NODE_ENV || 'production',
       createdBy: { id: userId } as User,
-      updatedBy: { id: userId } as User
+      updatedBy: { id: userId } as User,
     });
 
     // Create audit record
@@ -423,7 +471,7 @@ export class PlatformSettingsService {
       operation: SettingOperation.CREATE,
       reason: 'Setting created',
       changedBy: userId,
-      context
+      context,
     });
 
     // Invalidate cache
@@ -437,10 +485,13 @@ export class PlatformSettingsService {
     key: string,
     userId: string,
     reason: string,
-    context: RequestContext
+    context: RequestContext,
   ): Promise<void> {
     const setting = await this.settingsRepository.findOne({
-      where: { key, environment: context.environment as any || process.env.NODE_ENV || 'production' }
+      where: {
+        key,
+        environment: (context.environment as any) || process.env.NODE_ENV || 'production',
+      },
     });
 
     if (!setting) {
@@ -456,7 +507,7 @@ export class PlatformSettingsService {
       throw new BadRequestException(`Cannot delete required setting '${key}'`);
     }
 
-    let rawOldValue = setting.isEncrypted
+    const rawOldValue = setting.isEncrypted
       ? await this.encryptionService.decrypt(setting.value)
       : setting.value;
 
@@ -484,7 +535,9 @@ export class PlatformSettingsService {
             break;
         }
       } catch (error) {
-        this.logger.warn(`Failed to parse old value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.logger.warn(
+          `Failed to parse old value for setting ${key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
@@ -493,7 +546,7 @@ export class PlatformSettingsService {
       ...setting,
       isActive: false,
       updatedBy: { id: userId } as User,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     // Create audit record
@@ -505,7 +558,7 @@ export class PlatformSettingsService {
       operation: SettingOperation.DELETE,
       reason,
       changedBy: userId,
-      context
+      context,
     });
 
     // Invalidate cache
@@ -517,7 +570,7 @@ export class PlatformSettingsService {
   async getSettingHistory(
     key: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<PlatformSettingHistoryResponse> {
     return await this.auditService.getSettingHistory(key, limit, offset);
   }
@@ -527,10 +580,10 @@ export class PlatformSettingsService {
     historyId: string,
     userId: string,
     reason: string,
-    context: RequestContext
+    context: RequestContext,
   ): Promise<PlatformSetting> {
     const historyRecord = await this.historyRepository.findOne({
-      where: { id: historyId, key }
+      where: { id: historyId, key },
     });
 
     if (!historyRecord) {
@@ -543,13 +596,13 @@ export class PlatformSettingsService {
       historyRecord.oldValue,
       userId,
       `Rollback: ${reason}`,
-      context
+      context,
     );
   }
 
   async getSettingsSchema(): Promise<PlatformSettingSchema[]> {
     return await this.schemaRepository.find({
-      order: { category: 'ASC', key: 'ASC' }
+      order: { category: 'ASC', key: 'ASC' },
     });
   }
 
@@ -557,7 +610,7 @@ export class PlatformSettingsService {
     const components = {
       database: 'healthy',
       cache: 'healthy',
-      encryption: 'healthy'
+      encryption: 'healthy',
     };
 
     try {
@@ -582,22 +635,23 @@ export class PlatformSettingsService {
       const testData = { test: 'data' };
       const encrypted = await this.encryptionService.encrypt(testData);
       const decrypted = await this.encryptionService.decrypt(encrypted);
-      components.encryption = JSON.stringify(testData) === JSON.stringify(decrypted) ? 'healthy' : 'unhealthy';
+      components.encryption =
+        JSON.stringify(testData) === JSON.stringify(decrypted) ? 'healthy' : 'unhealthy';
     } catch (error) {
       components.encryption = 'unhealthy';
       this.logger.error('Encryption health check failed:', error);
     }
 
-    const allHealthy = Object.values(components).every(status => status === 'healthy');
-    
+    const allHealthy = Object.values(components).every((status) => status === 'healthy');
+
     return {
       status: allHealthy ? 'healthy' : 'degraded',
-      components
+      components,
     };
   }
 
   private async processSettingsForResponse(
-    settings: PlatformSetting[]
+    settings: PlatformSetting[],
   ): Promise<PlatformSettingsResponse> {
     const categorizedSettings: { [category: string]: { [key: string]: any } } = {};
 
@@ -627,14 +681,14 @@ export class PlatformSettingsService {
               break;
           }
         } catch (error) {
-          this.logger.warn(`Failed to parse value for setting ${setting.key}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          this.logger.warn(
+            `Failed to parse value for setting ${setting.key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
         }
       }
 
       // Decrypt if needed
-      const finalValue = setting.isEncrypted
-        ? await this.encryptionService.decrypt(value)
-        : value;
+      const finalValue = setting.isEncrypted ? await this.encryptionService.decrypt(value) : value;
 
       // Group by category
       if (!categorizedSettings[setting.category]) {
@@ -647,7 +701,7 @@ export class PlatformSettingsService {
       settings: categorizedSettings as any,
       lastUpdated: new Date(),
       environment: settings[0]?.environment || process.env.NODE_ENV || 'production',
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 
@@ -660,20 +714,16 @@ export class PlatformSettingsService {
 
   private async invalidateSettingCache(key: string, environment?: string): Promise<void> {
     const env = environment || process.env.NODE_ENV || 'production';
-    const keys = [
-      `setting:${key}:${env}`,
-      `platform_settings:${env}`,
-      'platform_settings:*'
-    ];
+    const keys = [`setting:${key}:${env}`, `platform_settings:${env}`, 'platform_settings:*'];
 
-    await Promise.all(keys.map(k => this.cacheService.del(k)));
+    await Promise.all(keys.map((k) => this.cacheService.del(k)));
   }
 
   private async validateUserPermissions(userId: string, category: SettingCategory): Promise<void> {
     // For now, we'll implement basic permission checking
     // In a real implementation, this would integrate with your user service
     this.logger.debug(`Validating permissions for user ${userId} on category ${category}`);
-    
+
     // Basic permission check - in production this would be more sophisticated
     // For now, we'll allow all operations for admin users
     // This is a placeholder for proper RBAC implementation

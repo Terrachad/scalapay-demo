@@ -3,7 +3,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PaymentEventHandler } from './handlers/payment-event.handler';
 import { TransactionEventHandler } from './handlers/transaction-event.handler';
 import { UserEventHandler } from './handlers/user-event.handler';
-import { NotificationService } from '../payments/services/notification.service';
+import { NotificationService } from '../shared/services/notification.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { Transaction } from '../transactions/entities/transaction.entity';
