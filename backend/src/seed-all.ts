@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User, UserRole } from './modules/users/entities/user.entity';
 import { Merchant } from './modules/merchants/entities/merchant.entity';
-import { PaymentConfig } from './modules/payments/entities/payment-config.entity';
+import { PlatformSetting } from './modules/platform-settings/entities/platform-setting.entity';
 import {
   MerchantSettings,
   SettingType,
@@ -16,8 +16,8 @@ async function seedAllData() {
   // Get repositories
   const userRepository = app.get<Repository<User>>(getRepositoryToken(User));
   const merchantRepository = app.get<Repository<Merchant>>(getRepositoryToken(Merchant));
-  const paymentConfigRepository = app.get<Repository<PaymentConfig>>(
-    getRepositoryToken(PaymentConfig),
+  const paymentConfigRepository = app.get<Repository<PlatformSetting>>(
+    getRepositoryToken(PlatformSetting),
   );
   const merchantSettingsRepository = app.get<Repository<MerchantSettings>>(
     getRepositoryToken(MerchantSettings),
@@ -130,7 +130,7 @@ async function seedAllData() {
   // ========== STEP 3: Create Payment Configurations ==========
   console.log('\n💳 STEP 3: Creating payment configurations...');
 
-  const defaultPaymentConfigs = [
+  const defaultPlatformSettings = [
     {
       key: 'default',
       value: JSON.stringify({
@@ -268,14 +268,18 @@ async function seedAllData() {
     },
   ];
 
-  for (const configData of defaultPaymentConfigs) {
+  for (const configData of defaultPlatformSettings) {
     try {
       const existingConfig = await paymentConfigRepository.findOne({
         where: { key: configData.key },
       });
       if (existingConfig) {
         console.log(`⚠️  Config '${configData.key}' already exists, updating...`);
-        await paymentConfigRepository.update({ key: configData.key }, configData);
+        await paymentConfigRepository.update({ key: configData.key }, {
+          value: configData.value || '',
+          description: configData.description || '',
+          isActive: configData.isActive ?? true,
+        } as any);
         console.log(`🔄 Updated config: ${configData.key}`);
       } else {
         const config = paymentConfigRepository.create(configData);
@@ -446,7 +450,7 @@ async function seedAllData() {
   console.log('\n🏪 MERCHANTS:');
   console.log('   • Demo Electronics Store (ID: 123e4567-e89b-12d3-a456-426614174000)');
   console.log('\n💳 PAYMENT CONFIGS:');
-  console.log(`   • ${defaultPaymentConfigs.length} platform-wide payment configurations`);
+  console.log(`   • ${defaultPlatformSettings.length} platform-wide payment configurations`);
   console.log('   • Default payment config with biweekly intervals');
   console.log('   • Fraud detection and credit check settings');
   console.log('   • Fee structures and retry policies');

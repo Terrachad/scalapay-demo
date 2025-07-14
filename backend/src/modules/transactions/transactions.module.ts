@@ -7,7 +7,7 @@ import { Transaction } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
 import { Payment } from '../payments/entities/payment.entity';
-import { PaymentConfig } from '../payments/entities/payment-config.entity';
+import { PlatformSetting } from '../platform-settings/entities/platform-setting.entity';
 import { TransactionsService } from './transactions.service';
 import { TransactionsController } from './transactions.controller';
 import { TransactionRepository } from './repositories/transaction.repository';
@@ -20,7 +20,7 @@ import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment, PaymentConfig]),
+    TypeOrmModule.forFeature([Transaction, User, Merchant, Payment, PlatformSetting]),
     ConfigModule,
     ScheduleModule.forRoot(),
     HttpModule,

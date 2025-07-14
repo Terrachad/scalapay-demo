@@ -236,4 +236,133 @@ export class SettingsValidationService {
     const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY'];
     return validCurrencies.includes(currency.toUpperCase());
   }
+
+  /**
+   * Payment Gateway specific validation methods
+   * These methods provide backward compatibility for payment gateway services
+   */
+
+  async validateBulkUpdate(
+    updates: Array<{ configKey: string; value: string; category?: string }>,
+    environment?: string,
+  ): Promise<Array<{ configKey: string; errors: string[] }>> {
+    const results: Array<{ configKey: string; errors: string[] }> = [];
+
+    for (const update of updates) {
+      const errors: string[] = [];
+
+      try {
+        // Validate each setting using existing validation logic
+        await this.validateSetting(update.configKey, update.value);
+
+        // Additional payment gateway specific validations
+        if (update.configKey.includes('stripe') && update.configKey.includes('key')) {
+          if (update.value && !update.value.match(/^(sk_|pk_)/)) {
+            errors.push('Invalid Stripe API key format');
+          }
+        }
+
+        if (update.configKey.includes('webhook') && update.configKey.includes('secret')) {
+          if (update.value && !update.value.match(/^whsec_/)) {
+            errors.push('Invalid webhook secret format');
+          }
+        }
+
+        if (update.configKey.includes('url') && update.value) {
+          if (!this.isValidUrl(update.value)) {
+            errors.push('Invalid URL format');
+          }
+        }
+      } catch (validationError) {
+        if (validationError instanceof Error) {
+          errors.push(validationError.message);
+        } else {
+          errors.push('Validation failed');
+        }
+      }
+
+      results.push({
+        configKey: update.configKey,
+        errors,
+      });
+    }
+
+    return results;
+  }
+
+  async validateSingleConfig(
+    configKey: string,
+    value: string,
+    category?: string,
+    environment?: string,
+  ): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  }> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    try {
+      // Use existing validation logic
+      await this.validateSetting(configKey, value);
+
+      // Payment gateway specific validations
+      if (configKey.includes('stripe')) {
+        if (configKey.includes('publishable_key')) {
+          if (!value.match(/^pk_(test_|live_)/)) {
+            errors.push('Invalid Stripe publishable key format');
+          }
+          if (value.includes('test') && environment === 'production') {
+            warnings.push('Using test key in production environment');
+          }
+        }
+
+        if (configKey.includes('secret_key')) {
+          if (!value.match(/^sk_(test_|live_)/)) {
+            errors.push('Invalid Stripe secret key format');
+          }
+          if (value.includes('test') && environment === 'production') {
+            warnings.push('Using test key in production environment');
+          }
+        }
+
+        if (configKey.includes('webhook_secret')) {
+          if (!value.match(/^whsec_/)) {
+            errors.push('Invalid Stripe webhook secret format');
+          }
+        }
+      }
+
+      // Generic validations for payment gateway configs
+      if (configKey.includes('url') && value) {
+        if (!this.isValidUrl(value)) {
+          errors.push('Invalid URL format');
+        } else if (!value.startsWith('https://') && environment === 'production') {
+          warnings.push('HTTPS recommended for production URLs');
+        }
+      }
+
+      if (configKey.includes('timeout') && value) {
+        const timeout = parseInt(value, 10);
+        if (isNaN(timeout) || timeout <= 0) {
+          errors.push('Timeout must be a positive number');
+        } else if (timeout > 30000) {
+          warnings.push('Timeout value seems high (>30 seconds)');
+        }
+      }
+    } catch (validationError) {
+      if (validationError instanceof Error) {
+        errors.push(validationError.message);
+      } else {
+        errors.push('Validation failed');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
 }

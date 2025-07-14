@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment, PaymentStatus } from '../../payments/entities/payment.entity';
 import { Transaction, PaymentPlan } from '../entities/transaction.entity';
-import { PaymentConfigService } from '../../payments/services/payment-config.service';
+import { PaymentBusinessLogicService } from '../../payments/services/payment-business-logic.service';
 import { StripeService } from '../../payments/services/stripe.service';
 
 export interface PaymentSchedule {
@@ -17,7 +17,7 @@ export class PaymentSchedulerService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    private paymentConfigService: PaymentConfigService,
+    private paymentBusinessLogicService: PaymentBusinessLogicService,
     private stripeService: StripeService,
   ) {}
 
@@ -29,7 +29,7 @@ export class PaymentSchedulerService {
   ): Promise<PaymentSchedule[]> {
     // Use default config if no merchantId provided
     const config = merchantId
-      ? await this.paymentConfigService.getConfigForMerchant(merchantId)
+      ? await this.paymentBusinessLogicService.getConfigForMerchant(merchantId)
       : {
           paymentInterval: 'biweekly',
           gracePeriodDays: 3,
@@ -42,7 +42,7 @@ export class PaymentSchedulerService {
 
     // Create payments with temporary numbering first
     for (let i = 0; i < installments; i++) {
-      const dueDate = this.paymentConfigService.calculateDueDate(
+      const dueDate = this.paymentBusinessLogicService.calculateDueDate(
         i,
         startDate,
         config.paymentInterval,
@@ -208,7 +208,7 @@ export class PaymentSchedulerService {
   async getPaymentPlanInfo(paymentPlan: PaymentPlan, merchantId?: string) {
     // Use default config if no merchantId provided
     const config = merchantId
-      ? await this.paymentConfigService.getConfigForMerchant(merchantId)
+      ? await this.paymentBusinessLogicService.getConfigForMerchant(merchantId)
       : {
           paymentInterval: 'biweekly',
           gracePeriodDays: 3,
@@ -217,7 +217,7 @@ export class PaymentSchedulerService {
           firstPaymentDelayHours: 0,
         };
     const installments = this.getInstallmentCount(paymentPlan);
-    const intervalDescription = this.paymentConfigService.getIntervalDescription(config);
+    const intervalDescription = this.paymentBusinessLogicService.getIntervalDescription(config);
 
     return {
       installments,

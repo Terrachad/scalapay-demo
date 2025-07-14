@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Payment, PaymentStatus } from '../entities/payment.entity';
-import { PaymentConfigService } from './payment-config.service';
+import { PaymentBusinessLogicService } from './payment-business-logic.service';
 import { StripeService } from './stripe.service';
 import { NotificationService } from '../../shared/services/notification.service';
 
@@ -14,7 +14,7 @@ export class PaymentRetryService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
-    private paymentConfigService: PaymentConfigService,
+    private paymentBusinessLogicService: PaymentBusinessLogicService,
     private stripeService: StripeService,
     private notificationService: NotificationService,
   ) {}
@@ -44,7 +44,9 @@ export class PaymentRetryService {
 
       // Use default config if no merchantId provided
       const config = payment.transaction.merchantId
-        ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
+        ? await this.paymentBusinessLogicService.getConfigForMerchant(
+            payment.transaction.merchantId,
+          )
         : {
             paymentInterval: 'biweekly',
             gracePeriodDays: 3,
@@ -189,7 +191,7 @@ export class PaymentRetryService {
 
     // Use default config if no merchantId provided
     const config = payment.transaction.merchantId
-      ? await this.paymentConfigService.getConfigForMerchant(payment.transaction.merchantId)
+      ? await this.paymentBusinessLogicService.getConfigForMerchant(payment.transaction.merchantId)
       : {
           paymentInterval: 'biweekly',
           gracePeriodDays: 3,

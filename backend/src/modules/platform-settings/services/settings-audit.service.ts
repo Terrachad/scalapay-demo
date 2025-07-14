@@ -200,4 +200,112 @@ export class SettingsAuditService {
       .slice(0, limit)
       .map(([key, count]) => ({ key, count }));
   }
+
+  /**
+   * Payment Gateway specific audit methods
+   * These methods provide backward compatibility for payment gateway services
+   */
+
+  async logOperation(operationData: {
+    operation: SettingOperation;
+    configKey: string;
+    category?: any;
+    environment?: any;
+    userId: string;
+    userEmail?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    requestId?: string;
+    reason: string;
+    isSuccessful?: boolean;
+    errorMessage?: string;
+    oldValue?: any;
+    newValue?: any;
+    metadata?: any;
+  }): Promise<void> {
+    // Adapter method for payment gateway compatibility
+    const changeData: SettingChangeData = {
+      settingId: operationData.configKey, // Use configKey as settingId for payment configs
+      key: operationData.configKey,
+      oldValue: operationData.oldValue,
+      newValue: operationData.newValue,
+      operation: operationData.operation,
+      reason: operationData.reason,
+      changedBy: operationData.userId,
+      context: {
+        requestId: operationData.requestId || 'unknown',
+        userId: operationData.userId,
+        ipAddress: operationData.ipAddress || '',
+        userAgent: operationData.userAgent || '',
+        environment: operationData.environment || 'production',
+      },
+    };
+
+    await this.logSettingChange(changeData);
+  }
+
+  async getFilteredAuditHistory(filters: AuditReportFilters): Promise<{
+    records: PlatformSettingHistory[];
+    total: number;
+    summary: AuditSummary;
+    hasMore: boolean;
+  }> {
+    // Create date range for last 30 days if not specified
+    const endDate = filters.dateTo || new Date();
+    const startDate =
+      filters.dateFrom ||
+      (() => {
+        const date = new Date();
+        date.setDate(date.getDate() - 30);
+        return date;
+      })();
+
+    const auditReport = await this.getAuditReport(startDate, endDate, filters);
+
+    const limit = filters.limit || 100;
+    const offset = filters.offset || 0;
+    const hasMore = offset + auditReport.changes.length < auditReport.totalCount;
+
+    return {
+      records: auditReport.changes,
+      total: auditReport.totalCount,
+      summary: auditReport.summary,
+      hasMore,
+    };
+  }
+
+  async getAuditTrailSummary(configKey: string, environment?: string): Promise<AuditSummary> {
+    // Get audit summary for specific config key
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    const history = await this.historyRepository.find({
+      where: { key: configKey },
+      order: { changedAt: 'DESC' },
+      take: 100,
+    });
+
+    return this.generateAuditSummary(history);
+  }
+
+  async getConfigAuditTrail(
+    configKey: string,
+    environment?: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<{
+    history: PlatformSettingHistory[];
+    total: number;
+  }> {
+    const [history, total] = await this.historyRepository.findAndCount({
+      where: { key: configKey },
+      order: { changedAt: 'DESC' },
+      take: limit,
+      skip: offset,
+      relations: ['changedBy'],
+    });
+
+    return { history, total };
+  }
 }

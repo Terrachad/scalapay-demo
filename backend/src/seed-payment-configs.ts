@@ -2,16 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { PaymentConfig } from './modules/payments/entities/payment-config.entity';
+import { PlatformSetting } from './modules/platform-settings/entities/platform-setting.entity';
 import {
   MerchantSettings,
   SettingType,
 } from './modules/merchants/entities/merchant-settings.entity';
 
-async function seedPaymentConfigs() {
+async function seedPlatformSettings() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  const paymentConfigRepository = app.get<Repository<PaymentConfig>>(
-    getRepositoryToken(PaymentConfig),
+  const paymentConfigRepository = app.get<Repository<PlatformSetting>>(
+    getRepositoryToken(PlatformSetting),
   );
   const merchantSettingsRepository = app.get<Repository<MerchantSettings>>(
     getRepositoryToken(MerchantSettings),
@@ -20,7 +20,7 @@ async function seedPaymentConfigs() {
   console.log('🔄 Seeding payment configurations...');
 
   // Default payment configuration settings
-  const defaultPaymentConfigs = [
+  const defaultPlatformSettings = [
     {
       key: 'default',
       value: JSON.stringify({
@@ -153,14 +153,18 @@ async function seedPaymentConfigs() {
   ];
 
   // Seed payment configurations
-  for (const configData of defaultPaymentConfigs) {
+  for (const configData of defaultPlatformSettings) {
     try {
       const existingConfig = await paymentConfigRepository.findOne({
         where: { key: configData.key },
       });
       if (existingConfig) {
         console.log(`⚠️  Payment config '${configData.key}' already exists, updating...`);
-        await paymentConfigRepository.update({ key: configData.key }, configData);
+        await paymentConfigRepository.update({ key: configData.key }, {
+          value: configData.value || '',
+          description: configData.description || '',
+          isActive: configData.isActive ?? true,
+        } as any);
         console.log(`🔄 Updated payment config: ${configData.key}`);
       } else {
         const config = paymentConfigRepository.create(configData);
@@ -299,7 +303,7 @@ async function seedPaymentConfigs() {
   await app.close();
 }
 
-seedPaymentConfigs().catch((error) => {
+seedPlatformSettings().catch((error) => {
   console.error('❌ Payment config seeding failed:', error);
   process.exit(1);
 });

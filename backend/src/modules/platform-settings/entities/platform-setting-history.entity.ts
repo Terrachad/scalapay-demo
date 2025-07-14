@@ -13,6 +13,8 @@ export enum SettingOperation {
   CREATE = 'CREATE',
   UPDATE = 'UPDATE',
   DELETE = 'DELETE',
+  VALIDATE = 'VALIDATE',
+  ROLLBACK = 'ROLLBACK',
 }
 
 @Entity('platform_settings_history')

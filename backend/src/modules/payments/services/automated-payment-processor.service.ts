@@ -11,7 +11,7 @@ import { MerchantSettings } from '../../merchants/entities/merchant-settings.ent
 import { StripeService } from './stripe.service';
 import { PaymentRetryService } from './payment-retry.service';
 import { NotificationService } from '../../shared/services/notification.service';
-import { PaymentConfigService } from './payment-config.service';
+import { PlatformSettingsService } from '../../platform-settings/services/platform-settings.service';
 import { CreditCheckService } from '../../integrations/services/credit-check.service';
 import { FraudDetectionService } from '../../integrations/services/fraud-detection.service';
 
@@ -60,7 +60,7 @@ export class AutomatedPaymentProcessorService {
     private stripeService: StripeService,
     private paymentRetryService: PaymentRetryService,
     private notificationService: NotificationService,
-    private paymentConfigService: PaymentConfigService,
+    private platformSettingsService: PlatformSettingsService,
     private creditCheckService: CreditCheckService,
     private fraudDetectionService: FraudDetectionService,
     private eventEmitter: EventEmitter2,

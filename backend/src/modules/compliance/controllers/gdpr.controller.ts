@@ -17,6 +17,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRole } from '../../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GDPRConsent, ConsentData, DataRequest } from '../entities/gdpr-consent.entity';
@@ -379,6 +382,8 @@ export class GDPRController {
   }
 
   @Put('data-request/:requestIndex')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update data request status (Admin only)' })
   @ApiResponse({ status: 200, description: 'Data request updated successfully' })
   async processDataRequest(
@@ -386,7 +391,6 @@ export class GDPRController {
     @Param('requestIndex') requestIndex: number,
     @Body() processDto: ProcessDataRequestDto,
   ) {
-    // TODO: Add admin role check
     const userId = req.user.userId || req.user.id;
 
     const consent = await this.gdprConsentRepository.findOne({
@@ -554,10 +558,11 @@ export class GDPRController {
 
   // Admin endpoints
   @Get('admin/compliance/search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Search compliance records (Admin only)' })
   @ApiResponse({ status: 200, description: 'Compliance records retrieved successfully' })
   async searchComplianceRecords(@Request() req: any, @Query() searchDto: ComplianceSearchDto) {
-    // TODO: Add admin role check
     const {
       page = 1,
       limit = 10,
@@ -626,11 +631,11 @@ export class GDPRController {
   }
 
   @Get('admin/statistics')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get GDPR compliance statistics (Admin only)' })
   @ApiResponse({ status: 200, description: 'GDPR statistics retrieved successfully' })
   async getGDPRStatistics(@Request() req: any) {
-    // TODO: Add admin role check
-
     const totalConsents = await this.gdprConsentRepository.count();
     const activeConsents = await this.gdprConsentRepository.count({
       where: { isActive: true },
@@ -666,11 +671,11 @@ export class GDPRController {
   }
 
   @Post('admin/cleanup')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Clean up expired consent data (Admin only)' })
   @ApiResponse({ status: 200, description: 'Cleanup completed successfully' })
   async cleanupExpiredData(@Request() req: any) {
-    // TODO: Add admin role check
-
     const expiredConsents = await this.gdprConsentRepository.find({
       where: { isActive: true },
     });

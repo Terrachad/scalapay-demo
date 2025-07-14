@@ -223,10 +223,28 @@ export class AuditReportFilters {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ description: 'Config key filter' })
+  @IsOptional()
+  @IsString()
+  configKey?: string;
+
   @ApiPropertyOptional({ enum: SettingOperation, description: 'Operation filter' })
   @IsOptional()
   @IsEnum(SettingOperation)
   operation?: SettingOperation;
+
+  @ApiPropertyOptional({ enum: Environment, description: 'Environment filter' })
+  @IsOptional()
+  @IsEnum(Environment)
+  environment?: Environment;
+
+  @ApiPropertyOptional({ description: 'Date from filter' })
+  @IsOptional()
+  dateFrom?: Date;
+
+  @ApiPropertyOptional({ description: 'Date to filter' })
+  @IsOptional()
+  dateTo?: Date;
 
   @ApiPropertyOptional({ description: 'Result limit', minimum: 1, maximum: 1000 })
   @IsOptional()
@@ -240,6 +258,11 @@ export class AuditReportFilters {
   @IsNumber()
   @Min(0)
   offset?: number;
+
+  @ApiPropertyOptional({ description: 'Filter by operation success status' })
+  @IsOptional()
+  @IsBoolean()
+  isSuccessful?: boolean;
 }
 
 export class AuditSummary {

@@ -6,7 +6,7 @@ import { Transaction, PaymentPlan } from '../../transactions/entities/transactio
 import { User } from '../../users/entities/user.entity';
 import { PaymentMethod } from '../entities/payment-method.entity';
 import { StripeService } from './stripe.service';
-import { PaymentConfigService } from './payment-config.service';
+import { PaymentBusinessLogicService } from './payment-business-logic.service';
 import { MerchantSettings, SettingType } from '../../merchants/entities/merchant-settings.entity';
 
 export interface PaymentScheduleConfig {
@@ -46,7 +46,7 @@ export class EnterprisePaymentSchedulerService {
     private merchantSettingsRepository: Repository<MerchantSettings>,
     private dataSource: DataSource,
     private stripeService: StripeService,
-    private paymentConfigService: PaymentConfigService,
+    private paymentBusinessLogicService: PaymentBusinessLogicService,
   ) {}
 
   /**
@@ -161,7 +161,11 @@ export class EnterprisePaymentSchedulerService {
 
     for (let i = 0; i < installmentCount; i++) {
       // Calculate due date using configuration-driven intervals
-      const dueDate = this.paymentConfigService.calculateDueDate(i, baseDate, paymentInterval);
+      const dueDate = this.paymentBusinessLogicService.calculateDueDate(
+        i,
+        baseDate,
+        paymentInterval,
+      );
 
       // Calculate installment amount (add remainder to last installment)
       const installmentAmount =
@@ -208,10 +212,10 @@ export class EnterprisePaymentSchedulerService {
       // Get global defaults
       const [defaultInterval, defaultGracePeriod, defaultLateFee, defaultMaxRetries] =
         await Promise.all([
-          this.paymentConfigService.getConfigValue('default.payment.interval'),
-          this.paymentConfigService.getConfigValue('default.grace.period.days'),
-          this.paymentConfigService.getConfigValue('default.late.fee.amount'),
-          this.paymentConfigService.getConfigValue('default.max.retries'),
+          this.paymentBusinessLogicService.getConfigValue('default.payment.interval'),
+          this.paymentBusinessLogicService.getConfigValue('default.grace.period.days'),
+          this.paymentBusinessLogicService.getConfigValue('default.late.fee.amount'),
+          this.paymentBusinessLogicService.getConfigValue('default.max.retries'),
         ]);
 
       return {
