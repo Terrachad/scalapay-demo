@@ -6,7 +6,18 @@
 [![Next.js](https://img.shields.io/badge/Next.js-14.x-black.svg)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A production-grade **Buy Now, Pay Later (BNPL)** platform built with modern enterprise technologies. This comprehensive solution provides flexible payment splitting, real-time fraud detection, credit assessment, and multi-tenant merchant management.
+A production-grade **Buy Now, Pay Later (BNPL)** platform built with modern enterprise technologies. This comprehensive solution provides flexible payment splitting, real-time fraud detection, credit assessment, multi-tenant merchant management, and enterprise-grade security features.
+
+## 🆕 Latest Updates
+
+### **7 Major Feature Releases (Recent Commits)**
+- **Backend Infrastructure Refactoring**: Enhanced payment processing with enterprise-grade scheduling
+- **Payment Gateway Configuration System**: Multi-provider gateway support with encrypted credential storage
+- **Customer Dashboard Enhancement**: Early payments, payment methods, and security management
+- **Security & Payment Components**: GDPR compliance, MFA setup, and advanced payment method management
+- **Enterprise UI Components**: Advanced tables, dialogs, and accessibility-focused components
+- **Frontend Services & State Management**: Comprehensive API integration with optimized state management
+- **Complete Dashboard Integration**: Real-time analytics, enhanced checkout, and dependency updates
 
 ## 🏗️ Architecture Overview
 
@@ -21,30 +32,47 @@ ScalaPay is a full-stack enterprise application designed for high scalability an
 ## 🌟 Core Business Features
 
 ### 💳 **Advanced Payment Processing**
-- **Flexible Payment Plans**: 2x, 3x, or 4x installment options
-- **Stripe Integration**: Full payment processing with 3D Secure support
-- **Smart Retry Logic**: Automated payment retry with exponential backoff
-- **Early Payment Options**: Customer-friendly early payment with discounts
-- **Multi-Currency Support**: Global payment processing capabilities
+- **Flexible Payment Plans**: 2x, 3x, or 4x installment options with dynamic scheduling
+- **Multi-Gateway Support**: Comprehensive payment gateway configuration system
+- **Stripe Integration**: Full payment processing with 3D Secure support and webhooks
+- **Smart Retry Logic**: Automated payment retry with exponential backoff and circuit breakers
+- **Early Payment Options**: Customer-friendly early payment with real-time discounts and analytics
+- **Payment Method Management**: Secure storage and lifecycle management of customer payment methods
+- **Multi-Currency Support**: Global payment processing with currency conversion
+- **Payment Business Logic**: Gateway-agnostic processing with intelligent routing
 
-### 🛡️ **Enterprise Risk Management**
-- **Real-Time Fraud Detection**: Integration with MaxMind, Sift, and Kount
-- **Credit Assessment**: Live integration with Experian, Equifax, and Plaid
-- **AI-Powered Risk Scoring**: Composite risk assessment from multiple sources
-- **Velocity Checking**: Transaction pattern analysis and limits
-- **Device Fingerprinting**: Advanced fraud prevention techniques
+### 🛡️ **Enterprise Risk Management & Security**
+- **Real-Time Fraud Detection**: Production integration with MaxMind, Sift, and Kount APIs
+- **Credit Assessment**: Live integration with Experian, Equifax, and Plaid credit bureaus
+- **AI-Powered Risk Scoring**: Composite risk assessment from multiple fraud detection sources
+- **Velocity Checking**: Advanced transaction pattern analysis and dynamic limits
+- **Device Fingerprinting**: Multi-provider device analysis and threat detection
+- **GDPR Compliance**: Comprehensive consent management and data protection controls
+- **Multi-Factor Authentication**: Enterprise-grade MFA with setup wizard and recovery options
+- **Security Dashboard**: Real-time security monitoring and threat analysis
 
-### 👥 **Multi-Tenant Platform**
-- **Role-Based Access Control**: Customer, Merchant, and Admin roles
-- **Merchant Management**: Comprehensive onboarding and settings management
-- **White-Label Ready**: Customizable branding and configuration
-- **API-First Design**: Full REST API with OpenAPI documentation
+### 👥 **Multi-Tenant Platform & User Management**
+- **Role-Based Access Control**: Customer, Merchant, and Admin with granular permissions
+- **Advanced User Profiles**: Comprehensive profile management with preferences and notifications
+- **Merchant Settings Management**: Real-time configuration with payment, security, and store settings
+- **Platform Settings**: Global configuration management with validation and audit trails
+- **White-Label Ready**: Customizable branding, themes, and enterprise configuration
+- **API-First Design**: Complete REST API with OpenAPI documentation and rate limiting
 
-### 📊 **Real-Time Analytics & Reporting**
-- **Live Dashboards**: Real-time transaction monitoring and analytics
-- **Business Intelligence**: Revenue tracking, conversion metrics, and KPIs
-- **Compliance Reporting**: Automated regulatory and audit reports
-- **Merchant Analytics**: Detailed performance and settlement reporting
+### 📊 **Real-Time Analytics & Advanced Dashboards**
+- **Live Customer Dashboards**: Real-time payment management, early payment insights, and transaction history
+- **Merchant Analytics Portal**: Revenue tracking, conversion metrics, order management, and settlement reporting
+- **Admin Control Center**: Platform-wide analytics, user management, and system configuration
+- **Early Payment Analytics**: Predictive insights, fee calculations, and payment acceleration trends
+- **Payment Gateway Analytics**: Multi-provider performance monitoring and routing optimization
+- **Security Analytics**: Fraud detection insights, risk scoring trends, and threat intelligence
+
+### 🔧 **Enterprise Configuration & Management**
+- **Payment Gateway Configuration**: Dynamic multi-provider setup with encrypted credential storage
+- **Platform Settings Management**: Comprehensive system configuration with validation and versioning
+- **Settings Audit Trail**: Complete history tracking with compliance reporting
+- **Payment Scheduler**: Advanced scheduling with automated retry and notification systems
+- **Configuration Validation**: Real-time validation with business rule enforcement
 
 ## 🛠️ Technology Stack
 
@@ -62,12 +90,14 @@ Testing           : Jest (Unit/Integration/E2E)
 ### **Frontend (Next.js)**
 ```typescript
 Framework       : Next.js 14 with App Router
-UI Components   : Radix UI with shadcn/ui
-State Management: Zustand + React Query
-Styling         : Tailwind CSS + CSS-in-JS
-Animation       : Framer Motion
-Charts          : Recharts
-Payment UI      : Stripe Elements
+UI Components   : Radix UI with shadcn/ui with custom components
+State Management: Zustand + React Query for optimized data fetching
+Styling         : Tailwind CSS + CSS-in-JS with custom design system
+Animation       : Framer Motion for smooth interactions
+Charts          : Recharts for analytics and reporting
+Payment UI      : Stripe Elements with custom payment forms
+Enterprise UI   : Advanced table, dialog, checkbox, and separator components
+Route Security  : Route checking and access control utilities
 ```
 
 ### **Infrastructure**
@@ -150,18 +180,26 @@ scalapay-demo/
 │   ├── src/
 │   │   ├── modules/
 │   │   │   ├── auth/                 # Authentication & authorization
-│   │   │   ├── users/                # User management
-│   │   │   ├── merchants/            # Merchant onboarding & settings
-│   │   │   ├── payments/             # Payment processing core
-│   │   │   │   ├── entities/         # Payment, config, method entities
-│   │   │   │   ├── services/         # Stripe, retry, early payment
-│   │   │   │   └── controllers/      # Payment APIs
-│   │   │   ├── transactions/         # Transaction lifecycle
-│   │   │   ├── integrations/         # External API integrations
-│   │   │   │   └── services/         # Credit check, fraud detection
+│   │   │   ├── users/                # User management with profiles
+│   │   │   ├── merchants/            # Merchant onboarding & settings management
+│   │   │   ├── payments/             # Comprehensive payment processing core
+│   │   │   │   ├── entities/         # Payment gateway config, method entities
+│   │   │   │   ├── services/         # Gateway config, business logic, retry services
+│   │   │   │   ├── controllers/      # Payment gateway configuration APIs
+│   │   │   │   └── payment-gateway-config.module.ts  # Dedicated gateway module
+│   │   │   ├── transactions/         # Transaction lifecycle management
+│   │   │   ├── integrations/         # Production API integrations
+│   │   │   │   └── services/         # Real credit check & fraud detection APIs
+│   │   │   ├── platform-settings/    # Platform configuration management
+│   │   │   │   ├── dto/              # Settings validation and configuration DTOs
+│   │   │   │   ├── entities/         # Settings history and audit entities
+│   │   │   │   └── services/         # Settings validation and audit services
+│   │   │   ├── compliance/           # GDPR and regulatory compliance
 │   │   │   ├── queues/               # Background job processing
 │   │   │   ├── websocket/            # Real-time communication
 │   │   │   └── analytics/            # Business intelligence
+│   │   ├── shared/                   # Shared types and utilities
+│   │   │   └── payment-settings.types.ts  # Cross-module payment types
 │   │   ├── common/                   # Shared utilities
 │   │   │   ├── guards/               # Security guards
 │   │   │   ├── interceptors/         # Request/response interceptors
@@ -172,18 +210,46 @@ scalapay-demo/
 │   ├── src/
 │   │   ├── app/                      # Next.js 14 App Router
 │   │   │   ├── (dashboard)/          # Dashboard layouts
-│   │   │   │   ├── admin/            # Admin control panel
-│   │   │   │   ├── merchant/         # Merchant portal
-│   │   │   │   └── customer/         # Customer portal
+│   │   │   │   ├── admin/            # Admin control panel with settings
+│   │   │   │   ├── merchant/         # Merchant portal with analytics
+│   │   │   │   └── customer/         # Customer portal with new features
+│   │   │   │       ├── early-payments/    # Early payment management
+│   │   │   │       ├── payment-methods/   # Payment method management
+│   │   │   │       └── security/          # Security settings dashboard
 │   │   │   └── (shop)/               # E-commerce interface
 │   │   ├── components/
-│   │   │   ├── ui/                   # Reusable UI components
+│   │   │   ├── ui/                   # UI component library
+│   │   │   │   ├── checkbox.tsx      # Accessible checkbox component
+│   │   │   │   ├── table.tsx         # Advanced table with sorting/filtering
+│   │   │   │   ├── separator.tsx     # Visual separator component
+│   │   │   │   └── payment-config-panel-enterprise.tsx  # Enterprise config panel
+│   │   │   ├── payments/             # Comprehensive payment component library
+│   │   │   │   ├── add-payment-method-modal.tsx    # Payment method addition
+│   │   │   │   ├── early-payment-calculator.tsx    # Real-time calculation
+│   │   │   │   ├── early-payment-history.tsx       # Payment history tracking
+│   │   │   │   ├── early-payment-insights.tsx      # Analytics dashboard
+│   │   │   │   ├── payment-method-*.tsx             # Payment method management
+│   │   │   │   └── payment-method-storage.tsx       # Secure storage component
+│   │   │   ├── security/             # Security management components
+│   │   │   │   ├── gdpr-consent-management.tsx     # GDPR compliance
+│   │   │   │   └── mfa-setup-wizard.tsx             # Multi-factor auth setup
 │   │   │   ├── checkout/             # Payment processing UI
 │   │   │   ├── admin/                # Admin-specific components
 │   │   │   └── layout/               # Layout components
 │   │   ├── services/                 # API client services
+│   │   │   ├── early-payment-service.ts          # Early payment API integration
+│   │   │   ├── payment-gateway-config-service.ts # Gateway configuration API
+│   │   │   ├── payment-method-service.ts         # Payment method management API
+│   │   │   ├── security-service.ts               # Security and compliance API
+│   │   │   ├── payment-config-service.ts         # Payment config service
+│   │   │   └── platform-settings-service.ts      # Platform settings API
 │   │   ├── store/                    # State management
+│   │   │   ├── early-payment-store.ts    # Early payment state management
+│   │   │   ├── payment-method-store.ts   # Payment method state
+│   │   │   ├── security-store.ts         # Security settings state
+│   │   │   └── wishlist-store.ts         # Wishlist with payment features
 │   │   └── lib/                      # Utilities and helpers
+│   │       └── route-check.ts        # Navigation security
 ├── docker-compose.yml                # Infrastructure definition
 └── package.json                      # Monorepo configuration
 ```
@@ -283,23 +349,31 @@ Role: Platform administrator with full access
 ### Demo Workflows
 
 #### **Customer Journey**
-1. **Shopping**: Browse products and add to cart
-2. **Checkout**: Select BNPL payment option (2x, 3x, or 4x)
-3. **Payment Setup**: Enter payment method with Stripe
-4. **Approval**: Real-time credit and fraud checking
-5. **Completion**: Automatic installment scheduling
+1. **Shopping**: Browse products and add to cart with modern UI
+2. **Checkout**: Select BNPL payment option (2x, 3x, or 4x) with real-time calculations
+3. **Payment Setup**: Secure payment method management with encrypted storage
+4. **Approval**: Real-time credit bureau and fraud detection API checks
+5. **Completion**: Automatic installment scheduling with SMS/email notifications
+6. **Management**: Access payment methods dashboard, early payment calculator, and security settings
+7. **Early Payments**: Calculate and process early payments with discount insights
+8. **Security**: Manage GDPR consent, enable MFA, and control payment preferences
 
 #### **Merchant Experience**
-1. **Dashboard**: Real-time transaction monitoring
-2. **Analytics**: Revenue tracking and conversion metrics
-3. **Settings**: Payment configuration and limits
-4. **Reports**: Settlement and compliance reporting
+1. **Dashboard**: Real-time transaction monitoring with advanced analytics
+2. **Analytics**: Revenue tracking, conversion metrics, and order management
+3. **Settings**: Comprehensive payment configuration with gateway management
+4. **Gateway Config**: Multi-provider payment gateway setup with encrypted credentials
+5. **Reports**: Advanced settlement, compliance, and performance reporting
+6. **Transaction Management**: Real-time transaction lifecycle monitoring
 
 #### **Admin Controls**
-1. **User Management**: Account approval and management
-2. **Platform Settings**: Global configuration and limits
-3. **Analytics**: System-wide performance monitoring
-4. **Risk Management**: Fraud rules and credit policies
+1. **User Management**: Advanced account approval and profile management
+2. **Platform Settings**: Global configuration with validation and audit trails
+3. **Payment Configuration**: Enterprise payment settings with real-time validation
+4. **Gateway Management**: Multi-provider payment gateway configuration and monitoring
+5. **Analytics**: System-wide performance monitoring with security insights
+6. **Risk Management**: Advanced fraud rules, credit policies, and threat analysis
+7. **Compliance**: GDPR management, audit trails, and regulatory reporting
 
 ## 🚀 Deployment Guide
 
@@ -368,13 +442,54 @@ MAXMIND_API_KEY=<production-key>
 
 ## 🤝 API Documentation
 
-### REST API Endpoints
-- **Authentication**: `/api/auth/*` - Login, registration, token refresh
-- **Users**: `/api/users/*` - Profile management and preferences
-- **Merchants**: `/api/merchants/*` - Merchant onboarding and settings
-- **Payments**: `/api/payments/*` - Payment processing and management
-- **Transactions**: `/api/transactions/*` - Transaction lifecycle
-- **Analytics**: `/api/analytics/*` - Business intelligence data
+### Complete REST API Endpoints (165+ endpoints)
+
+#### **Authentication & Security** (`/auth`, `/mfa`)
+- **Authentication**: `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/refresh`, `/auth/me`
+- **Multi-Factor Auth**: `/mfa/setup`, `/mfa/verify`, `/mfa/backup-codes`, `/mfa/trusted-devices`
+- **MFA Management**: `/mfa/totp/*`, `/mfa/sms/*`, `/mfa/email/*`, `/mfa/analytics`
+
+#### **User Management** (`/users`)
+- **Profile**: `/users/profile`, `/users/profile/update`, `/users/profile/extended`
+- **Preferences**: `/users/notification-preferences`, `/users/security-preferences`
+- **Admin**: `/users/pending-approvals`, `/users/{id}/approve`, `/users/{id}/reject`
+
+#### **Merchant Management** (`/merchants`)
+- **Profile**: `/merchants/profile`, `/merchants/analytics`, `/merchants/api-key/regenerate`
+- **Settings**: `/merchants/payment-settings`, `/merchants/notification-settings`
+- **Configuration**: `/merchants/security-settings`, `/merchants/store-settings`
+
+#### **Payment Processing** (`/payments`, `/payment-methods`)
+- **Payment Flow**: `/payments/intent`, `/payments/{id}/confirm`, `/payments/{id}/retry`
+- **Payment Methods**: `/payment-methods/setup-intent`, `/payment-methods/store`
+- **Management**: `/payment-methods/{id}/default`, `/payment-methods/bulk`
+- **Analytics**: `/payment-methods/analytics/summary`, `/payment-methods/usage-stats`
+
+#### **Early Payments** (`/early-payments`)
+- **Calculation**: `/early-payments/options/{transactionId}`, `/early-payments/savings/{transactionId}`
+- **Processing**: `/early-payments/process/full`, `/early-payments/process/partial`
+- **Configuration**: `/early-payments/config`, `/early-payments/config/{merchantId}`
+- **Analytics**: `/early-payments/analytics/statistics`, `/early-payments/insights`
+
+#### **Transaction Management** (`/transactions`)
+- **CRUD**: `/transactions`, `/transactions/{id}`, `/transactions/my`, `/transactions/merchant`
+- **Lifecycle**: `/transactions/{id}/retry-payment`, `/transactions/{id}/approve`
+- **Payments**: `/transactions/{id}/payments`, `/transactions/{id}/cancel`
+
+#### **Platform Administration** (`/admin`)
+- **User Admin**: `/admin/merchants/{id}/approve`, `/admin/pending-merchants`
+- **Platform Settings**: `/admin/platform-settings`, `/admin/platform-settings/{key}`
+- **Gateway Config**: `/admin/payment-gateway-config`, `/admin/payment-gateway-config/validate`
+- **Audit**: `/admin/platform-settings/audit/report`, `/admin/platform-settings/{key}/history`
+
+#### **GDPR Compliance** (`/gdpr`)
+- **Consent**: `/gdpr/consent`, `/gdpr/consent/withdraw`, `/gdpr/consent-history`
+- **Data Rights**: `/gdpr/data-request`, `/gdpr/data-export`, `/gdpr/privacy-settings`
+- **Admin**: `/gdpr/admin/statistics`, `/gdpr/admin/compliance/search`
+
+#### **Integration & Webhooks** (`/webhooks`, `/stripe-config`)
+- **Webhooks**: `/webhooks/stripe`, `/webhooks/payment-reminders`
+- **Stripe Config**: `/stripe-config/public-key`, `/stripe-config/webhook-test`
 
 ### WebSocket Events
 - **Real-time Updates**: Payment status changes, transaction events
@@ -419,26 +534,47 @@ npm run seed:configs --workspace=backend   # System configuration
 - **ESLint + Prettier**: Code quality enforcement
 - **Husky**: Pre-commit hooks for quality assurance
 
-## 📄 License & Support
+## 📄 Documentation & Support
 
-### License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Interactive API Documentation
+- **Swagger UI**: http://localhost:3001/api - Complete interactive API documentation
+- **OpenAPI Spec**: Full REST API specification with request/response examples
+- **Postman Collection**: Available for comprehensive API testing
+- **Rate Limiting**: 100 requests/minute per user with enterprise scaling
 
-### Contributing
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Development Resources
+- **Setup Guide**: Complete installation and configuration instructions above
+- **Environment Configuration**: `.env.example` with all required variables
+- **Database Migrations**: Automated schema management with TypeORM
+- **Seed Data**: Demo users, merchants, and transactions for development
+- **Testing Suite**: Unit, integration, and E2E tests with coverage reports
 
-### Support & Documentation
-- **Technical Documentation**: Available in `/docs` directory
-- **API Reference**: Interactive documentation at `/api`
-- **Issue Tracking**: GitHub Issues for bug reports and feature requests
-- **Community**: Discussions and Q&A in GitHub Discussions
+### Production Deployment
+- **Docker Support**: Complete containerization with docker-compose
+- **Health Checks**: Built-in monitoring endpoints for all services
+- **Security**: PCI DSS compliance, encryption, and enterprise security features
+- **Monitoring**: Structured logging, metrics, and error tracking
+- **Scalability**: Horizontal scaling ready with stateless architecture
+
+### Support Channels
+- **GitHub Issues**: Bug reports and feature requests
+- **GitHub Discussions**: Community Q&A and development discussions
+- **Documentation**: Comprehensive README with setup and API documentation
+- **Code Examples**: Complete demo workflows and implementation patterns
+
+### License & Contributing
+- **License**: MIT License - see [LICENSE](LICENSE) file for details
+- **Contributing**: 
+  1. Fork the repository
+  2. Create feature branch (`git checkout -b feature/payment-enhancement`)
+  3. Commit changes (`git commit -m 'Add payment feature'`)
+  4. Push to branch (`git push origin feature/payment-enhancement`)
+  5. Open Pull Request with detailed description
 
 ---
 
-**Built with ❤️ for the future of financial technology**
+## 🏆 Enterprise BNPL Platform
 
-*enterprise-grade security, advanced risk management, and exceptional user experience in a single, comprehensive solution.*
+**ScalaPay** delivers production-ready **Buy Now, Pay Later** capabilities with enterprise-grade security, real-time fraud detection, multi-provider payment gateway support, and comprehensive compliance features.
+
+*Built for financial institutions, e-commerce platforms, and fintech companies requiring robust, scalable, and secure payment processing solutions.*
