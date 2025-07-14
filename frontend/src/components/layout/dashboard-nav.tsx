@@ -34,6 +34,9 @@ import {
   Menu,
   User,
   Package,
+  TrendingUp,
+  Shield,
+  Receipt,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,9 +62,27 @@ const navItems: Record<string, NavItem[]> = {
       roles: ['customer'],
     },
     {
+      title: 'Payment Methods',
+      href: '/dashboard/customer/payment-methods',
+      icon: CreditCard,
+      roles: ['customer'],
+    },
+    {
+      title: 'Early Payments',
+      href: '/dashboard/customer/early-payments',
+      icon: TrendingUp,
+      roles: ['customer'],
+    },
+    {
+      title: 'Security & Privacy',
+      href: '/dashboard/customer/security',
+      icon: Shield,
+      roles: ['customer'],
+    },
+    {
       title: 'Transactions',
       href: '/dashboard/customer/transactions',
-      icon: CreditCard,
+      icon: Receipt,
       roles: ['customer'],
     },
     {
@@ -111,12 +132,6 @@ const navItems: Record<string, NavItem[]> = {
       roles: ['admin'],
     },
     {
-      title: 'Transactions',
-      href: '/dashboard/admin/transactions',
-      icon: CreditCard,
-      roles: ['admin'],
-    },
-    {
       title: 'Users',
       href: '/dashboard/admin/users',
       icon: Users,
@@ -126,6 +141,12 @@ const navItems: Record<string, NavItem[]> = {
       title: 'Merchants',
       href: '/dashboard/admin/merchants',
       icon: Store,
+      roles: ['admin'],
+    },
+    {
+      title: 'Transactions',
+      href: '/dashboard/admin/transactions',
+      icon: Receipt,
       roles: ['admin'],
     },
     {

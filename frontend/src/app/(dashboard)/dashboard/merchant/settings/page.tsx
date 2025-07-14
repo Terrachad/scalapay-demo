@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { merchantService } from '@/services/merchant-service';
 import {
   Settings,
@@ -27,6 +27,7 @@ import {
 
 export default function MerchantSettingsPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   const { data: profile, refetch: refetchProfile } = useQuery({
@@ -58,6 +59,11 @@ export default function MerchantSettingsPage() {
     }
   }, [profile]);
 
+  const { data: paymentSettingsData } = useQuery({
+    queryKey: ['merchant-payment-settings'],
+    queryFn: merchantService.getPaymentSettings,
+  });
+
   const [paymentSettings, setPaymentSettings] = useState({
     enablePayIn2: true,
     enablePayIn3: true,
@@ -66,6 +72,23 @@ export default function MerchantSettingsPage() {
     maximumAmount: '5000.00',
     autoApprove: true,
     requireManualReview: false,
+  });
+
+  // Update payment settings when data loads
+  useEffect(() => {
+    if (paymentSettingsData) {
+      setPaymentSettings((prev) => ({
+        ...prev,
+        ...paymentSettingsData,
+        minimumAmount: paymentSettingsData.minimumAmount?.toString() || prev.minimumAmount,
+        maximumAmount: paymentSettingsData.maximumAmount?.toString() || prev.maximumAmount,
+      }));
+    }
+  }, [paymentSettingsData]);
+
+  const { data: notificationSettingsData } = useQuery({
+    queryKey: ['merchant-notification-settings'],
+    queryFn: merchantService.getNotificationSettings,
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -80,6 +103,21 @@ export default function MerchantSettingsPage() {
     inApp: true,
   });
 
+  // Update notification settings when data loads
+  useEffect(() => {
+    if (notificationSettingsData) {
+      setNotificationSettings((prev) => ({
+        ...prev,
+        ...notificationSettingsData,
+      }));
+    }
+  }, [notificationSettingsData]);
+
+  const { data: securitySettingsData } = useQuery({
+    queryKey: ['merchant-security-settings'],
+    queryFn: merchantService.getSecuritySettings,
+  });
+
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorEnabled: false,
     sessionTimeout: '30',
@@ -87,6 +125,18 @@ export default function MerchantSettingsPage() {
     webhookUrl: 'https://api.demo-electronics.com/webhooks/scalapay',
     apiKey: 'sk_live_*********************',
   });
+
+  // Update security settings when data loads
+  useEffect(() => {
+    if (securitySettingsData) {
+      setSecuritySettings((prev) => ({
+        ...prev,
+        ...securitySettingsData,
+        sessionTimeout: securitySettingsData.sessionTimeout?.toString() || prev.sessionTimeout,
+        ipWhitelist: securitySettingsData.ipWhitelist?.join(', ') || prev.ipWhitelist,
+      }));
+    }
+  }, [securitySettingsData]);
 
   const handleSaveStoreSettings = async () => {
     setLoading(true);
@@ -118,7 +168,14 @@ export default function MerchantSettingsPage() {
   const handleSavePaymentSettings = async () => {
     setLoading(true);
     try {
-      await merchantService.updatePaymentSettings(paymentSettings);
+      await merchantService.updatePaymentSettings({
+        ...paymentSettings,
+        minimumAmount: parseFloat(paymentSettings.minimumAmount) || 0,
+        maximumAmount: parseFloat(paymentSettings.maximumAmount) || 0,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['merchant-payment-settings'] });
+
       toast({
         title: 'Payment settings saved',
         description: 'Your payment configuration has been updated.',
@@ -138,6 +195,9 @@ export default function MerchantSettingsPage() {
     setLoading(true);
     try {
       await merchantService.updateNotificationSettings(notificationSettings);
+
+      queryClient.invalidateQueries({ queryKey: ['merchant-notification-settings'] });
+
       toast({
         title: 'Notification settings saved',
         description: 'Your notification preferences have been updated.',
@@ -156,7 +216,16 @@ export default function MerchantSettingsPage() {
   const handleSaveSecuritySettings = async () => {
     setLoading(true);
     try {
-      await merchantService.updateSecuritySettings(securitySettings);
+      await merchantService.updateSecuritySettings({
+        ...securitySettings,
+        sessionTimeout: parseInt(securitySettings.sessionTimeout) || 30,
+        ipWhitelist: securitySettings.ipWhitelist
+          ? securitySettings.ipWhitelist.split(',').map((ip) => ip.trim())
+          : [],
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['merchant-security-settings'] });
+
       toast({
         title: 'Security settings saved',
         description: 'Your security configuration has been updated.',

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { CreditCard, Wallet, Layers, Check } from 'lucide-react';
 
-export interface PaymentMethod {
+export interface PaymentType {
   id: 'credit' | 'card' | 'hybrid';
   name: string;
   description: string;
@@ -17,7 +17,7 @@ export interface PaymentMethod {
 }
 
 export interface PaymentMethodSelection {
-  method: PaymentMethod;
+  method: PaymentType;
   creditAmount: number;
   cardAmount: number;
 }
@@ -28,7 +28,7 @@ interface PaymentMethodSelectorProps {
   onSelect: (selection: PaymentMethodSelection) => void;
 }
 
-const paymentMethods: PaymentMethod[] = [
+const paymentMethods: PaymentType[] = [
   {
     id: 'credit',
     name: 'Credit Only',

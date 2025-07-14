@@ -8,8 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { transactionService, Transaction, Payment } from '@/services/transaction-service';
-import { EarlyPaymentModal } from '@/components/payments/early-payment-modal';
+import { EarlyPaymentCalculator } from '@/components/payments/early-payment-calculator';
+import { EarlyPaymentHistory } from '@/components/payments/early-payment-history';
+import { EarlyPaymentInsights } from '@/components/payments/early-payment-insights';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth-store';
 import {
   getNextPaymentInfo,
   getPaymentProgress,
@@ -52,6 +57,7 @@ interface EarlyPaymentState {
 
 export default function CustomerTransactionsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -743,12 +749,17 @@ export default function CustomerTransactionsPage() {
                                     ? 'bg-yellow-500'
                                     : 'bg-blue-500'
                               }`}
-                              style={{ width: `${paymentProgress.progress}%` }}
+                              style={{ width: `${paymentProgress.progressPercentage || 0}%` }}
                             ></div>
                           </div>
                           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                            <span>{paymentProgress.remainingPayments} payments remaining</span>
-                            <span>{paymentProgress.progress.toFixed(0)}% complete</span>
+                            <span>
+                              {paymentProgress.totalPayments - paymentProgress.completedPayments}{' '}
+                              payments remaining
+                            </span>
+                            <span>
+                              {paymentProgress.progressPercentage?.toFixed(0) || 0}% complete
+                            </span>
                           </div>
                         </div>
 
@@ -1008,15 +1019,51 @@ export default function CustomerTransactionsPage() {
           </div>
         )}
 
-        {/* Early Payment Modal */}
-        {earlyPaymentModal.isOpen && earlyPaymentModal.transaction && earlyPaymentModal.payment && (
-          <EarlyPaymentModal
-            transaction={earlyPaymentModal.transaction}
-            payment={earlyPaymentModal.payment}
-            isOpen={earlyPaymentModal.isOpen}
-            onClose={closeEarlyPaymentModal}
-            onSuccess={handleEarlyPaymentSuccess}
-          />
+        {/* Enterprise Early Payment Modal */}
+        {earlyPaymentModal.isOpen && earlyPaymentModal.transaction && (
+          <Dialog open={earlyPaymentModal.isOpen} onOpenChange={closeEarlyPaymentModal}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  Early Payment Options
+                </DialogTitle>
+              </DialogHeader>
+
+              <Tabs defaultValue="calculator" className="h-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="calculator">Calculator</TabsTrigger>
+                  <TabsTrigger value="history">History</TabsTrigger>
+                  <TabsTrigger value="insights">Insights</TabsTrigger>
+                </TabsList>
+
+                {/* Early Payment Calculator Tab */}
+                <TabsContent
+                  value="calculator"
+                  className="mt-6 h-[calc(90vh-140px)] overflow-y-auto"
+                >
+                  <EarlyPaymentCalculator
+                    transactionId={earlyPaymentModal.transaction.id}
+                    userId={user?.id || ''}
+                    onPaymentComplete={handleEarlyPaymentSuccess}
+                  />
+                </TabsContent>
+
+                {/* Early Payment History Tab */}
+                <TabsContent value="history" className="mt-6 h-[calc(90vh-140px)] overflow-y-auto">
+                  <EarlyPaymentHistory
+                    userId={user?.id || ''}
+                    transactionId={earlyPaymentModal.transaction.id}
+                  />
+                </TabsContent>
+
+                {/* Early Payment Insights Tab */}
+                <TabsContent value="insights" className="mt-6 h-[calc(90vh-140px)] overflow-y-auto">
+                  <EarlyPaymentInsights userId={user?.id || ''} />
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>

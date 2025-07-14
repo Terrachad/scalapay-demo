@@ -329,7 +329,8 @@ export default function MerchantTransactionsPage() {
                                   Order #{transaction.id.slice(0, 8)}
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  Customer: {transaction.userId?.slice(0, 8)}...
+                                  Customer: {(transaction as any).userId?.slice(0, 8) || 'Unknown'}
+                                  ...
                                 </p>
                                 <div className="mt-1">
                                   <p
@@ -500,7 +501,7 @@ export default function MerchantTransactionsPage() {
                       <div>
                         <label className="text-sm font-medium text-gray-600">Customer ID</label>
                         <p className="font-mono">
-                          {selectedTransaction.userId?.slice(0, 8) || 'N/A'}
+                          {(selectedTransaction as any).userId?.slice(0, 8) || 'N/A'}
                         </p>
                       </div>
                       <div>

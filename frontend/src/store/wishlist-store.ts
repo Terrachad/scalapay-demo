@@ -7,10 +7,14 @@ export interface WishlistItem {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
   image: string;
   category: string;
   brand?: string;
   description?: string;
+  isOnSale?: boolean;
+  colors?: string[];
+  merchantId?: string;
   addedAt: Date;
 }
 
@@ -22,6 +26,7 @@ interface WishlistStore {
   isInWishlist: (id: string) => boolean;
   getWishlistCount: () => number;
   moveToCart: (id: string) => void;
+  toggleItem: (item: Omit<WishlistItem, 'addedAt'>) => void;
 }
 
 export const useWishlistStore = create<WishlistStore>()(
@@ -73,6 +78,15 @@ export const useWishlistStore = create<WishlistStore>()(
           // Note: In a real app, you'd also add to cart here
           // For now, we just remove from wishlist
           console.log(`Moving item ${id} to cart`);
+        }
+      },
+
+      toggleItem: (item) => {
+        const { isInWishlist, addToWishlist, removeFromWishlist } = get();
+        if (isInWishlist(item.id)) {
+          removeFromWishlist(item.id);
+        } else {
+          addToWishlist(item);
         }
       },
     }),

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import {
   PlatformSettings,
   DEFAULT_PLATFORM_SETTINGS,
 } from '@/services/platform-settings-service';
+import PaymentConfigPanel from '@/components/ui/payment-config-panel';
 import {
   Settings,
   CreditCard,
@@ -268,7 +269,7 @@ export default function AdminSettingsPage() {
           transition={{ delay: 0.1 }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 General
@@ -284,6 +285,10 @@ export default function AdminSettingsPage() {
               <TabsTrigger value="features" className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
                 Features
+              </TabsTrigger>
+              <TabsTrigger value="payment-config" className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Payment Config
               </TabsTrigger>
             </TabsList>
 
@@ -763,6 +768,25 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Payment Configuration Tab */}
+            <TabsContent value="payment-config" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Enterprise Payment Configuration
+                  </CardTitle>
+                  <CardDescription>
+                    Advanced payment system configuration, early payment settings, and fraud
+                    detection
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <PaymentConfigPanel context="admin" showPlatformSettings={true} />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -10,9 +10,22 @@ export interface RegisterData extends LoginData {
   role: string;
 }
 
-export interface AuthResponse {
+export interface AuthResponseData {
   accessToken: string;
   user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    creditLimit: number;
+    availableCredit: number;
+  };
+}
+
+export interface AuthResponse {
+  data?: AuthResponseData; // Wrapped response from TransformInterceptor
+  accessToken?: string; // Direct response format
+  user?: {
     id: string;
     email: string;
     name: string;
@@ -65,7 +78,7 @@ export interface UserProfileResponse {
 }
 
 export const authService = {
-  async login(data: LoginData): Promise<AuthResponse> {
+  async login(data: LoginData): Promise<AuthResponseData> {
     console.log('🔐 Attempting login with:', { email: data.email });
     try {
       const response = await apiClient.post<AuthResponse>('/auth/login', data);
@@ -73,7 +86,7 @@ export const authService = {
       console.log('✅ Login response data:', response.data);
 
       // Handle wrapped response format from TransformInterceptor
-      const authData = response.data.data || response.data;
+      const authData = (response.data as AuthResponse).data || (response.data as AuthResponseData);
       console.log('✅ Auth data:', authData);
       console.log('✅ Has accessToken:', !!authData?.accessToken);
       console.log('✅ Has user:', !!authData?.user);
@@ -81,16 +94,19 @@ export const authService = {
       return authData;
     } catch (error) {
       console.error('❌ Auth service error:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.error('❌ Error response:', axiosError.response?.data);
+        console.error('❌ Error status:', axiosError.response?.status);
+      }
       throw error;
     }
   },
 
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<AuthResponseData> {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
     // Handle wrapped response format from TransformInterceptor
-    return response.data.data || response.data;
+    return (response.data as AuthResponse).data || (response.data as AuthResponseData);
   },
 
   async getProfile() {

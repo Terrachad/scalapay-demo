@@ -17,7 +17,7 @@ import {
 } from '@/components/checkout/payment-method-selector';
 import { IntegratedStripeForm } from '@/components/checkout/integrated-stripe-form';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { useToast } from '@/components/ui/use-toast';
 import { transactionService } from '@/services/transaction-service';
 import { merchantService } from '@/services/merchant-service';
@@ -78,7 +78,7 @@ export default function CheckoutPage() {
   const [postalCodeError, setPostalCodeError] = useState('');
   const [cardholderName, setCardholderName] = useState('');
   const [cardholderNameError, setCardholderNameError] = useState('');
-  const [stripePromise, setStripePromise] = useState(null);
+  const [stripePromise, setStripePromise] = useState<Stripe | null>(null);
   const [paymentClientSecret, setPaymentClientSecret] = useState('');
   const [paymentReady, setPaymentReady] = useState(false);
 
@@ -109,11 +109,88 @@ export default function CheckoutPage() {
     initializeStripe();
   }, []);
 
+  // Define completeTransaction first (before functions that reference it)
+  const completeTransaction = useCallback(
+    async (transaction?: any) => {
+      // Invalidate and refetch transaction queries
+      await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+      toast({
+        title: 'Success!',
+        description: 'Your order has been placed successfully.',
+      });
+
+      // Clear cart after successful purchase
+      clearCart();
+
+      router.push(`/checkout/success?id=${transaction?.id}`);
+    },
+    [queryClient, toast, clearCart, router],
+  );
+
+  // Define createPaymentIntent after completeTransaction
+  const createPaymentIntent = useCallback(async () => {
+    if (!selectedPlan || !selectedPaymentMethod) return;
+
+    setIsProcessing(true);
+    try {
+      // Get demo merchant ID from backend, with fallback
+      let merchantId = '123e4567-e89b-12d3-a456-426614174000';
+      try {
+        const demoMerchant = await merchantService.getDemoMerchant();
+        merchantId = demoMerchant.id;
+      } catch (error) {
+        console.warn('Failed to fetch demo merchant, using fallback:', error);
+      }
+
+      const transactionData = {
+        amount: totalAmount,
+        merchantId: merchantId,
+        paymentPlan: selectedPlan.id,
+        items: cartItems.map((item) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        paymentMethodPreference: {
+          type:
+            selectedPaymentMethod.method.id === 'hybrid'
+              ? 'split'
+              : selectedPaymentMethod.method.id,
+          creditAmount: selectedPaymentMethod.creditAmount,
+          cardAmount: selectedPaymentMethod.cardAmount,
+        },
+      };
+
+      const transactionResponse = await transactionService.create(transactionData);
+      const transaction = transactionResponse.data || transactionResponse;
+
+      if (transaction.requiresPayment && transaction.clientSecret) {
+        setPaymentClientSecret(transaction.clientSecret);
+        setPaymentReady(true);
+
+        // Stay on current step - payment will be processed via IntegratedStripeForm
+      } else {
+        // No payment required, complete directly
+        await completeTransaction(transaction);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to prepare payment. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [selectedPlan, selectedPaymentMethod, totalAmount, cartItems, toast, completeTransaction]);
+
   // Auto-create payment intent when reaching step 3 with card payment
   useEffect(() => {
     const shouldCreatePaymentIntent =
       currentStep === 3 &&
-      selectedPaymentMethod?.cardAmount > 0 &&
+      (selectedPaymentMethod?.cardAmount || 0) > 0 &&
       !paymentClientSecret &&
       selectedPlan;
 
@@ -221,81 +298,6 @@ export default function CheckoutPage() {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const completeTransaction = useCallback(
-    async (transaction?: any) => {
-      // Invalidate and refetch transaction queries
-      await queryClient.invalidateQueries({ queryKey: ['customer-transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-
-      toast({
-        title: 'Success!',
-        description: 'Your order has been placed successfully.',
-      });
-
-      // Clear cart after successful purchase
-      clearCart();
-
-      router.push(`/checkout/success?id=${transaction?.id}`);
-    },
-    [queryClient, toast, clearCart, router],
-  );
-
-  const createPaymentIntent = useCallback(async () => {
-    if (!selectedPlan || !selectedPaymentMethod) return;
-
-    setIsProcessing(true);
-    try {
-      // Get demo merchant ID from backend, with fallback
-      let merchantId = '123e4567-e89b-12d3-a456-426614174000';
-      try {
-        const demoMerchant = await merchantService.getDemoMerchant();
-        merchantId = demoMerchant.id;
-      } catch (error) {
-        console.warn('Failed to fetch demo merchant, using fallback:', error);
-      }
-
-      const transactionData = {
-        amount: totalAmount,
-        merchantId: merchantId,
-        paymentPlan: selectedPlan.id,
-        items: cartItems.map((item) => ({
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        })),
-        paymentMethodPreference: {
-          type:
-            selectedPaymentMethod.method.id === 'hybrid'
-              ? 'split'
-              : selectedPaymentMethod.method.id,
-          creditAmount: selectedPaymentMethod.creditAmount,
-          cardAmount: selectedPaymentMethod.cardAmount,
-        },
-      };
-
-      const transactionResponse = await transactionService.create(transactionData);
-      const transaction = transactionResponse.data || transactionResponse;
-
-      if (transaction.requiresPayment && transaction.clientSecret) {
-        setPaymentClientSecret(transaction.clientSecret);
-        setPaymentReady(true);
-
-        // Stay on current step - payment will be processed via IntegratedStripeForm
-      } else {
-        // No payment required, complete directly
-        await completeTransaction(transaction);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to prepare payment. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [selectedPlan, selectedPaymentMethod, totalAmount, cartItems, toast, completeTransaction]);
 
   const handleComplete = async () => {
     if (!isAuthenticated) {
@@ -799,14 +801,14 @@ export default function CheckoutPage() {
                 Back
               </Button>
               {currentStep < steps.length - 1 &&
-              !(currentStep === 3 && selectedPaymentMethod?.cardAmount > 0) ? (
+              !(currentStep === 3 && (selectedPaymentMethod?.cardAmount || 0) > 0) ? (
                 <Button
                   onClick={handleNext}
                   disabled={
                     (currentStep === 1 && !selectedPaymentMethod) ||
                     (currentStep === 2 && !selectedPlan) ||
                     (currentStep === 3 &&
-                      selectedPaymentMethod?.cardAmount > 0 &&
+                      (selectedPaymentMethod?.cardAmount || 0) > 0 &&
                       (!postalCode ||
                         !cardholderName ||
                         !Object.values(stripeElements).every((ready) => ready)))

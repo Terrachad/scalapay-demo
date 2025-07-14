@@ -52,8 +52,8 @@ export function StripeCheckoutForm({
     if (paymentElement) {
       paymentElement.on('ready', () => setPaymentElementReady(true));
       paymentElement.on('change', (event) => {
-        if (event.error) {
-          setErrorMessage(event.error.message || 'Payment element error');
+        if ((event as any).error) {
+          setErrorMessage((event as any).error.message || 'Payment element error');
         } else {
           setErrorMessage('');
         }
@@ -63,8 +63,8 @@ export function StripeCheckoutForm({
     if (addressElement) {
       addressElement.on('ready', () => setAddressElementReady(true));
       addressElement.on('change', (event) => {
-        if (event.error) {
-          setErrorMessage(event.error.message || 'Address element error');
+        if ((event as any).error) {
+          setErrorMessage((event as any).error.message || 'Address element error');
         }
       });
     }
@@ -84,7 +84,9 @@ export function StripeCheckoutForm({
     try {
       // Get the address from the AddressElement
       const addressElement = elements.getElement('address');
-      const { error: addressError, value: addressValue } = (await addressElement?.getValue()) || {};
+      const addressResult = (await addressElement?.getValue()) || {};
+      const addressError = (addressResult as any).error;
+      const addressValue = (addressResult as any).value;
 
       if (addressError) {
         throw new Error(addressError.message || 'Invalid address information');

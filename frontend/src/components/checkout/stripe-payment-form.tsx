@@ -48,8 +48,8 @@ export function StripePaymentForm({
       });
 
       paymentElement.on('change', (event) => {
-        if (event.error) {
-          setErrorMessage(event.error.message || 'Payment element error');
+        if ((event as any).error) {
+          setErrorMessage((event as any).error.message || 'Payment element error');
         } else {
           setErrorMessage('');
         }

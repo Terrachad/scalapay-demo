@@ -11,6 +11,10 @@
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build": "npm run build --workspaces",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "npm run start:prod --workspace=backend",
+    "start:frontend": "npm run start --workspace=frontend",
+    "prod": "npm run start",
     "test": "npm run test --workspaces",
     "test:e2e": "npm run test:e2e --workspace=backend",
     "lint": "npm run lint --workspaces",
@@ -36,6 +40,7 @@
     "npm": ">=10.0.0"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/bull": "^11.0.2",
     "@nestjs/event-emitter": "^3.0.1",

@@ -254,7 +254,7 @@ export default function MerchantOrdersPage() {
                               Order #{order.id.slice(0, 8)}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-300">
-                              Customer: {order.user?.name || 'Unknown'}
+                              Customer: {(order as any).user?.name || 'Unknown'}
                             </p>
                           </div>
                         </div>
@@ -311,7 +311,7 @@ export default function MerchantOrdersPage() {
                             Customer Email
                           </p>
                           <p className="text-sm text-gray-900 dark:text-white">
-                            {order.user?.email || 'N/A'}
+                            {(order as any).user?.email || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -448,13 +448,13 @@ export default function MerchantOrdersPage() {
                       <div>
                         <label className="text-sm font-medium text-gray-600">Customer Name</label>
                         <p className="font-medium">
-                          {selectedOrder.user?.name || 'Unknown Customer'}
+                          {(selectedOrder as any).user?.name || 'Unknown Customer'}
                         </p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Email</label>
                         <p className="text-sm text-gray-500">
-                          {selectedOrder.user?.email || 'No email'}
+                          {(selectedOrder as any).user?.email || 'No email'}
                         </p>
                       </div>
                       <div>

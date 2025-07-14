@@ -283,7 +283,7 @@ export default function MerchantAnalyticsPage() {
                       Total Orders
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {transactions.length}
+                      {transactions?.length || 0}
                     </p>
                     <p className="text-sm text-green-600 mt-1 flex items-center">
                       <TrendingUp className="w-3 h-3 mr-1" />
@@ -365,7 +365,7 @@ export default function MerchantAnalyticsPage() {
                                 Completed Orders
                               </p>
                               <p className="text-sm text-green-600">
-                                {completedTransactions.length} transactions
+                                {completedTransactions} transactions
                               </p>
                             </div>
                             <p className="text-xl font-bold text-green-800 dark:text-green-300">
@@ -379,11 +379,9 @@ export default function MerchantAnalyticsPage() {
                                 Pending Revenue
                               </p>
                               <p className="text-sm text-yellow-600">
-                                {
-                                  transactions.filter((t) =>
-                                    ['pending', 'approved'].includes(t.status),
-                                  ).length
-                                }{' '}
+                                {transactions?.filter((t) =>
+                                  ['pending', 'approved'].includes(t.status),
+                                ).length || 0}{' '}
                                 transactions
                               </p>
                             </div>
@@ -458,7 +456,8 @@ export default function MerchantAnalyticsPage() {
                             <div>
                               <p className="font-medium">{plan.replace('_', ' ').toUpperCase()}</p>
                               <p className="text-sm text-gray-600">
-                                {((count / transactions.length) * 100).toFixed(1)}% of orders
+                                {((count / (transactions?.length || 1)) * 100).toFixed(1)}% of
+                                orders
                               </p>
                             </div>
                             <div className="text-right">
@@ -561,7 +560,7 @@ export default function MerchantAnalyticsPage() {
                               </span>
                             </div>
                             <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                              {transactions.filter((t) => t.status === 'pending').length}{' '}
+                              {transactions?.filter((t) => t.status === 'pending').length || 0}{' '}
                               transactions waiting for approval
                             </p>
                           </div>

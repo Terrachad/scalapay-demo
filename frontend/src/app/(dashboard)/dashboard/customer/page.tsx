@@ -10,13 +10,29 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { transactionService } from '@/services/transaction-service';
 import { useAuthStore } from '@/store/auth-store';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EarlyPaymentCalculator } from '@/components/payments/early-payment-calculator';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { CreditCard, ShoppingBag, Calendar, TrendingUp, ArrowRight, Clock } from 'lucide-react';
+import {
+  CreditCard,
+  ShoppingBag,
+  Calendar,
+  TrendingUp,
+  ArrowRight,
+  Clock,
+  Shield,
+  Wallet,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function CustomerDashboard() {
   const { user } = useAuthStore();
   const [creditUsage, setCreditUsage] = useState(0);
+  const [earlyPaymentModal, setEarlyPaymentModal] = useState({
+    isOpen: false,
+    payment: null as any,
+    transaction: null as any,
+  });
 
   const {
     data: transactions,
@@ -53,6 +69,27 @@ export default function CustomerDashboard() {
     : [];
 
   const recentTransactions = Array.isArray(transactions) ? transactions.slice(0, 5) : [];
+
+  const handleEarlyPayment = (payment: any) => {
+    // Find the transaction for this payment
+    const transaction = transactions?.find((t) =>
+      t.payments?.some((p: any) => p.id === payment.id),
+    );
+
+    setEarlyPaymentModal({
+      isOpen: true,
+      payment,
+      transaction: transaction || null,
+    });
+  };
+
+  const closeEarlyPaymentModal = () => {
+    setEarlyPaymentModal({
+      isOpen: false,
+      payment: null,
+      transaction: null,
+    });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -122,6 +159,24 @@ export default function CustomerDashboard() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
+            <Link href="/dashboard/customer/payment-methods">
+              <Button variant="secondary" className="w-full justify-between">
+                <span>Manage Payment Methods</span>
+                <Wallet className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/dashboard/customer/early-payments">
+              <Button variant="secondary" className="w-full justify-between">
+                <span>Early Payment Options</span>
+                <TrendingUp className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/dashboard/customer/security">
+              <Button variant="secondary" className="w-full justify-between">
+                <span>Security & Privacy</span>
+                <Shield className="w-4 h-4" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </motion.div>
@@ -145,25 +200,51 @@ export default function CustomerDashboard() {
               <p className="text-center text-gray-500 py-8">Loading...</p>
             ) : upcomingPayments && upcomingPayments.length > 0 ? (
               <div className="space-y-4">
-                {upcomingPayments.map((payment) => (
-                  <div
-                    key={payment.id || Math.random()}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-full">
-                        <Clock className="w-5 h-5 text-purple-600" />
+                {upcomingPayments.map((payment) => {
+                  const dueDate = new Date(payment.dueDate);
+                  const today = new Date();
+                  const daysUntil = Math.ceil(
+                    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+                  );
+                  const canPayEarly = daysUntil > 0; // Can pay early if not overdue
+
+                  return (
+                    <div
+                      key={payment.id || Math.random()}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-full">
+                          <Clock className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {formatCurrency(parseFloat(payment.amount.toString()))}
+                          </p>
+                          <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
+                          {daysUntil <= 7 && daysUntil > 0 && (
+                            <p className="text-xs text-amber-600">
+                              Due in {daysUntil} day{daysUntil !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">
-                          {formatCurrency(parseFloat(payment.amount.toString()))}
-                        </p>
-                        <p className="text-sm text-gray-600">Due {formatDate(payment.dueDate)}</p>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline">Scheduled</Badge>
+                        {canPayEarly && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEarlyPayment(payment)}
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                          >
+                            Pay Early
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <Badge variant="outline">Scheduled</Badge>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-center text-gray-500 py-8">No upcoming payments</p>
@@ -231,6 +312,29 @@ export default function CustomerDashboard() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Early Payment Modal */}
+      {earlyPaymentModal.isOpen && earlyPaymentModal.transaction && (
+        <Dialog open={earlyPaymentModal.isOpen} onOpenChange={closeEarlyPaymentModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Early Payment Calculator
+              </DialogTitle>
+            </DialogHeader>
+            <EarlyPaymentCalculator
+              transactionId={earlyPaymentModal.transaction.id}
+              userId={user?.id || ''}
+              onPaymentComplete={() => {
+                closeEarlyPaymentModal();
+                // Refresh the data
+                window.location.reload();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

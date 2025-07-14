@@ -6,11 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { formatCurrency } from '@/lib/utils';
-import { ArrowLeft, CreditCard, Lock } from 'lucide-react';
+import { ArrowLeft, CreditCard, Lock, Plus, Check } from 'lucide-react';
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCartStore } from '@/store/cart-store';
+import { useAuthStore } from '@/store/auth-store';
+import { PaymentMethodList } from '@/components/payments/payment-method-list';
+import { AddPaymentMethodModal } from '@/components/payments/add-payment-method-modal';
+import { Badge } from '@/components/ui/badge';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -39,9 +43,14 @@ function PaymentForm() {
   const stripe = useStripe();
   const elements = useElements();
   const { clearCart } = useCartStore();
+  const { user } = useAuthStore();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [useNewCard, setUseNewCard] = useState(false);
+  const [saveCard, setSaveCard] = useState(false);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
 
   useEffect(() => {
     // Get transaction details from session storage
@@ -76,21 +85,62 @@ function PaymentForm() {
     setIsProcessing(true);
 
     try {
-      console.log('Processing payment with Stripe Elements...');
+      console.log('Processing payment...');
       console.log('Client Secret:', pendingTransaction.clientSecret);
+      console.log('Selected Payment Method:', selectedPaymentMethod);
+      console.log('Use New Card:', useNewCard);
+      console.log('Save Card:', saveCard);
 
-      // Confirm the payment using Stripe Elements
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        pendingTransaction.clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: 'Customer', // You can collect this from a form field
+      let paymentResult;
+
+      if (selectedPaymentMethod && !useNewCard) {
+        // Using saved payment method
+        console.log('Using saved payment method:', selectedPaymentMethod);
+        paymentResult = await stripe.confirmCardPayment(pendingTransaction.clientSecret, {
+          payment_method: selectedPaymentMethod,
+        });
+      } else {
+        // Using new card
+        console.log('Using new card...');
+
+        if (saveCard && user) {
+          // Create payment method and save it for future use
+          const { error: setupError, setupIntent } = await stripe.confirmCardSetup(
+            pendingTransaction.setupIntentClientSecret, // This would need to be provided by backend
+            {
+              payment_method: {
+                card: cardElement,
+                billing_details: {
+                  name: user.name || 'Customer',
+                  email: user.email,
+                },
+              },
             },
-          },
-        },
-      );
+          );
+
+          if (setupError) {
+            throw new Error(setupError.message);
+          }
+
+          // Now use the saved payment method for the payment
+          paymentResult = await stripe.confirmCardPayment(pendingTransaction.clientSecret, {
+            payment_method: (setupIntent.payment_method as any)?.id || setupIntent.payment_method,
+          });
+        } else {
+          // Standard one-time payment
+          paymentResult = await stripe.confirmCardPayment(pendingTransaction.clientSecret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                name: user?.name || 'Customer',
+                email: user?.email,
+              },
+            },
+          });
+        }
+      }
+
+      const { error, paymentIntent } = paymentResult;
 
       if (error) {
         console.error('Payment failed:', error);
@@ -236,19 +286,90 @@ function PaymentForm() {
               <CardDescription>Enter your card information securely</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Stripe Card Element */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Card Information
-                  </label>
-                  <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
-                    <CardElement options={cardElementOptions} />
+              {/* Payment Method Selection */}
+              {user && (
+                <div className="space-y-6 mb-6">
+                  <div className="border-b pb-6">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                      Choose Payment Method
+                    </h3>
+
+                    {/* Existing Payment Methods */}
+                    <div className="space-y-3 mb-4">
+                      <PaymentMethodList
+                        userId={user.id}
+                        showAnalytics={false}
+                        showSecurityOverview={false}
+                        allowReordering={false}
+                      />
+                    </div>
+
+                    {/* Add New Payment Method Option */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full flex items-center gap-2"
+                      onClick={() => {
+                        setUseNewCard(true);
+                        setSelectedPaymentMethod(null);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Use New Card
+                    </Button>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Your card information is encrypted and secure.
-                  </p>
                 </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Stripe Card Element - Only show if using new card or no saved methods */}
+                {(!user || useNewCard || !selectedPaymentMethod) && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Card Information
+                    </label>
+                    <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                      <CardElement options={cardElementOptions} />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Your card information is encrypted and secure.
+                    </p>
+
+                    {/* Save Card Option */}
+                    {user && (
+                      <div className="flex items-center space-x-2 mt-3">
+                        <input
+                          type="checkbox"
+                          id="saveCard"
+                          checked={saveCard}
+                          onChange={(e) => setSaveCard(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label
+                          htmlFor="saveCard"
+                          className="text-sm text-gray-700 dark:text-gray-300"
+                        >
+                          Save this card for future purchases
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Selected Payment Method Display */}
+                {user && selectedPaymentMethod && (
+                  <div className="p-4 border border-green-200 bg-green-50 dark:bg-green-900/20 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span className="text-sm text-green-800 dark:text-green-200">
+                        Using saved payment method
+                      </span>
+                      <Badge variant="outline" className="ml-auto">
+                        Selected
+                      </Badge>
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   type="submit"
@@ -274,6 +395,17 @@ function PaymentForm() {
               </form>
             </CardContent>
           </Card>
+
+          {/* Add Payment Method Modal */}
+          {user && (
+            <AddPaymentMethodModal
+              isOpen={showAddPaymentModal}
+              onClose={() => setShowAddPaymentModal(false)}
+              userId={user.id}
+              currentCount={0}
+              maxCards={10}
+            />
+          )}
         </div>
       </div>
     </div>

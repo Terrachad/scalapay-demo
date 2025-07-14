@@ -597,5 +597,4 @@ class PlatformSettingsService {
 
 export const platformSettingsService = new PlatformSettingsService();
 
-// Export types for components to use
-export type { ValidateSettingsResponse, PendingMerchant };
+// Export types for components to use - interfaces are already exported above

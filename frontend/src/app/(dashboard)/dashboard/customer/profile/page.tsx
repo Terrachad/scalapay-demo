@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,9 @@ import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth-service';
 import { transactionService } from '@/services/transaction-service';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { PaymentMethodList } from '@/components/payments/payment-method-list';
+import { MFASetupWizard } from '@/components/security/mfa-setup-wizard';
+import { GDPRConsentManagement } from '@/components/security/gdpr-consent-management';
 import {
   User,
   CreditCard,
@@ -29,12 +33,15 @@ import {
   CheckCircle,
   Clock,
   Settings,
+  Shield,
 } from 'lucide-react';
 
 export default function CustomerProfilePage() {
   const { toast } = useToast();
   const { user, setUser } = useAuthStore();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showMFAWizard, setShowMFAWizard] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
@@ -328,8 +335,9 @@ export default function CustomerProfilePage() {
             <Card>
               <CardContent className="p-6">
                 <Tabs defaultValue="profile" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="profile">Profile</TabsTrigger>
+                    <TabsTrigger value="payment-methods">Payment Methods</TabsTrigger>
                     <TabsTrigger value="notifications">Notifications</TabsTrigger>
                     <TabsTrigger value="security">Security</TabsTrigger>
                   </TabsList>
@@ -440,6 +448,26 @@ export default function CustomerProfilePage() {
                         <Save className="w-4 h-4 mr-2" />
                         {loading ? 'Saving...' : 'Save Changes'}
                       </Button>
+                    </div>
+                  </TabsContent>
+
+                  {/* Payment Methods Tab */}
+                  <TabsContent value="payment-methods" className="space-y-6 mt-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Payment Methods
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Manage your saved payment methods, set up auto-payments, and configure
+                        security settings.
+                      </p>
+                      <PaymentMethodList
+                        userId={user?.id || ''}
+                        showAnalytics={true}
+                        showSecurityOverview={true}
+                        allowReordering={true}
+                      />
                     </div>
                   </TabsContent>
 
@@ -555,84 +583,162 @@ export default function CustomerProfilePage() {
                   {/* Security Tab */}
                   <TabsContent value="security" className="space-y-6 mt-6">
                     <div>
-                      <h3 className="text-lg font-semibold mb-4">Account Security</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Two-Factor Authentication</p>
-                            <p className="text-sm text-gray-600">Add an extra layer of security</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              variant={securitySettings.twoFactorEnabled ? 'default' : 'secondary'}
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Security & Privacy
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Manage your account security settings, multi-factor authentication, and
+                        privacy preferences.
+                      </p>
+
+                      {/* Enhanced Security Overview */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-4 w-4 text-blue-600" />
+                                <span className="font-medium">Multi-Factor Authentication</span>
+                              </div>
+                              <Badge
+                                variant={
+                                  securitySettings.twoFactorEnabled ? 'default' : 'secondary'
+                                }
+                              >
+                                {securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Add an extra layer of security to your account
+                            </p>
+                            <Button
+                              onClick={() => setShowMFAWizard(true)}
+                              variant={securitySettings.twoFactorEnabled ? 'outline' : 'default'}
+                              className="w-full"
                             >
-                              {securitySettings.twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                            </Badge>
-                            <input
-                              type="checkbox"
-                              checked={securitySettings.twoFactorEnabled}
-                              onChange={(e) =>
-                                setSecuritySettings({
-                                  ...securitySettings,
-                                  twoFactorEnabled: e.target.checked,
-                                })
-                              }
-                              className="w-4 h-4"
-                            />
+                              {securitySettings.twoFactorEnabled ? 'Manage MFA' : 'Setup MFA'}
+                            </Button>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Settings className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">Privacy Settings</span>
+                              </div>
+                              <Badge variant="outline">GDPR Compliant</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Control your data and privacy preferences
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => {
+                                // Scroll to GDPR section within the same tab
+                                const gdprSection = document.querySelector(
+                                  'h4:has-text("Privacy & Data Protection")',
+                                );
+                                if (gdprSection) {
+                                  gdprSection.scrollIntoView({ behavior: 'smooth' });
+                                }
+                              }}
+                            >
+                              Manage Privacy
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Enterprise Security Components */}
+                      <div className="space-y-6">
+                        {/* GDPR Consent Management */}
+                        <div>
+                          <h4 className="text-md font-semibold mb-4">Privacy & Data Protection</h4>
+                          <GDPRConsentManagement userId={user?.id || ''} />
+                        </div>
+
+                        {/* Basic Security Settings */}
+                        <div>
+                          <h4 className="text-md font-semibold mb-4">Account Security</h4>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 border rounded-lg">
+                              <div>
+                                <p className="font-medium">Login Notifications</p>
+                                <p className="text-sm text-gray-600">
+                                  Get notified of account access
+                                </p>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={securitySettings.loginNotifications}
+                                onChange={(e) =>
+                                  setSecuritySettings({
+                                    ...securitySettings,
+                                    loginNotifications: e.target.checked,
+                                  })
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                              <Input
+                                id="sessionTimeout"
+                                value={securitySettings.sessionTimeout}
+                                onChange={(e) =>
+                                  setSecuritySettings({
+                                    ...securitySettings,
+                                    sessionTimeout: e.target.value,
+                                  })
+                                }
+                                placeholder="30"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <h5 className="font-medium">Password Management</h5>
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full">
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Change Password
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <p className="font-medium">Login Notifications</p>
-                            <p className="text-sm text-gray-600">Get notified of account access</p>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={securitySettings.loginNotifications}
-                            onChange={(e) =>
-                              setSecuritySettings({
-                                ...securitySettings,
-                                loginNotifications: e.target.checked,
-                              })
-                            }
-                            className="w-4 h-4"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-                          <Input
-                            id="sessionTimeout"
-                            value={securitySettings.sessionTimeout}
-                            onChange={(e) =>
-                              setSecuritySettings({
-                                ...securitySettings,
-                                sessionTimeout: e.target.value,
-                              })
-                            }
-                            placeholder="30"
-                          />
+                        <div className="flex justify-end">
+                          <Button onClick={handleSaveSecurity} disabled={loading}>
+                            <Save className="w-4 h-4 mr-2" />
+                            {loading ? 'Saving...' : 'Save Security Settings'}
+                          </Button>
                         </div>
                       </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">Password</h3>
-                      <div className="space-y-4">
-                        <Button variant="outline" className="w-full">
-                          <Edit className="w-4 h-4 mr-2" />
-                          Change Password
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button onClick={handleSaveSecurity} disabled={loading}>
-                        <Save className="w-4 h-4 mr-2" />
-                        {loading ? 'Saving...' : 'Save Security Settings'}
-                      </Button>
-                    </div>
+                    {/* MFA Setup Wizard Modal */}
+                    <MFASetupWizard
+                      isOpen={showMFAWizard}
+                      onClose={() => setShowMFAWizard(false)}
+                      userId={user?.id || ''}
+                      onSetupComplete={() => {
+                        setShowMFAWizard(false);
+                        // Update the security settings state
+                        setSecuritySettings({
+                          ...securitySettings,
+                          twoFactorEnabled: true,
+                        });
+                        toast({
+                          title: 'MFA Setup Complete',
+                          description: 'Multi-factor authentication has been successfully enabled.',
+                        });
+                      }}
+                    />
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -706,15 +812,27 @@ export default function CustomerProfilePage() {
                 <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/dashboard/customer/transactions')}
+                >
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   View Orders
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/dashboard/customer/payment-methods')}
+                >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Payment Methods
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/dashboard/customer/security')}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Account Settings
                 </Button>
